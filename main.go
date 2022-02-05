@@ -6,21 +6,6 @@ import (
 	"os"
 )
 
-const BaseResolution = 512
-
-type NodeRasterizer struct {
-}
-
-func NewNodeRasterizer() NodeRasterizer {
-	return NodeRasterizer{}
-}
-
-func (r *NodeRasterizer) RenderIsometric(def *NodeDef) *image.NRGBA {
-	size := BaseResolution + BaseResolution/2
-	canvas := image.NewNRGBA(image.Rect(0, 0, size, size))
-	return canvas
-}
-
 func savePNG(img *image.NRGBA, name string) error {
 	file, err := os.Create(name)
 	if err != nil {
@@ -49,6 +34,6 @@ func main() {
 		drawtype: DrawTypeMesh,
 		mesh:     &mesh,
 	}
-	img := nr.RenderIsometric(def)
+	img := nr.Render(def)
 	savePNG(img, "test.png")
 }

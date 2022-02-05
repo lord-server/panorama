@@ -9,17 +9,19 @@ import (
 	"strings"
 )
 
+type Vertex struct {
+	position Vector3
+	texcoord Vector2
+	normal   Vector3
+}
+
 type Mesh struct {
-	positions []Vector3
-	texcoords []Vector2
-	normals   []Vector3
+	vertices []Vertex
 }
 
 func NewMesh() Mesh {
 	return Mesh{
-		positions: []Vector3{},
-		texcoords: []Vector2{},
-		normals:   []Vector3{},
+		vertices: []Vertex{},
 	}
 }
 
@@ -106,6 +108,26 @@ type objParser struct {
 	mesh Mesh
 }
 
+func (o *objParser) vertexAt(triplet Triplet) Vertex {
+	return Vertex{
+		position: o.positions[triplet.positionIndex],
+		texcoord: o.texcoords[triplet.texcoordIndex],
+		normal:   o.normals[triplet.normalIndex],
+	}
+}
+
+func (o *objParser) triangulatePolygon(triplets []Triplet) []Vertex {
+	vertices := []Vertex{}
+
+	origin := o.vertexAt(triplets[0])
+
+	for i := 2; i < len(triplets); i++ {
+		vertices = append(vertices, origin, o.vertexAt(triplets[i-1]), o.vertexAt(triplets[i]))
+	}
+
+	return vertices
+}
+
 func (o *objParser) processLine(line string) error {
 	// Skip comments
 	if strings.HasPrefix(line, "#") {
@@ -142,21 +164,14 @@ func (o *objParser) processLine(line string) error {
 
 		o.normals = append(o.positions, normal)
 	case "f":
-		ts, err := parseFace(fields[1:])
+		triplets, err := parseFace(fields[1:])
 		if err != nil {
 			return err
 		}
 
-		for i, triplet := range ts {
-			// FIXME: support n-gons
-			if i >= 3 {
-				break
-			}
+		vertices := o.triangulatePolygon(triplets)
 
-			o.mesh.positions = append(o.mesh.positions, o.positions[triplet.positionIndex])
-			o.mesh.texcoords = append(o.mesh.texcoords, o.texcoords[triplet.texcoordIndex])
-			o.mesh.normals = append(o.mesh.normals, o.normals[triplet.normalIndex])
-		}
+		o.mesh.vertices = append(o.mesh.vertices, vertices...)
 
 	default:
 		log.Printf("unknown attribute %v; ignoring\n", fields[0])
