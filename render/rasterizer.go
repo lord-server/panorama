@@ -52,17 +52,17 @@ func NewNodeRasterizer() NodeRasterizer {
 }
 
 func cartesianToBarycentric(p lm.Vector2, a, b, c lm.Vector2) lm.Vector3 {
-	u := lm.Vector3{c.X - a.X, b.X - a.X, a.X - p.X}
-	v := lm.Vector3{c.Y - a.Y, b.Y - a.Y, a.Y - p.Y}
+	u := lm.Vec3(c.X-a.X, b.X-a.X, a.X-p.X)
+	v := lm.Vec3(c.Y-a.Y, b.Y-a.Y, a.Y-p.Y)
 	w := u.Cross(v)
 
-	return lm.Vector3{1 - (w.X+w.Y)/w.Z, w.Y / w.Z, w.X / w.Z}
+	return lm.Vec3(1-(w.X+w.Y)/w.Z, w.Y/w.Z, w.X/w.Z)
 }
 
 func sampleTriangle(x, y int, a, b, c lm.Vector2) (bool, lm.Vector3) {
-	p := lm.Vector2{float32(x), float32(y)}
+	p := lm.Vec2(float32(x), float32(y))
 
-	samplePointOffset := lm.Vector2{0.5, 0.5}
+	samplePointOffset := lm.Vec2(0.5, 0.5)
 
 	barycentric := cartesianToBarycentric(p.Add(samplePointOffset), a, b, c)
 
@@ -73,21 +73,21 @@ func sampleTriangle(x, y int, a, b, c lm.Vector2) (bool, lm.Vector3) {
 	return false, lm.Vector3{}
 }
 
-var LightDir lm.Vector3 = lm.Vector3{-0.9, 1, -0.7}.Normalize()
+var LightDir lm.Vector3 = lm.Vec3(-0.9, 1, -0.7).Normalize()
 var Projection lm.Matrix3 = lm.DimetricProjection()
 
 func drawTriangle(img *image.NRGBA, depth *DepthBuffer, a, b, c mesh.Vertex) {
 	originX := float32(img.Bounds().Dx() / 2)
 	originY := float32(img.Bounds().Dy() / 2)
-	origin := lm.Vector2{originX, originY}
+	origin := lm.Vec2(originX, originY)
 
 	a.Position = Projection.MulVec(a.Position)
 	b.Position = Projection.MulVec(b.Position)
 	c.Position = Projection.MulVec(c.Position)
 
-	pa := a.Position.XY().Mul(lm.Vector2{1, -1}).MulScalar(BaseResolution * math.Sqrt2 / 2).Add(origin)
-	pb := b.Position.XY().Mul(lm.Vector2{1, -1}).MulScalar(BaseResolution * math.Sqrt2 / 2).Add(origin)
-	pc := c.Position.XY().Mul(lm.Vector2{1, -1}).MulScalar(BaseResolution * math.Sqrt2 / 2).Add(origin)
+	pa := a.Position.XY().Mul(lm.Vec2(1, -1)).MulScalar(BaseResolution * math.Sqrt2 / 2).Add(origin)
+	pb := b.Position.XY().Mul(lm.Vec2(1, -1)).MulScalar(BaseResolution * math.Sqrt2 / 2).Add(origin)
+	pc := c.Position.XY().Mul(lm.Vec2(1, -1)).MulScalar(BaseResolution * math.Sqrt2 / 2).Add(origin)
 
 	bboxMin := pa.Min(pb).Min(pc)
 	bboxMax := pa.Max(pb).Max(pc)
@@ -100,7 +100,7 @@ func drawTriangle(img *image.NRGBA, depth *DepthBuffer, a, b, c mesh.Vertex) {
 				continue
 			}
 
-			pixelDepth := lm.Vector3{a.Position.Z, b.Position.Z, c.Position.Z}.Dot(barycentric)
+			pixelDepth := lm.Vec3(a.Position.Z, b.Position.Z, c.Position.Z).Dot(barycentric)
 
 			if pixelDepth > depth.At(x, y) {
 				continue
