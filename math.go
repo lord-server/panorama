@@ -1,6 +1,18 @@
 package main
 
-import "math"
+import (
+	"math"
+)
+
+func Clamp(value, min, max float32) float32 {
+	if value < min {
+		return min
+	} else if value > max {
+		return max
+	} else {
+		return value
+	}
+}
 
 type Vector2 struct {
 	X, Y float32
@@ -16,6 +28,18 @@ func NewVector2(x, y float32) Vector2 {
 func (lhs Vector2) Add(rhs Vector2) Vector2 {
 	x := lhs.X + rhs.X
 	y := lhs.Y + rhs.Y
+	return NewVector2(x, y)
+}
+
+func (lhs Vector2) Sub(rhs Vector2) Vector2 {
+	x := lhs.X - rhs.X
+	y := lhs.Y - rhs.Y
+	return NewVector2(x, y)
+}
+
+func (lhs Vector2) Mul(rhs Vector2) Vector2 {
+	x := lhs.X * rhs.X
+	y := lhs.Y * rhs.Y
 	return NewVector2(x, y)
 }
 
@@ -63,10 +87,37 @@ func (lhs Vector3) MulScalar(rhs float32) Vector3 {
 	return NewVector3(x, y, z)
 }
 
+func (lhs Vector3) DivScalar(rhs float32) Vector3 {
+	reciprocal := 1 / rhs
+	x := lhs.X * reciprocal
+	y := lhs.Y * reciprocal
+	z := lhs.Z * reciprocal
+	return NewVector3(x, y, z)
+}
+
 func (lhs Vector3) Cross(rhs Vector3) Vector3 {
 	x := lhs.Y*rhs.Z - lhs.Z*rhs.Y
 	y := lhs.Z*rhs.X - lhs.X*rhs.Z
 	z := lhs.X*rhs.Y - lhs.Y*rhs.X
+	return NewVector3(x, y, z)
+}
+
+func (lhs Vector3) Dot(rhs Vector3) float32 {
+	return lhs.X*rhs.X + lhs.Y*rhs.Y + lhs.Z*rhs.Z
+}
+
+func (lhs Vector3) Length() float32 {
+	return float32(math.Sqrt(float64(lhs.Dot(lhs))))
+}
+
+func (lhs Vector3) Normalize() Vector3 {
+	return lhs.DivScalar(lhs.Length())
+}
+
+func (lhs Vector3) ClampScalar(min, max float32) Vector3 {
+	x := Clamp(lhs.X, min, max)
+	y := Clamp(lhs.Y, min, max)
+	z := Clamp(lhs.Z, min, max)
 	return NewVector3(x, y, z)
 }
 
@@ -120,7 +171,7 @@ func (lhs *Matrix3) MulVec(rhs Vector3) Vector3 {
 }
 
 func DimetricProjection() Matrix3 {
-	alpha := math.Pi / 6 // math.Asin(math.Tan(math.Pi / 6))
+	alpha := math.Pi / 6
 	beta := math.Pi / 4
 
 	cosAlpha := float32(math.Cos(alpha))

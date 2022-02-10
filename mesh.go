@@ -65,8 +65,8 @@ func parseVector2(fields []string) (Vector2, error) {
 
 type Triplet struct {
 	positionIndex int
-	texcoordIndex int
-	normalIndex   int
+	texcoordIndex *int
+	normalIndex   *int
 }
 
 func parseFace(fields []string) ([]Triplet, error) {
@@ -78,23 +78,30 @@ func parseFace(fields []string) ([]Triplet, error) {
 	for _, field := range fields {
 		parts := strings.SplitN(field, "/", 3)
 
-		positionIndex, err := strconv.Atoi(parts[0])
+		var err error
+		triplet := Triplet{}
+
+		triplet.positionIndex, err = strconv.Atoi(parts[0])
 		if err != nil {
 			return []Triplet{}, err
 		}
-		texcoordIndex, err := strconv.Atoi(parts[1])
-		if err != nil {
-			return []Triplet{}, err
+
+		if len(parts) > 1 && len(parts[1]) != 0 {
+			texcoordIndex, err := strconv.Atoi(parts[1])
+			if err != nil {
+				return []Triplet{}, err
+			}
+			triplet.texcoordIndex = &texcoordIndex
 		}
-		normalIndex, err := strconv.Atoi(parts[2])
-		if err != nil {
-			return []Triplet{}, err
+
+		if len(parts) > 2 && len(parts[2]) != 0 {
+			normalIndex, err := strconv.Atoi(parts[2])
+			if err != nil {
+				return []Triplet{}, err
+			}
+			triplet.normalIndex = &normalIndex
 		}
-		triplets = append(triplets, Triplet{
-			positionIndex: positionIndex - 1,
-			texcoordIndex: texcoordIndex - 1,
-			normalIndex:   normalIndex - 1,
-		})
+		triplets = append(triplets, triplet)
 	}
 
 	return triplets, nil
@@ -109,10 +116,21 @@ type objParser struct {
 }
 
 func (o *objParser) vertexAt(triplet Triplet) Vertex {
+	texcoord := Vector2{}
+	normal := Vector3{}
+
+	if triplet.texcoordIndex != nil {
+		texcoord = o.texcoords[*triplet.texcoordIndex-1]
+	}
+
+	if triplet.normalIndex != nil {
+		normal = o.normals[*triplet.normalIndex-1]
+	}
+
 	return Vertex{
-		position: o.positions[triplet.positionIndex],
-		texcoord: o.texcoords[triplet.texcoordIndex],
-		normal:   o.normals[triplet.normalIndex],
+		position: o.positions[triplet.positionIndex-1],
+		texcoord: texcoord,
+		normal:   normal,
 	}
 }
 
@@ -162,7 +180,7 @@ func (o *objParser) processLine(line string) error {
 			return err
 		}
 
-		o.normals = append(o.positions, normal)
+		o.normals = append(o.normals, normal)
 	case "f":
 		triplets, err := parseFace(fields[1:])
 		if err != nil {
@@ -174,7 +192,7 @@ func (o *objParser) processLine(line string) error {
 		o.mesh.vertices = append(o.mesh.vertices, vertices...)
 
 	default:
-		log.Printf("unknown attribute %v; ignoring\n", fields[0])
+		// log.Printf("unknown attribute %v; ignoring\n", fields[0])
 	}
 
 	return nil
@@ -210,4 +228,13 @@ func loadOBJ(path string) (Mesh, error) {
 	}
 
 	return parser.mesh, nil
+}
+
+func Cube() *Mesh {
+	mesh, err := loadOBJ("untitled.obj")
+	if err != nil {
+		log.Panic(err)
+	}
+
+	return &mesh
 }

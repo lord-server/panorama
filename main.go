@@ -3,6 +3,7 @@ package main
 import (
 	"image"
 	"image/png"
+	"log"
 	"os"
 )
 
@@ -25,15 +26,21 @@ func savePNG(img *image.NRGBA, name string) error {
 }
 
 func main() {
-	nr := NewNodeRasterizer()
-	mesh, err := loadOBJ("test.obj")
+	config := LoadConfig("panorama.toml")
+
+	log.Printf("path: %v\n", config.Game.Path)
+	log.Printf("description: `%v`\n", config.Game.Desc)
+
+	game, err := LoadGame(config.Game.Desc, config.Game.Path)
 	if err != nil {
-		panic(err)
+		log.Panic(err)
 	}
-	def := &NodeDef{
-		drawtype: DrawTypeMesh,
-		mesh:     &mesh,
-	}
-	img := nr.Render(def)
-	savePNG(img, "test.png")
+
+	log.Printf("Loaded %v nodes, %v aliases\n", len(game.nodes), len(game.aliases))
+
+	node := "default:stone"
+	nodedef := game.NodeDef(node)
+	renderer := NewNodeRasterizer()
+	output := renderer.Render(&nodedef)
+	savePNG(output, "test.png")
 }
