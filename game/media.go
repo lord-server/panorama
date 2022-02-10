@@ -1,4 +1,4 @@
-package main
+package game
 
 import (
 	"image"
@@ -6,11 +6,13 @@ import (
 	"io/fs"
 	"log"
 	"path/filepath"
+
+	"github.com/weqqr/panorama/mesh"
 )
 
 type MediaCache struct {
 	images     map[string]*image.NRGBA
-	meshes     map[string]*Mesh
+	meshes     map[string]*mesh.Mesh
 	dummyImage *image.NRGBA
 }
 
@@ -23,7 +25,7 @@ func NewMediaCache() *MediaCache {
 
 	return &MediaCache{
 		images:     make(map[string]*image.NRGBA),
-		meshes:     make(map[string]*Mesh),
+		meshes:     make(map[string]*mesh.Mesh),
 		dummyImage: dummyImage,
 	}
 }
@@ -41,7 +43,7 @@ func (m *MediaCache) fetchMedia(path string) error {
 			m.images[basePath] = img
 		case ".obj":
 			log.Println(path)
-			mesh, err := loadOBJ(path)
+			mesh, err := mesh.LoadOBJ(path)
 			if err != nil {
 				return err
 			}

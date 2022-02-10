@@ -1,10 +1,14 @@
-package main
+package render
 
 import (
 	"image"
 	"image/color"
 	"log"
 	"math"
+
+	"github.com/weqqr/panorama/game"
+	"github.com/weqqr/panorama/lm"
+	"github.com/weqqr/panorama/mesh"
 )
 
 const BaseResolution = 64
@@ -47,18 +51,18 @@ func NewNodeRasterizer() NodeRasterizer {
 	return NodeRasterizer{}
 }
 
-func cartesianToBarycentric(p Vector2, a, b, c Vector2) Vector3 {
-	u := NewVector3(c.X-a.X, b.X-a.X, a.X-p.X)
-	v := NewVector3(c.Y-a.Y, b.Y-a.Y, a.Y-p.Y)
+func cartesianToBarycentric(p lm.Vector2, a, b, c lm.Vector2) lm.Vector3 {
+	u := lm.Vector3{c.X - a.X, b.X - a.X, a.X - p.X}
+	v := lm.Vector3{c.Y - a.Y, b.Y - a.Y, a.Y - p.Y}
 	w := u.Cross(v)
 
-	return NewVector3(1-(w.X+w.Y)/w.Z, w.Y/w.Z, w.X/w.Z)
+	return lm.Vector3{1 - (w.X+w.Y)/w.Z, w.Y / w.Z, w.X / w.Z}
 }
 
-func sampleTriangle(x, y int, a, b, c Vector2) (bool, Vector3) {
-	p := NewVector2(float32(x), float32(y))
+func sampleTriangle(x, y int, a, b, c lm.Vector2) (bool, lm.Vector3) {
+	p := lm.Vector2{float32(x), float32(y)}
 
-	samplePointOffset := Vector2{0.5, 0.5}
+	samplePointOffset := lm.Vector2{0.5, 0.5}
 
 	barycentric := cartesianToBarycentric(p.Add(samplePointOffset), a, b, c)
 
@@ -66,24 +70,24 @@ func sampleTriangle(x, y int, a, b, c Vector2) (bool, Vector3) {
 		return true, barycentric
 	}
 
-	return false, Vector3{}
+	return false, lm.Vector3{}
 }
 
-var LightDir Vector3 = NewVector3(-0.9, 1, -0.7).Normalize()
-var Projection Matrix3 = DimetricProjection()
+var LightDir lm.Vector3 = lm.Vector3{-0.9, 1, -0.7}.Normalize()
+var Projection lm.Matrix3 = lm.DimetricProjection()
 
-func drawTriangle(img *image.NRGBA, depth *DepthBuffer, a, b, c Vertex) {
+func drawTriangle(img *image.NRGBA, depth *DepthBuffer, a, b, c mesh.Vertex) {
 	originX := float32(img.Bounds().Dx() / 2)
 	originY := float32(img.Bounds().Dy() / 2)
-	origin := NewVector2(originX, originY)
+	origin := lm.Vector2{originX, originY}
 
-	a.position = Projection.MulVec(a.position)
-	b.position = Projection.MulVec(b.position)
-	c.position = Projection.MulVec(c.position)
+	a.Position = Projection.MulVec(a.Position)
+	b.Position = Projection.MulVec(b.Position)
+	c.Position = Projection.MulVec(c.Position)
 
-	pa := a.position.XY().Mul(NewVector2(1, -1)).MulScalar(BaseResolution * math.Sqrt2 / 2).Add(origin)
-	pb := b.position.XY().Mul(NewVector2(1, -1)).MulScalar(BaseResolution * math.Sqrt2 / 2).Add(origin)
-	pc := c.position.XY().Mul(NewVector2(1, -1)).MulScalar(BaseResolution * math.Sqrt2 / 2).Add(origin)
+	pa := a.Position.XY().Mul(lm.Vector2{1, -1}).MulScalar(BaseResolution * math.Sqrt2 / 2).Add(origin)
+	pb := b.Position.XY().Mul(lm.Vector2{1, -1}).MulScalar(BaseResolution * math.Sqrt2 / 2).Add(origin)
+	pc := c.Position.XY().Mul(lm.Vector2{1, -1}).MulScalar(BaseResolution * math.Sqrt2 / 2).Add(origin)
 
 	bboxMin := pa.Min(pb).Min(pc)
 	bboxMax := pa.Max(pb).Max(pc)
@@ -96,7 +100,7 @@ func drawTriangle(img *image.NRGBA, depth *DepthBuffer, a, b, c Vertex) {
 				continue
 			}
 
-			pixelDepth := NewVector3(a.position.Z, b.position.Z, c.position.Z).Dot(barycentric)
+			pixelDepth := lm.Vector3{a.Position.Z, b.Position.Z, c.Position.Z}.Dot(barycentric)
 
 			if pixelDepth > depth.At(x, y) {
 				continue
@@ -104,11 +108,11 @@ func drawTriangle(img *image.NRGBA, depth *DepthBuffer, a, b, c Vertex) {
 
 			depth.Set(x, y, pixelDepth)
 
-			normal := a.normal.MulScalar(barycentric.X).
-				Add(b.normal.MulScalar(barycentric.Y)).
-				Add(c.normal.MulScalar(barycentric.Z))
+			normal := a.Normal.MulScalar(barycentric.X).
+				Add(b.Normal.MulScalar(barycentric.Y)).
+				Add(c.Normal.MulScalar(barycentric.Z))
 
-			c := uint8(255 * Clamp(normal.Dot(LightDir)*0.8+0.2, 0.0, 1.0))
+			c := uint8(255 * lm.Clamp(normal.Dot(LightDir)*0.8+0.2, 0.0, 1.0))
 
 			finalColor := color.NRGBA{
 				R: uint8(c),
@@ -122,7 +126,7 @@ func drawTriangle(img *image.NRGBA, depth *DepthBuffer, a, b, c Vertex) {
 	}
 }
 
-func (r *NodeRasterizer) Render(def *NodeDef) *image.NRGBA {
+func (r *NodeRasterizer) Render(def *game.Node) *image.NRGBA {
 	rect := image.Rect(0, 0, BaseResolution, BaseResolution+BaseResolution/8-2)
 	log.Printf("%v\n", rect)
 	img := image.NewNRGBA(rect)
@@ -132,12 +136,12 @@ func (r *NodeRasterizer) Render(def *NodeDef) *image.NRGBA {
 		return img
 	}
 
-	triangleCount := len(def.Mesh.vertices) / 3
+	triangleCount := len(def.Mesh.Vertices) / 3
 
 	for i := 0; i < triangleCount; i++ {
-		a := def.Mesh.vertices[i*3]
-		b := def.Mesh.vertices[i*3+1]
-		c := def.Mesh.vertices[i*3+2]
+		a := def.Mesh.Vertices[i*3]
+		b := def.Mesh.Vertices[i*3+1]
+		c := def.Mesh.Vertices[i*3+2]
 
 		drawTriangle(img, &depth, a, b, c)
 	}

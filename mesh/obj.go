@@ -1,66 +1,51 @@
-package main
+package mesh
 
 import (
 	"bufio"
 	"fmt"
-	"log"
 	"os"
 	"strconv"
 	"strings"
+
+	"github.com/weqqr/panorama/lm"
 )
 
-type Vertex struct {
-	position Vector3
-	texcoord Vector2
-	normal   Vector3
-}
-
-type Mesh struct {
-	vertices []Vertex
-}
-
-func NewMesh() Mesh {
-	return Mesh{
-		vertices: []Vertex{},
-	}
-}
-
-func parseVector3(fields []string) (Vector3, error) {
+func parseVector3(fields []string) (lm.Vector3, error) {
 	if len(fields) < 3 {
-		return Vector3{}, fmt.Errorf("expected at least 3 vector elements, found %d", len(fields))
+		return lm.Vector3{}, fmt.Errorf("expected at least 3 vector elements, found %d", len(fields))
 	}
 
 	x, err := strconv.ParseFloat(fields[0], 32)
 	if err != nil {
-		return Vector3{}, err
+		return lm.Vector3{}, err
 	}
 	y, err := strconv.ParseFloat(fields[1], 32)
 	if err != nil {
-		return Vector3{}, err
+		return lm.Vector3{}, err
 	}
 	z, err := strconv.ParseFloat(fields[2], 32)
 	if err != nil {
-		return Vector3{}, err
+		return lm.Vector3{}, err
 	}
 
-	return NewVector3(float32(x), float32(y), float32(z)), nil
+	return lm.Vector3{float32(x), float32(y), float32(z)}, nil
 }
 
-func parseVector2(fields []string) (Vector2, error) {
+func parseVector2(fields []string) (lm.Vector2, error) {
 	if len(fields) < 2 {
-		return Vector2{}, fmt.Errorf("expected at least 3 vector elements, found %d", len(fields))
+		return lm.Vector2{}, fmt.Errorf("expected at least 3 vector elements, found %d", len(fields))
 	}
 
 	x, err := strconv.ParseFloat(fields[0], 32)
 	if err != nil {
-		return Vector2{}, err
+		return lm.Vector2{}, err
 	}
 	y, err := strconv.ParseFloat(fields[1], 32)
 	if err != nil {
-		return Vector2{}, err
+		return lm.Vector2{}, err
 	}
 
-	return NewVector2(float32(x), float32(y)), nil
+	return lm.Vector2{float32(x), float32(y)}, nil
 }
 
 type Triplet struct {
@@ -108,16 +93,16 @@ func parseFace(fields []string) ([]Triplet, error) {
 }
 
 type objParser struct {
-	positions []Vector3
-	texcoords []Vector2
-	normals   []Vector3
+	positions []lm.Vector3
+	texcoords []lm.Vector2
+	normals   []lm.Vector3
 
 	mesh Mesh
 }
 
 func (o *objParser) vertexAt(triplet Triplet) Vertex {
-	texcoord := Vector2{}
-	normal := Vector3{}
+	texcoord := lm.Vector2{}
+	normal := lm.Vector3{}
 
 	if triplet.texcoordIndex != nil {
 		texcoord = o.texcoords[*triplet.texcoordIndex-1]
@@ -128,9 +113,9 @@ func (o *objParser) vertexAt(triplet Triplet) Vertex {
 	}
 
 	return Vertex{
-		position: o.positions[triplet.positionIndex-1],
-		texcoord: texcoord,
-		normal:   normal,
+		Position: o.positions[triplet.positionIndex-1],
+		Texcoord: texcoord,
+		Normal:   normal,
 	}
 }
 
@@ -189,7 +174,7 @@ func (o *objParser) processLine(line string) error {
 
 		vertices := o.triangulatePolygon(triplets)
 
-		o.mesh.vertices = append(o.mesh.vertices, vertices...)
+		o.mesh.Vertices = append(o.mesh.Vertices, vertices...)
 
 	default:
 		// log.Printf("unknown attribute %v; ignoring\n", fields[0])
@@ -198,7 +183,7 @@ func (o *objParser) processLine(line string) error {
 	return nil
 }
 
-func loadOBJ(path string) (Mesh, error) {
+func LoadOBJ(path string) (Mesh, error) {
 	file, err := os.Open(path)
 	if err != nil {
 		return Mesh{}, err
@@ -208,9 +193,9 @@ func loadOBJ(path string) (Mesh, error) {
 
 	scanner := bufio.NewScanner(file)
 	parser := objParser{
-		positions: []Vector3{},
-		texcoords: []Vector2{},
-		normals:   []Vector3{},
+		positions: []lm.Vector3{},
+		texcoords: []lm.Vector2{},
+		normals:   []lm.Vector3{},
 		mesh:      NewMesh(),
 	}
 
@@ -228,13 +213,4 @@ func loadOBJ(path string) (Mesh, error) {
 	}
 
 	return parser.mesh, nil
-}
-
-func Cube() *Mesh {
-	mesh, err := loadOBJ("untitled.obj")
-	if err != nil {
-		log.Panic(err)
-	}
-
-	return &mesh
 }

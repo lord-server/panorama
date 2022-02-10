@@ -1,4 +1,4 @@
-package main
+package lm
 
 import (
 	"math"

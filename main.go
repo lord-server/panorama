@@ -5,6 +5,9 @@ import (
 	"image/png"
 	"log"
 	"os"
+
+	"github.com/weqqr/panorama/game"
+	"github.com/weqqr/panorama/render"
 )
 
 func savePNG(img *image.NRGBA, name string) error {
@@ -31,16 +34,16 @@ func main() {
 	log.Printf("path: %v\n", config.Game.Path)
 	log.Printf("description: `%v`\n", config.Game.Desc)
 
-	game, err := LoadGame(config.Game.Desc, config.Game.Path)
+	game, err := game.LoadGame(config.Game.Desc, config.Game.Path)
 	if err != nil {
 		log.Panic(err)
 	}
 
-	log.Printf("Loaded %v nodes, %v aliases\n", len(game.nodes), len(game.aliases))
+	log.Printf("Loaded %v nodes, %v aliases\n", len(game.Nodes), len(game.Aliases))
 
 	node := "default:stone"
-	nodedef := game.NodeDef(node)
-	renderer := NewNodeRasterizer()
-	output := renderer.Render(&nodedef)
+	gameNode := game.Node(node)
+	renderer := render.NewNodeRasterizer()
+	output := renderer.Render(&gameNode)
 	savePNG(output, "test.png")
 }
