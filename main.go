@@ -8,6 +8,7 @@ import (
 
 	"github.com/weqqr/panorama/game"
 	"github.com/weqqr/panorama/render"
+	"github.com/weqqr/panorama/world"
 )
 
 func savePNG(img *image.NRGBA, name string) error {
@@ -41,9 +42,22 @@ func main() {
 
 	log.Printf("Loaded %v nodes, %v aliases\n", len(game.Nodes), len(game.Aliases))
 
-	node := "default:stone"
-	gameNode := game.Node(node)
-	renderer := render.NewNodeRasterizer()
-	output := renderer.Render(&gameNode)
+	log.Printf("Using %v as backend", config.World.Backend)
+
+	backend, err := world.NewPgBackend(config.World.Connection)
+	if err != nil {
+		log.Panic(err)
+	}
+	log.Printf("Connected to %v", config.World.Backend)
+
+	world := world.NewWorldWithBackend(backend)
+	block, err := world.GetBlock(-1, 0, -5)
+	if err != nil {
+		log.Panic(err)
+	}
+
+	nr := render.NewNodeRasterizer()
+	output := render.RenderBlock(&nr, block, &game)
+
 	savePNG(output, "test.png")
 }

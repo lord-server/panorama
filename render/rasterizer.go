@@ -13,37 +13,6 @@ import (
 
 const BaseResolution = 64
 
-type DepthBuffer struct {
-	Pix  []float32
-	Rect image.Rectangle
-}
-
-func NewDepthBuffer(rect image.Rectangle) DepthBuffer {
-	pix := make([]float32, rect.Dx()*rect.Dy())
-	for i := range pix {
-		pix[i] = math.MaxFloat32
-	}
-
-	return DepthBuffer{
-		Pix:  pix,
-		Rect: rect,
-	}
-}
-
-func (d *DepthBuffer) At(x, y int) float32 {
-	if x < d.Rect.Min.X || y < d.Rect.Min.Y || x > d.Rect.Max.X || y > d.Rect.Max.Y {
-		return -math.MaxFloat32
-	}
-	return d.Pix[d.Rect.Dx()*y+x]
-}
-
-func (d *DepthBuffer) Set(x, y int, depth float32) {
-	if x < d.Rect.Min.X || y < d.Rect.Min.Y || x > d.Rect.Max.X || y > d.Rect.Max.Y {
-		return
-	}
-	d.Pix[d.Rect.Dx()*y+x] = depth
-}
-
 type NodeRasterizer struct {
 }
 
@@ -112,7 +81,8 @@ func drawTriangle(img *image.NRGBA, depth *DepthBuffer, a, b, c mesh.Vertex) {
 				Add(b.Normal.MulScalar(barycentric.Y)).
 				Add(c.Normal.MulScalar(barycentric.Z))
 
-			c := uint8(255 * lm.Clamp(normal.Dot(LightDir)*0.8+0.2, 0.0, 1.0))
+			lighting := lm.Abs(lm.Clamp(normal.Dot(LightDir)*0.8+0.2, 0.0, 1.0))
+			c := uint8(255 * lighting)
 
 			finalColor := color.NRGBA{
 				R: uint8(c),
@@ -126,14 +96,14 @@ func drawTriangle(img *image.NRGBA, depth *DepthBuffer, a, b, c mesh.Vertex) {
 	}
 }
 
-func (r *NodeRasterizer) Render(def *game.Node) *image.NRGBA {
+func (r *NodeRasterizer) Render(def *game.Node) (*image.NRGBA, *DepthBuffer) {
 	rect := image.Rect(0, 0, BaseResolution, BaseResolution+BaseResolution/8-2)
 	log.Printf("%v\n", rect)
 	img := image.NewNRGBA(rect)
 	depth := NewDepthBuffer(rect)
 
 	if def.Mesh == nil {
-		return img
+		return img, depth
 	}
 
 	triangleCount := len(def.Mesh.Vertices) / 3
@@ -143,8 +113,8 @@ func (r *NodeRasterizer) Render(def *game.Node) *image.NRGBA {
 		b := def.Mesh.Vertices[i*3+1]
 		c := def.Mesh.Vertices[i*3+2]
 
-		drawTriangle(img, &depth, a, b, c)
+		drawTriangle(img, depth, a, b, c)
 	}
 
-	return img
+	return img, depth
 }

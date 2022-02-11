@@ -4,6 +4,10 @@ import (
 	"math"
 )
 
+func Abs(value float32) float32 {
+	return float32(math.Abs(float64(value)))
+}
+
 func Clamp(value, min, max float32) float32 {
 	if value < min {
 		return min

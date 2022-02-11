@@ -39,7 +39,7 @@ func (m *MediaCache) fetchMedia(path string) error {
 		basePath := filepath.Base(path)
 		switch filepath.Ext(path) {
 		case ".png":
-			img, _ := readPNG(path)
+			img, _ := LoadPNG(path)
 			m.images[basePath] = img
 		case ".obj":
 			log.Println(path)
@@ -60,5 +60,14 @@ func (m *MediaCache) Image(name string) *image.NRGBA {
 	} else {
 		log.Printf("unknown image: %v\n", name)
 		return m.dummyImage
+	}
+}
+
+func (m *MediaCache) Mesh(name string) *mesh.Mesh {
+	if mesh, ok := m.meshes[name]; ok {
+		return mesh
+	} else {
+		log.Printf("unknown mesh: %v\n", name)
+		return nil
 	}
 }

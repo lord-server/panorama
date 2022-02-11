@@ -11,7 +11,7 @@ import (
 	"github.com/weqqr/panorama/mesh"
 )
 
-type GameDefinitions struct {
+type GameDescriptor struct {
 	Aliases map[string]string         `json:"aliases"`
 	Nodes   map[string]NodeDescriptor `json:"nodes"`
 }
@@ -22,7 +22,7 @@ func toNRGBA(img image.Image) *image.NRGBA {
 	return dst
 }
 
-func readPNG(path string) (*image.NRGBA, error) {
+func LoadPNG(path string) (*image.NRGBA, error) {
 	file, err := os.Open(path)
 	if err != nil {
 		return nil, err
@@ -64,7 +64,7 @@ func ResolveNode(descriptor NodeDescriptor, mediaCache *MediaCache) Node {
 	}
 
 	if descriptor.Mesh != nil {
-		nodeMesh = mediaCache.meshes[*descriptor.Mesh]
+		nodeMesh = mediaCache.Mesh(*descriptor.Mesh)
 	}
 
 	return Node{
@@ -80,8 +80,8 @@ func LoadGame(desc string, path string) (Game, error) {
 		return Game{}, err
 	}
 
-	var defs GameDefinitions
-	err = json.Unmarshal(descJSON, &defs)
+	var descriptor GameDescriptor
+	err = json.Unmarshal(descJSON, &descriptor)
 	if err != nil {
 		return Game{}, err
 	}
@@ -94,14 +94,14 @@ func LoadGame(desc string, path string) (Game, error) {
 	}
 
 	nodes := make(map[string]Node)
-	for name, gameNode := range defs.Nodes {
+	for name, gameNode := range descriptor.Nodes {
 		node := ResolveNode(gameNode, mediaCache)
 
 		nodes[name] = node
 	}
 
 	return Game{
-		Aliases: defs.Aliases,
+		Aliases: descriptor.Aliases,
 		Nodes:   nodes,
 		unknown: Node{
 			DrawType: DrawTypeNormal,

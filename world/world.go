@@ -2,7 +2,6 @@ package world
 
 import (
 	"context"
-	"log"
 
 	"github.com/jackc/pgx/v4"
 )
@@ -19,7 +18,7 @@ type PgBackend struct {
 func NewPgBackend(dsn string) (*PgBackend, error) {
 	conn, err := pgx.Connect(context.Background(), dsn)
 	if err != nil {
-		log.Panic(err)
+		return nil, err
 	}
 	return &PgBackend{
 		conn: conn,
