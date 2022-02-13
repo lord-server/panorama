@@ -3,7 +3,7 @@ package world
 import (
 	"context"
 
-	"github.com/jackc/pgx/v4"
+	"github.com/jackc/pgx/v4/pgxpool"
 )
 
 type Backend interface {
@@ -12,11 +12,11 @@ type Backend interface {
 }
 
 type PgBackend struct {
-	conn *pgx.Conn
+	conn *pgxpool.Pool
 }
 
 func NewPgBackend(dsn string) (*PgBackend, error) {
-	conn, err := pgx.Connect(context.Background(), dsn)
+	conn, err := pgxpool.Connect(context.Background(), dsn)
 	if err != nil {
 		return nil, err
 	}
@@ -26,7 +26,7 @@ func NewPgBackend(dsn string) (*PgBackend, error) {
 }
 
 func (p *PgBackend) Close() {
-	p.conn.Close(context.Background())
+	p.conn.Close()
 }
 
 func (p *PgBackend) GetBlockData(x, y, z int) ([]byte, error) {

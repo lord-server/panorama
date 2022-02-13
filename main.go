@@ -1,10 +1,15 @@
 package main
 
 import (
+	"fmt"
 	"image"
 	"image/png"
 	"log"
+	"net/http"
 	"os"
+	"path/filepath"
+	"runtime"
+	"runtime/pprof"
 
 	"github.com/weqqr/panorama/game"
 	"github.com/weqqr/panorama/render"
@@ -30,35 +35,68 @@ func savePNG(img *image.NRGBA, name string) error {
 }
 
 func main() {
-	config := LoadConfig("panorama.toml")
+	runtime.GOMAXPROCS(8)
+	profile := false
+	web := true
+	generate := false
 
-	log.Printf("path: %v\n", config.Game.Path)
-	log.Printf("description: `%v`\n", config.Game.Desc)
-
-	game, err := game.LoadGame(config.Game.Desc, config.Game.Path)
-	if err != nil {
-		log.Panic(err)
+	if profile {
+		f, err := os.Create("cpu.prof")
+		if err != nil {
+			log.Fatal(err)
+		}
+		pprof.StartCPUProfile(f)
+		defer pprof.StopCPUProfile()
 	}
 
-	log.Printf("Loaded %v nodes, %v aliases\n", len(game.Nodes), len(game.Aliases))
+	if web {
+		staticFS := http.FileServer(http.Dir("./static"))
+		http.Handle("/static/", http.StripPrefix("/static/", staticFS))
 
-	log.Printf("Using %v as backend", config.World.Backend)
+		tilesFS := http.FileServer(http.Dir("./tiles"))
+		http.Handle("/tiles/", http.StripPrefix("/tiles/", tilesFS))
 
-	backend, err := world.NewPgBackend(config.World.Connection)
-	if err != nil {
-		log.Panic(err)
+		err := http.ListenAndServe(":1337", nil)
+		if err != nil {
+			log.Fatal(err)
+		}
 	}
-	log.Printf("Connected to %v", config.World.Backend)
 
-	world := world.NewWorldWithBackend(backend)
-	// block, err := world.GetBlock(-1, 0, -6)
-	// if err != nil {
-	// 	log.Panic(err)
-	// }
+	if generate {
+		config := LoadConfig("panorama.toml")
 
-	// nr := render.NewNodeRasterizer()
-	// output, _ := render.RenderBlock(&nr, block, &game)
-	//
-	output := render.RenderTile(&world, &game)
-	savePNG(output, "test.png")
+		log.Printf("path: %v\n", config.Game.Path)
+		log.Printf("description: `%v`\n", config.Game.Desc)
+
+		game, err := game.LoadGame(config.Game.Desc, config.Game.Path)
+		if err != nil {
+			log.Panic(err)
+		}
+
+		log.Printf("Loaded %v nodes, %v aliases\n", len(game.Nodes), len(game.Aliases))
+
+		log.Printf("Using %v as backend", config.World.Backend)
+
+		backend, err := world.NewPgBackend(config.World.Connection)
+		if err != nil {
+			log.Panic(err)
+		}
+		log.Printf("Connected to %v", config.World.Backend)
+
+		world := world.NewWorldWithBackend(backend)
+
+		for x := -10; x < 10; x++ {
+			os.MkdirAll(fmt.Sprintf("tiles/%v", x), os.ModePerm)
+
+			xx := x
+			for y := -10; y < 10; y++ {
+				yy := y
+				output := render.RenderTile(xx, yy*2, &world, &game)
+				filename := fmt.Sprintf("%v.png", yy)
+				path := filepath.Join(fmt.Sprintf("tiles/%v", xx), filename)
+				savePNG(output, path)
+				log.Printf("saved %v", path)
+			}
+		}
+	}
 }

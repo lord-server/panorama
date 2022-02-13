@@ -1,6 +1,7 @@
 package render
 
 import (
+	"fmt"
 	"image"
 	"math"
 
@@ -14,6 +15,9 @@ func overlayWithDepth(target *image.NRGBA, targetDepth *DepthBuffer, source *ima
 
 	for y := origin.Y; y < origin.Y+height; y++ {
 		for x := origin.X; x < origin.X+width; x++ {
+			if x > 1000 || y > 1000 {
+				fmt.Printf("x=%v y=%v origin=%v\n w=%v, h=%v", x, y, origin, width, height)
+			}
 			targetZ := targetDepth.At(x, y)
 			sourceZ := sourceDepth.At(x-origin.X, y-origin.Y) + depthOffset
 
@@ -41,9 +45,9 @@ func RenderBlock(nr *NodeRasterizer, block *world.MapBlock, game *game.Game) (*i
 	// FIXME: nodes must define their origin points
 	originX, originY := rect.Dx()/2-BaseResolution/2, rect.Dy()/2+BaseResolution/4+2
 
-	for z := 0; z < world.MapBlockSize; z++ {
-		for y := 0; y < world.MapBlockSize; y++ {
-			for x := 0; x < world.MapBlockSize; x++ {
+	for z := world.MapBlockSize - 1; z >= 0; z-- {
+		for y := world.MapBlockSize - 1; y >= 0; y-- {
+			for x := world.MapBlockSize - 1; x >= 0; x-- {
 				node := block.GetNode(x, y, z)
 				nodeName := block.ResolveName(node.ID)
 				gameNode := game.Node(nodeName)

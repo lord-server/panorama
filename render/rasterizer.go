@@ -8,14 +8,15 @@ import (
 	"github.com/weqqr/panorama/game"
 	"github.com/weqqr/panorama/lm"
 	"github.com/weqqr/panorama/mesh"
+	"github.com/weqqr/panorama/world"
 )
 
-const BaseResolution = 64
+const BaseResolution = 16
 
 var (
 	YOffsetCoef     = int(math.Round(BaseResolution * (1 + math.Sqrt2) / 4))
-	TileBlockWidth  = 16 * BaseResolution
-	TileBlockHeight = BaseResolution/2*16 - 1 + YOffsetCoef*16
+	TileBlockWidth  = world.MapBlockSize * BaseResolution
+	TileBlockHeight = BaseResolution/2*world.MapBlockSize - 1 + YOffsetCoef*world.MapBlockSize
 )
 
 type NodeRasterizer struct {
@@ -60,7 +61,8 @@ func sampleTexture(tex *image.NRGBA, texcoord lm.Vector2) lm.Vector3 {
 }
 
 var LightDir lm.Vector3 = lm.Vec3(-0.9, 1, -0.7).Normalize()
-var Projection lm.Matrix3 = lm.DimetricProjection()
+var LightIntensity = 1 / LightDir.MaxComponent()
+var Projection = lm.DimetricProjection()
 
 func drawTriangle(img *image.NRGBA, depth *DepthBuffer, tex *image.NRGBA, a, b, c mesh.Vertex) {
 	originX := float32(img.Bounds().Dx() / 2)
@@ -98,14 +100,14 @@ func drawTriangle(img *image.NRGBA, depth *DepthBuffer, tex *image.NRGBA, a, b, 
 				Add(b.Normal.MulScalar(barycentric.Y)).
 				Add(c.Normal.MulScalar(barycentric.Z))
 
-			lighting := lm.Abs(lm.Clamp(normal.Dot(LightDir)*0.8+0.2, 0.0, 1.0))
+			lighting := LightIntensity * lm.Abs(lm.Clamp(normal.Dot(LightDir)*0.8+0.2, 0.0, 1.0))
 
 			var finalColor color.NRGBA
 			if tex != nil {
 				texcoord := a.Texcoord.MulScalar(barycentric.X).
 					Add(b.Texcoord.MulScalar(barycentric.Y)).
 					Add(c.Texcoord.MulScalar(barycentric.Z))
-				col := sampleTexture(tex, texcoord).MulScalar(lighting)
+				col := sampleTexture(tex, texcoord).MulScalar(lighting).ClampScalar(0.0, 1.0)
 
 				finalColor = color.NRGBA{
 					R: uint8(255 * col.X),

@@ -129,6 +129,10 @@ func (v Vector3) XY() Vector2 {
 	return Vec2(v.X, v.Y)
 }
 
+func (v Vector3) MaxComponent() float32 {
+	return maxFloat32(v.X, maxFloat32(v.Y, v.Z))
+}
+
 func minFloat32(a, b float32) float32 {
 	if a < b {
 		return a
