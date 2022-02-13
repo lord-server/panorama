@@ -64,6 +64,7 @@ func DecodeMapBlock(data []byte) (*MapBlock, error) {
 	}
 
 	z, err := zstd.NewReader(reader)
+	defer z.Close()
 	if err != nil {
 		return nil, err
 	}

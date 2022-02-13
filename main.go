@@ -8,8 +8,7 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
-	"runtime"
-	"runtime/pprof"
+	"sync"
 
 	"github.com/weqqr/panorama/game"
 	"github.com/weqqr/panorama/render"
@@ -35,39 +34,14 @@ func savePNG(img *image.NRGBA, name string) error {
 }
 
 func main() {
-	runtime.GOMAXPROCS(8)
-	profile := false
 	web := true
 	generate := false
 
-	if profile {
-		f, err := os.Create("cpu.prof")
-		if err != nil {
-			log.Fatal(err)
-		}
-		pprof.StartCPUProfile(f)
-		defer pprof.StopCPUProfile()
-	}
-
-	if web {
-		staticFS := http.FileServer(http.Dir("./static"))
-		http.Handle("/static/", http.StripPrefix("/static/", staticFS))
-
-		tilesFS := http.FileServer(http.Dir("./tiles"))
-		http.Handle("/tiles/", http.StripPrefix("/tiles/", tilesFS))
-
-		err := http.ListenAndServe(":1337", nil)
-		if err != nil {
-			log.Fatal(err)
-		}
-	}
+	config := LoadConfig("panorama.toml")
+	log.Printf("path: %v\n", config.Game.Path)
+	log.Printf("description: `%v`\n", config.Game.Desc)
 
 	if generate {
-		config := LoadConfig("panorama.toml")
-
-		log.Printf("path: %v\n", config.Game.Path)
-		log.Printf("description: `%v`\n", config.Game.Desc)
-
 		game, err := game.LoadGame(config.Game.Desc, config.Game.Path)
 		if err != nil {
 			log.Panic(err)
@@ -84,19 +58,39 @@ func main() {
 		log.Printf("Connected to %v", config.World.Backend)
 
 		world := world.NewWorldWithBackend(backend)
+		nr := render.NewNodeRasterizer()
 
+		var wg sync.WaitGroup
 		for x := -10; x < 10; x++ {
 			os.MkdirAll(fmt.Sprintf("tiles/%v", x), os.ModePerm)
-
 			xx := x
-			for y := -10; y < 10; y++ {
-				yy := y
-				output := render.RenderTile(xx, yy*2, &world, &game)
-				filename := fmt.Sprintf("%v.png", yy)
-				path := filepath.Join(fmt.Sprintf("tiles/%v", xx), filename)
-				savePNG(output, path)
-				log.Printf("saved %v", path)
-			}
+			wg.Add(1)
+			go func() {
+				defer wg.Done()
+				for y := -10; y < 10; y++ {
+					yy := y
+					output := render.RenderTile(xx, yy*2, &nr, &world, &game)
+					filename := fmt.Sprintf("%v.png", yy)
+					path := filepath.Join(fmt.Sprintf("tiles/%v", xx), filename)
+					savePNG(output, path)
+					log.Printf("saved %v", path)
+				}
+			}()
+		}
+
+		wg.Wait()
+	}
+
+	if web {
+		staticFS := http.FileServer(http.Dir("./static"))
+		http.Handle("/static/", http.StripPrefix("/static/", staticFS))
+
+		tilesFS := http.FileServer(http.Dir("./tiles"))
+		http.Handle("/tiles/", http.StripPrefix("/tiles/", tilesFS))
+
+		err := http.ListenAndServe(":1337", nil)
+		if err != nil {
+			log.Fatal(err)
 		}
 	}
 }

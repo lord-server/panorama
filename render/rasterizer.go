@@ -4,6 +4,7 @@ import (
 	"image"
 	"image/color"
 	"math"
+	"sync"
 
 	"github.com/weqqr/panorama/game"
 	"github.com/weqqr/panorama/lm"
@@ -20,12 +21,14 @@ var (
 )
 
 type NodeRasterizer struct {
+	mutex      *sync.RWMutex
 	cache      map[string]*image.NRGBA
 	depthCache map[string]*DepthBuffer
 }
 
 func NewNodeRasterizer() NodeRasterizer {
 	return NodeRasterizer{
+		mutex:      &sync.RWMutex{},
 		cache:      make(map[string]*image.NRGBA),
 		depthCache: make(map[string]*DepthBuffer),
 	}
@@ -129,21 +132,25 @@ func drawTriangle(img *image.NRGBA, depth *DepthBuffer, tex *image.NRGBA, a, b, 
 	}
 }
 
-func (r *NodeRasterizer) Render(wnode string, node *game.Node) (*image.NRGBA, *DepthBuffer) {
-	if img, ok := r.cache[wnode]; ok {
-		return img, r.depthCache[wnode]
+func (r *NodeRasterizer) Render(nodeName string, node *game.Node) (*image.NRGBA, *DepthBuffer) {
+	if node.DrawType == game.DrawTypeAirLlke {
+		return nil, nil
 	}
+
+	if node.Mesh == nil {
+		return nil, nil
+	}
+
+	r.mutex.RLock()
+	if img, ok := r.cache[nodeName]; ok {
+		defer r.mutex.RUnlock()
+		return img, r.depthCache[nodeName]
+	}
+	r.mutex.RUnlock()
 
 	rect := image.Rect(0, 0, BaseResolution, BaseResolution+BaseResolution/8-2)
 	img := image.NewNRGBA(rect)
 	depth := NewDepthBuffer(rect)
-	if node.DrawType == game.DrawTypeAirLlke {
-		return img, depth
-	}
-
-	if node.Mesh == nil {
-		return img, depth
-	}
 
 	triangleCount := len(node.Mesh.Vertices) / 3
 
@@ -160,8 +167,10 @@ func (r *NodeRasterizer) Render(wnode string, node *game.Node) (*image.NRGBA, *D
 		drawTriangle(img, depth, texture, a, b, c)
 	}
 
-	r.cache[wnode] = img
-	r.depthCache[wnode] = depth
+	r.mutex.Lock()
+	defer r.mutex.Unlock()
+	r.cache[nodeName] = img
+	r.depthCache[nodeName] = depth
 
 	return img, depth
 }

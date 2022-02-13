@@ -10,6 +10,10 @@ import (
 )
 
 func overlayWithDepth(target *image.NRGBA, targetDepth *DepthBuffer, source *image.NRGBA, sourceDepth *DepthBuffer, origin image.Point, depthOffset float32) {
+	if source == nil {
+		return
+	}
+
 	width := source.Rect.Dx()
 	height := source.Rect.Dy()
 
@@ -37,10 +41,8 @@ func overlayWithDepth(target *image.NRGBA, targetDepth *DepthBuffer, source *ima
 	}
 }
 
-func RenderBlock(nr *NodeRasterizer, block *world.MapBlock, game *game.Game) (*image.NRGBA, *DepthBuffer) {
+func RenderBlock(target *image.NRGBA, targetDepth *DepthBuffer, nr *NodeRasterizer, block *world.MapBlock, game *game.Game, offsetX, offsetY int, depth float32) {
 	rect := image.Rect(0, 0, TileBlockWidth, TileBlockHeight)
-	blockColor := image.NewNRGBA(rect)
-	blockDepth := NewDepthBuffer(rect)
 
 	// FIXME: nodes must define their origin points
 	originX, originY := rect.Dx()/2-BaseResolution/2, rect.Dy()/2+BaseResolution/4+2
@@ -54,14 +56,12 @@ func RenderBlock(nr *NodeRasterizer, block *world.MapBlock, game *game.Game) (*i
 
 				nodeColor, nodeDepth := nr.Render(nodeName, &gameNode)
 
-				tileOffsetX := originX + BaseResolution*(z-x)/2
-				tileOffsetY := originY + BaseResolution/4*(z+x) - YOffsetCoef*y
+				tileOffsetX := originX + BaseResolution*(z-x)/2 + offsetX
+				tileOffsetY := originY + BaseResolution/4*(z+x) - YOffsetCoef*y + offsetY
 
-				depthOffset := -float32(z+x)/math.Sqrt2 - 0.5*(float32(y))
-				overlayWithDepth(blockColor, blockDepth, nodeColor, nodeDepth, image.Pt(tileOffsetX, tileOffsetY), depthOffset)
+				depthOffset := -float32(z+x)/math.Sqrt2 - 0.5*(float32(y)) + depth
+				overlayWithDepth(target, targetDepth, nodeColor, nodeDepth, image.Pt(tileOffsetX, tileOffsetY), depthOffset)
 			}
 		}
 	}
-
-	return blockColor, blockDepth
 }
