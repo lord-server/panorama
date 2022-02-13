@@ -3,7 +3,6 @@ package render
 import (
 	"image"
 	"image/color"
-	"log"
 	"math"
 
 	"github.com/weqqr/panorama/game"
@@ -13,11 +12,22 @@ import (
 
 const BaseResolution = 64
 
+var (
+	YOffsetCoef     = int(math.Round(BaseResolution * (1 + math.Sqrt2) / 4))
+	TileBlockWidth  = 16 * BaseResolution
+	TileBlockHeight = BaseResolution/2*16 - 1 + YOffsetCoef*16
+)
+
 type NodeRasterizer struct {
+	cache      map[string]*image.NRGBA
+	depthCache map[string]*DepthBuffer
 }
 
 func NewNodeRasterizer() NodeRasterizer {
-	return NodeRasterizer{}
+	return NodeRasterizer{
+		cache:      make(map[string]*image.NRGBA),
+		depthCache: make(map[string]*DepthBuffer),
+	}
 }
 
 func cartesianToBarycentric(p lm.Vector2, a, b, c lm.Vector2) lm.Vector3 {
@@ -42,10 +52,17 @@ func sampleTriangle(x, y int, a, b, c lm.Vector2) (bool, lm.Vector3) {
 	return false, lm.Vector3{}
 }
 
+func sampleTexture(tex *image.NRGBA, texcoord lm.Vector2) lm.Vector3 {
+	x := int(texcoord.X * float32(tex.Rect.Dx()))
+	y := int(texcoord.Y * float32(tex.Rect.Dy()))
+	c := tex.NRGBAAt(x, y)
+	return lm.Vec3(float32(c.R)/255, float32(c.G)/255, float32(c.B)/255)
+}
+
 var LightDir lm.Vector3 = lm.Vec3(-0.9, 1, -0.7).Normalize()
 var Projection lm.Matrix3 = lm.DimetricProjection()
 
-func drawTriangle(img *image.NRGBA, depth *DepthBuffer, a, b, c mesh.Vertex) {
+func drawTriangle(img *image.NRGBA, depth *DepthBuffer, tex *image.NRGBA, a, b, c mesh.Vertex) {
 	originX := float32(img.Bounds().Dx() / 2)
 	originY := float32(img.Bounds().Dy() / 2)
 	origin := lm.Vec2(originX, originY)
@@ -82,13 +99,27 @@ func drawTriangle(img *image.NRGBA, depth *DepthBuffer, a, b, c mesh.Vertex) {
 				Add(c.Normal.MulScalar(barycentric.Z))
 
 			lighting := lm.Abs(lm.Clamp(normal.Dot(LightDir)*0.8+0.2, 0.0, 1.0))
-			c := uint8(255 * lighting)
 
-			finalColor := color.NRGBA{
-				R: uint8(c),
-				G: uint8(c),
-				B: uint8(c),
-				A: 255,
+			var finalColor color.NRGBA
+			if tex != nil {
+				texcoord := a.Texcoord.MulScalar(barycentric.X).
+					Add(b.Texcoord.MulScalar(barycentric.Y)).
+					Add(c.Texcoord.MulScalar(barycentric.Z))
+				col := sampleTexture(tex, texcoord).MulScalar(lighting)
+
+				finalColor = color.NRGBA{
+					R: uint8(255 * col.X),
+					G: uint8(255 * col.Y),
+					B: uint8(255 * col.Z),
+					A: 255,
+				}
+			} else {
+				finalColor = color.NRGBA{
+					R: uint8(255 * lighting),
+					G: uint8(255 * lighting),
+					B: uint8(255 * lighting),
+					A: 255,
+				}
 			}
 
 			img.SetNRGBA(x, y, finalColor)
@@ -96,25 +127,39 @@ func drawTriangle(img *image.NRGBA, depth *DepthBuffer, a, b, c mesh.Vertex) {
 	}
 }
 
-func (r *NodeRasterizer) Render(def *game.Node) (*image.NRGBA, *DepthBuffer) {
+func (r *NodeRasterizer) Render(wnode string, node *game.Node) (*image.NRGBA, *DepthBuffer) {
+	if img, ok := r.cache[wnode]; ok {
+		return img, r.depthCache[wnode]
+	}
+
 	rect := image.Rect(0, 0, BaseResolution, BaseResolution+BaseResolution/8-2)
-	log.Printf("%v\n", rect)
 	img := image.NewNRGBA(rect)
 	depth := NewDepthBuffer(rect)
-
-	if def.Mesh == nil {
+	if node.DrawType == game.DrawTypeAirLlke {
 		return img, depth
 	}
 
-	triangleCount := len(def.Mesh.Vertices) / 3
+	if node.Mesh == nil {
+		return img, depth
+	}
+
+	triangleCount := len(node.Mesh.Vertices) / 3
+
+	var texture *image.NRGBA
+	if len(node.Tiles) >= 1 {
+		texture = node.Tiles[0]
+	}
 
 	for i := 0; i < triangleCount; i++ {
-		a := def.Mesh.Vertices[i*3]
-		b := def.Mesh.Vertices[i*3+1]
-		c := def.Mesh.Vertices[i*3+2]
+		a := node.Mesh.Vertices[i*3]
+		b := node.Mesh.Vertices[i*3+1]
+		c := node.Mesh.Vertices[i*3+2]
 
-		drawTriangle(img, depth, a, b, c)
+		drawTriangle(img, depth, texture, a, b, c)
 	}
+
+	r.cache[wnode] = img
+	r.depthCache[wnode] = depth
 
 	return img, depth
 }

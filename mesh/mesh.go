@@ -23,7 +23,7 @@ func NewMesh() Mesh {
 }
 
 func Cube() *Mesh {
-	mesh, err := LoadOBJ("untitled.obj")
+	mesh, err := LoadOBJ("cube.obj")
 	if err != nil {
 		log.Panic(err)
 	}

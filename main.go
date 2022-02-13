@@ -51,13 +51,14 @@ func main() {
 	log.Printf("Connected to %v", config.World.Backend)
 
 	world := world.NewWorldWithBackend(backend)
-	block, err := world.GetBlock(-1, 0, -5)
-	if err != nil {
-		log.Panic(err)
-	}
+	// block, err := world.GetBlock(-1, 0, -6)
+	// if err != nil {
+	// 	log.Panic(err)
+	// }
 
-	nr := render.NewNodeRasterizer()
-	output := render.RenderBlock(&nr, block, &game)
-
+	// nr := render.NewNodeRasterizer()
+	// output, _ := render.RenderBlock(&nr, block, &game)
+	//
+	output := render.RenderTile(&world, &game)
 	savePNG(output, "test.png")
 }
