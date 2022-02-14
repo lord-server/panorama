@@ -59,12 +59,14 @@ func ResolveNode(descriptor NodeDescriptor, mediaCache *MediaCache) Node {
 	}
 
 	var nodeMesh *mesh.Mesh
-	if descriptor.DrawType == DrawTypeNormal {
-		nodeMesh = mesh.Cube()
-	}
 
-	if descriptor.Mesh != nil {
-		nodeMesh = mediaCache.Mesh(*descriptor.Mesh)
+	switch descriptor.DrawType {
+	case DrawTypeNormal, DrawTypeAllFaces, DrawTypeLiquid, DrawTypeFlowingLiquid, DrawTypeGlasslike, DrawTypeGlasslikeFramed:
+		nodeMesh = mesh.Cube()
+	case DrawTypeMesh:
+		if descriptor.Mesh != nil {
+			nodeMesh = mediaCache.Mesh(*descriptor.Mesh)
+		}
 	}
 
 	return Node{

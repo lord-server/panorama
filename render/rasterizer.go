@@ -63,8 +63,8 @@ func sampleTexture(tex *image.NRGBA, texcoord lm.Vector2) lm.Vector3 {
 	return lm.Vec3(float32(c.R)/255, float32(c.G)/255, float32(c.B)/255)
 }
 
-var LightDir lm.Vector3 = lm.Vec3(-0.9, 1, -0.7).Normalize()
-var LightIntensity = 1 / LightDir.MaxComponent()
+var LightDir lm.Vector3 = lm.Vec3(-0.7, 1, -0.9).Normalize()
+var LightIntensity = 0.95 / LightDir.MaxComponent()
 var Projection = lm.DimetricProjection()
 
 func drawTriangle(img *image.NRGBA, depth *DepthBuffer, tex *image.NRGBA, a, b, c mesh.Vertex) {
@@ -103,7 +103,7 @@ func drawTriangle(img *image.NRGBA, depth *DepthBuffer, tex *image.NRGBA, a, b, 
 				Add(b.Normal.MulScalar(barycentric.Y)).
 				Add(c.Normal.MulScalar(barycentric.Z))
 
-			lighting := LightIntensity * lm.Abs(lm.Clamp(normal.Dot(LightDir)*0.8+0.2, 0.0, 1.0))
+			lighting := LightIntensity * lm.Clamp(lm.Abs(normal.Dot(LightDir))*0.8+0.2, 0.0, 1.0)
 
 			var finalColor color.NRGBA
 			if tex != nil {

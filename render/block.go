@@ -1,7 +1,6 @@
 package render
 
 import (
-	"fmt"
 	"image"
 	"math"
 
@@ -14,14 +13,10 @@ func overlayWithDepth(target *image.NRGBA, targetDepth *DepthBuffer, source *ima
 		return
 	}
 
-	width := source.Rect.Dx()
-	height := source.Rect.Dy()
+	bbox := source.Rect.Add(origin).Intersect(target.Rect)
 
-	for y := origin.Y; y < origin.Y+height; y++ {
-		for x := origin.X; x < origin.X+width; x++ {
-			if x > 1000 || y > 1000 {
-				fmt.Printf("x=%v y=%v origin=%v\n w=%v, h=%v", x, y, origin, width, height)
-			}
+	for y := bbox.Min.Y; y < bbox.Max.Y; y++ {
+		for x := bbox.Min.X; x < bbox.Max.X; x++ {
 			targetZ := targetDepth.At(x, y)
 			sourceZ := sourceDepth.At(x-origin.X, y-origin.Y) + depthOffset
 

@@ -35,7 +35,7 @@ func savePNG(img *image.NRGBA, name string) error {
 
 func main() {
 	web := true
-	generate := false
+	generate := true
 
 	config := LoadConfig("panorama.toml")
 	log.Printf("path: %v\n", config.Game.Path)
