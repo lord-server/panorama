@@ -6,7 +6,6 @@ import (
 	"image/draw"
 	"image/png"
 	"os"
-	"strings"
 
 	"github.com/weqqr/panorama/mesh"
 )
@@ -52,10 +51,7 @@ type Game struct {
 func ResolveNode(descriptor NodeDescriptor, mediaCache *MediaCache) Node {
 	tiles := make([]*image.NRGBA, len(descriptor.Tiles))
 	for i, tileName := range descriptor.Tiles {
-		// FIXME: resolve modifiers
-		baseImageName := strings.Split(tileName, "^")[0]
-
-		tiles[i] = mediaCache.Image(baseImageName)
+		tiles[i] = mediaCache.Image(tileName)
 	}
 
 	var nodeMesh *mesh.Mesh

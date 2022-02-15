@@ -69,7 +69,7 @@ func main() {
 				defer wg.Done()
 				for y := -10; y < 10; y++ {
 					yy := y
-					output := render.RenderTile(xx, yy*2, &nr, &world, &game)
+					output := render.RenderTile(xx-52, yy*2-3, &nr, &world, &game)
 					filename := fmt.Sprintf("%v.png", yy)
 					path := filepath.Join(fmt.Sprintf("tiles/%v", xx), filename)
 					savePNG(output, path)

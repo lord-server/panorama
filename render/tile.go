@@ -32,6 +32,10 @@ func RenderTile(tileX, tileY int, nr *NodeRasterizer, w *world.World, game *game
 
 					block, err := w.GetBlock(blockX, blockY, blockZ)
 					if err != nil {
+						panic(err)
+					}
+
+					if block == nil {
 						continue
 					}
 

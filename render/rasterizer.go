@@ -56,14 +56,14 @@ func sampleTriangle(x, y int, a, b, c lm.Vector2) (bool, lm.Vector3) {
 	return false, lm.Vector3{}
 }
 
-func sampleTexture(tex *image.NRGBA, texcoord lm.Vector2) lm.Vector3 {
+func sampleTexture(tex *image.NRGBA, texcoord lm.Vector2) lm.Vector4 {
 	x := int(texcoord.X * float32(tex.Rect.Dx()))
 	y := int(texcoord.Y * float32(tex.Rect.Dy()))
 	c := tex.NRGBAAt(x, y)
-	return lm.Vec3(float32(c.R)/255, float32(c.G)/255, float32(c.B)/255)
+	return lm.Vec4(float32(c.R)/255, float32(c.G)/255, float32(c.B)/255, float32(c.A)/255)
 }
 
-var LightDir lm.Vector3 = lm.Vec3(-0.7, 1, -0.9).Normalize()
+var LightDir lm.Vector3 = lm.Vec3(-0.6, 1, -0.8).Normalize()
 var LightIntensity = 0.95 / LightDir.MaxComponent()
 var Projection = lm.DimetricProjection()
 
@@ -93,12 +93,6 @@ func drawTriangle(img *image.NRGBA, depth *DepthBuffer, tex *image.NRGBA, a, b, 
 
 			pixelDepth := lm.Vec3(a.Position.Z, b.Position.Z, c.Position.Z).Dot(barycentric)
 
-			if pixelDepth > depth.At(x, y) {
-				continue
-			}
-
-			depth.Set(x, y, pixelDepth)
-
 			normal := a.Normal.MulScalar(barycentric.X).
 				Add(b.Normal.MulScalar(barycentric.Y)).
 				Add(c.Normal.MulScalar(barycentric.Z))
@@ -110,13 +104,14 @@ func drawTriangle(img *image.NRGBA, depth *DepthBuffer, tex *image.NRGBA, a, b, 
 				texcoord := a.Texcoord.MulScalar(barycentric.X).
 					Add(b.Texcoord.MulScalar(barycentric.Y)).
 					Add(c.Texcoord.MulScalar(barycentric.Z))
-				col := sampleTexture(tex, texcoord).MulScalar(lighting).ClampScalar(0.0, 1.0)
+				rgba := sampleTexture(tex, texcoord)
+				col := rgba.XYZ().MulScalar(lighting).ClampScalar(0.0, 1.0)
 
 				finalColor = color.NRGBA{
 					R: uint8(255 * col.X),
 					G: uint8(255 * col.Y),
 					B: uint8(255 * col.Z),
-					A: 255,
+					A: uint8(255 * rgba.W),
 				}
 			} else {
 				finalColor = color.NRGBA{
@@ -127,7 +122,14 @@ func drawTriangle(img *image.NRGBA, depth *DepthBuffer, tex *image.NRGBA, a, b, 
 				}
 			}
 
-			img.SetNRGBA(x, y, finalColor)
+			if finalColor.A > 10 {
+				if pixelDepth > depth.At(x, y) {
+					continue
+				}
+
+				depth.Set(x, y, pixelDepth)
+				img.SetNRGBA(x, y, finalColor)
+			}
 		}
 	}
 }
@@ -148,7 +150,7 @@ func (r *NodeRasterizer) Render(nodeName string, node *game.Node) (*image.NRGBA,
 	}
 	r.mutex.RUnlock()
 
-	rect := image.Rect(0, 0, BaseResolution, BaseResolution+BaseResolution/8-2)
+	rect := image.Rect(0, 0, BaseResolution, BaseResolution+BaseResolution/8)
 	img := image.NewNRGBA(rect)
 	depth := NewDepthBuffer(rect)
 

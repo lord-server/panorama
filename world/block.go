@@ -2,8 +2,8 @@ package world
 
 import (
 	"bytes"
+	"compress/zlib"
 	"encoding/binary"
-	"fmt"
 	"io"
 
 	"github.com/klauspost/compress/zstd"
@@ -51,41 +51,51 @@ type MapBlock struct {
 	nodeData []byte
 }
 
-func DecodeMapBlock(data []byte) (*MapBlock, error) {
-	reader := bytes.NewReader(data)
+type ReaderCounter struct {
+	inner *bytes.Reader
+	count int64
+}
 
-	version, err := readU8(reader)
+func NewReaderCounter(r *bytes.Reader) *ReaderCounter {
+	return &ReaderCounter{
+		inner: r,
+		count: 0,
+	}
+}
+
+func (r *ReaderCounter) Read(p []byte) (n int, err error) {
+	n, err = r.inner.Read(p)
+	r.count += int64(n)
+	return
+}
+
+func (r *ReaderCounter) ReadByte() (byte, error) {
+	b, err := r.inner.ReadByte()
+	r.count += 1
+	return b, err
+}
+
+func inflate(reader *bytes.Reader) ([]byte, error) {
+	position, _ := reader.Seek(0, io.SeekCurrent)
+
+	counter := NewReaderCounter(reader)
+	z, err := zlib.NewReader(counter)
 	if err != nil {
-		return nil, err
+		panic(err)
 	}
-
-	if version != 29 {
-		return nil, fmt.Errorf("unsupported block version: %v", version)
-	}
-
-	z, err := zstd.NewReader(reader)
 	defer z.Close()
+
+	data, err := io.ReadAll(z)
 	if err != nil {
-		return nil, err
+		panic(err)
 	}
 
-	data, err = io.ReadAll(z)
-	if err != nil {
-		return nil, err
-	}
+	reader.Seek(position+counter.count, io.SeekStart)
 
-	reader = bytes.NewReader(data)
+	return data, err
+}
 
-	// Skip:
-	// - uint8 flags
-	// - uint16 lighting_complete
-	// - uint32 timestamp
-	// - uint8 mapping version
-	_, err = reader.Seek(1+2+4+1, io.SeekCurrent)
-	if err != nil {
-		return nil, err
-	}
-
+func readMappings(reader *bytes.Reader) (map[uint16]string, error) {
 	mappingCount, err := readU16(reader)
 	if err != nil {
 		return nil, err
@@ -105,6 +115,96 @@ func DecodeMapBlock(data []byte) (*MapBlock, error) {
 		mappings[id] = name
 	}
 
+	return mappings, nil
+}
+
+func decodeLegacyBlock(reader *bytes.Reader, version uint8) (*MapBlock, error) {
+	if version >= 27 {
+		// - uint8 flags
+		// - uint16 lighting_complete
+		// - uint8 content_width
+		// - uint8 params_width
+		reader.Seek(1+2+1+1, io.SeekCurrent)
+	} else {
+		// - uint8 flags
+		// - uint8 content_width
+		// - uint8 params_width
+		reader.Seek(1+1+1, io.SeekCurrent)
+	}
+
+	nodeData, err := inflate(reader)
+	if err != nil {
+		panic(err)
+	}
+
+	_, err = inflate(reader)
+	if err != nil {
+		panic(err)
+	}
+
+	// - uint8 staticObjectVersion
+	reader.Seek(1, io.SeekCurrent)
+
+	staticObjectCount, err := readU16(reader)
+	if err != nil {
+		panic(err)
+	}
+
+	for i := 0; i < int(staticObjectCount); i++ {
+		// - uint8 type
+		// - int32 x, y, z
+		reader.Seek(1+4+4+4, io.SeekCurrent)
+		dataSize, err := readU16(reader)
+		if err != nil {
+			panic(err)
+		}
+		reader.Seek(int64(dataSize), io.SeekCurrent)
+	}
+
+	// - uint32 timestamp
+	// - uint8 mappingVersion
+	reader.Seek(4+1, io.SeekCurrent)
+
+	mappings, err := readMappings(reader)
+	if err != nil {
+		return nil, err
+	}
+
+	return &MapBlock{
+		mappings: mappings,
+		nodeData: nodeData,
+	}, nil
+}
+
+func decodeBlock(reader *bytes.Reader) (*MapBlock, error) {
+	z, err := zstd.NewReader(reader)
+	defer z.Close()
+	if err != nil {
+		return nil, err
+	}
+
+	data, err := io.ReadAll(z)
+	if err != nil {
+		return nil, err
+	}
+
+	reader = bytes.NewReader(data)
+
+	// Skip:
+	// - uint8 flags
+	// - uint16 lighting_complete
+	// - uint32 timestamp
+	// - uint8 mapping version
+	_, err = reader.Seek(1+2+4+1, io.SeekCurrent)
+	if err != nil {
+		return nil, err
+	}
+
+	mappings, err := readMappings(reader)
+	if err != nil {
+		return nil, err
+	}
+
 	// Skip uint8 contentWidth, uint8 paramsWidth
 	_, err = reader.Seek(1+1, io.SeekCurrent)
 	if err != nil {
@@ -121,6 +221,25 @@ func DecodeMapBlock(data []byte) (*MapBlock, error) {
 		mappings: mappings,
 		nodeData: nodeData,
 	}, nil
+}
+
+func DecodeMapBlock(data []byte) (*MapBlock, error) {
+	reader := bytes.NewReader(data)
+
+	version, err := readU8(reader)
+	if err != nil {
+		return nil, err
+	}
+
+	if version < 29 {
+		mapblock, err := decodeLegacyBlock(reader, version)
+		if err != nil {
+			panic(err)
+		}
+		return mapblock, nil
+	}
+
+	return decodeBlock(reader)
 }
 
 func (b *MapBlock) ResolveName(id uint16) string {

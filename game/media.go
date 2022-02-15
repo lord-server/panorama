@@ -6,6 +6,7 @@ import (
 	"io/fs"
 	"log"
 	"path/filepath"
+	"strings"
 
 	"github.com/weqqr/panorama/mesh"
 )
@@ -55,7 +56,10 @@ func (m *MediaCache) fetchMedia(path string) error {
 }
 
 func (m *MediaCache) Image(name string) *image.NRGBA {
-	if img, ok := m.images[name]; ok {
+	// FIXME: resolve modifiers
+	baseName := strings.Split(name, "^")[0]
+
+	if img, ok := m.images[baseName]; ok {
 		return img
 	} else {
 		log.Printf("unknown image: %v\n", name)
