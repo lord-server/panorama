@@ -5,19 +5,17 @@ import (
 	"math"
 
 	"github.com/weqqr/panorama/game"
+	"github.com/weqqr/panorama/imaging"
 	"github.com/weqqr/panorama/world"
 )
 
 func RenderTile(tileX, tileY int, nr *NodeRasterizer, w *world.World, game *game.Game) *image.NRGBA {
 	rect := image.Rect(0, 0, TileBlockWidth, TileBlockWidth)
-	tile := image.NewNRGBA(rect)
-	depth := NewDepthBuffer(rect)
+	target := imaging.NewRenderBuffer(rect)
 
 	centerX := tileY - tileX
 	centerY := 0
 	centerZ := tileY + tileX
-
-	originX, originY := 0, 0
 
 	upperLimit := 5
 	lowerLimit := -5
@@ -39,15 +37,15 @@ func RenderTile(tileX, tileY int, nr *NodeRasterizer, w *world.World, game *game
 						continue
 					}
 
-					tileOffsetX := originX + world.MapBlockSize*BaseResolution*(z-x)/2
-					tileOffsetY := originY + world.MapBlockSize*BaseResolution/4*(z+x) - world.MapBlockSize*YOffsetCoef*y
+					tileOffsetX := world.MapBlockSize * BaseResolution * (z - x) / 2
+					tileOffsetY := world.MapBlockSize*BaseResolution/4*(z+x) - world.MapBlockSize*YOffsetCoef*y
 
 					depthOffset := -float32(z+x)/math.Sqrt2*world.MapBlockSize - 0.5*float32(y)*world.MapBlockSize - 2*float32(i)*math.Sqrt2*world.MapBlockSize
-					RenderBlock(tile, depth, nr, block, game, tileOffsetX, tileOffsetY, depthOffset)
+					RenderBlock(target, nr, block, game, tileOffsetX, tileOffsetY, depthOffset)
 				}
 			}
 		}
 	}
 
-	return tile
+	return target.Color
 }

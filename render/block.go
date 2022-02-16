@@ -5,38 +5,11 @@ import (
 	"math"
 
 	"github.com/weqqr/panorama/game"
+	"github.com/weqqr/panorama/imaging"
 	"github.com/weqqr/panorama/world"
 )
 
-func overlayWithDepth(target *image.NRGBA, targetDepth *DepthBuffer, source *image.NRGBA, sourceDepth *DepthBuffer, origin image.Point, depthOffset float32) {
-	if source == nil {
-		return
-	}
-
-	bbox := source.Rect.Add(origin).Intersect(target.Rect)
-
-	for y := bbox.Min.Y; y < bbox.Max.Y; y++ {
-		for x := bbox.Min.X; x < bbox.Max.X; x++ {
-			targetZ := targetDepth.At(x, y)
-			sourceZ := sourceDepth.At(x-origin.X, y-origin.Y) + depthOffset
-
-			if sourceZ > targetZ {
-				continue
-			}
-
-			targetDepth.Set(x, y, sourceZ)
-
-			c := source.NRGBAAt(x-origin.X, y-origin.Y)
-			if c.A == 0 {
-				// TODO: support opacity
-				continue
-			}
-			target.SetNRGBA(x, y, c)
-		}
-	}
-}
-
-func RenderBlock(target *image.NRGBA, targetDepth *DepthBuffer, nr *NodeRasterizer, block *world.MapBlock, game *game.Game, offsetX, offsetY int, depth float32) {
+func RenderBlock(target *imaging.RenderBuffer, nr *NodeRasterizer, block *world.MapBlock, game *game.Game, offsetX, offsetY int, depth float32) {
 	rect := image.Rect(0, 0, TileBlockWidth, TileBlockHeight)
 
 	// FIXME: nodes must define their origin points
@@ -49,13 +22,13 @@ func RenderBlock(target *image.NRGBA, targetDepth *DepthBuffer, nr *NodeRasteriz
 				nodeName := block.ResolveName(node.ID)
 				gameNode := game.Node(nodeName)
 
-				nodeColor, nodeDepth := nr.Render(nodeName, &gameNode)
+				renderedNode := nr.Render(nodeName, &gameNode)
 
 				tileOffsetX := originX + BaseResolution*(z-x)/2 + offsetX
 				tileOffsetY := originY + BaseResolution/4*(z+x) - YOffsetCoef*y + offsetY
 
 				depthOffset := -float32(z+x)/math.Sqrt2 - 0.5*(float32(y)) + depth
-				overlayWithDepth(target, targetDepth, nodeColor, nodeDepth, image.Pt(tileOffsetX, tileOffsetY), depthOffset)
+				target.OverlayDepthAware(renderedNode, image.Pt(tileOffsetX, tileOffsetY), depthOffset)
 			}
 		}
 	}
