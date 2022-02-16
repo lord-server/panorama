@@ -135,11 +135,7 @@ func drawTriangle(img *image.NRGBA, depth *DepthBuffer, tex *image.NRGBA, a, b, 
 }
 
 func (r *NodeRasterizer) Render(nodeName string, node *game.Node) (*image.NRGBA, *DepthBuffer) {
-	if node.DrawType == game.DrawTypeAirLlke {
-		return nil, nil
-	}
-
-	if node.Mesh == nil {
+	if node.DrawType == game.DrawTypeAirLlke || node.Model == nil || len(node.Textures) == 0 {
 		return nil, nil
 	}
 
@@ -154,19 +150,16 @@ func (r *NodeRasterizer) Render(nodeName string, node *game.Node) (*image.NRGBA,
 	img := image.NewNRGBA(rect)
 	depth := NewDepthBuffer(rect)
 
-	triangleCount := len(node.Mesh.Vertices) / 3
+	for j, mesh := range node.Model.Meshes {
+		triangleCount := len(mesh.Vertices) / 3
 
-	var texture *image.NRGBA
-	if len(node.Tiles) >= 1 {
-		texture = node.Tiles[0]
-	}
+		for i := 0; i < triangleCount; i++ {
+			a := mesh.Vertices[i*3]
+			b := mesh.Vertices[i*3+1]
+			c := mesh.Vertices[i*3+2]
 
-	for i := 0; i < triangleCount; i++ {
-		a := node.Mesh.Vertices[i*3]
-		b := node.Mesh.Vertices[i*3+1]
-		c := node.Mesh.Vertices[i*3+2]
-
-		drawTriangle(img, depth, texture, a, b, c)
+			drawTriangle(img, depth, node.Textures[j], a, b, c)
+		}
 	}
 
 	r.mutex.Lock()

@@ -183,10 +183,10 @@ func (o *objParser) processLine(line string) error {
 	return nil
 }
 
-func LoadOBJ(path string) (Mesh, error) {
+func LoadOBJ(path string) (Model, error) {
 	file, err := os.Open(path)
 	if err != nil {
-		return Mesh{}, err
+		return Model{}, err
 	}
 
 	defer file.Close()
@@ -204,13 +204,16 @@ func LoadOBJ(path string) (Mesh, error) {
 		lineNumber += 1
 		err := parser.processLine(scanner.Text())
 		if err != nil {
-			return Mesh{}, err
+			return Model{}, err
 		}
 	}
 
 	if err := scanner.Err(); err != nil {
-		return Mesh{}, err
+		return Model{}, err
 	}
 
-	return parser.mesh, nil
+	model := NewModel()
+	model.Meshes = append(model.Meshes, parser.mesh)
+
+	return model, nil
 }

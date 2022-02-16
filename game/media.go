@@ -13,7 +13,7 @@ import (
 
 type MediaCache struct {
 	images     map[string]*image.NRGBA
-	meshes     map[string]*mesh.Mesh
+	models     map[string]*mesh.Model
 	dummyImage *image.NRGBA
 }
 
@@ -26,7 +26,7 @@ func NewMediaCache() *MediaCache {
 
 	return &MediaCache{
 		images:     make(map[string]*image.NRGBA),
-		meshes:     make(map[string]*mesh.Mesh),
+		models:     make(map[string]*mesh.Model),
 		dummyImage: dummyImage,
 	}
 }
@@ -44,11 +44,11 @@ func (m *MediaCache) fetchMedia(path string) error {
 			m.images[basePath] = img
 		case ".obj":
 			log.Println(path)
-			mesh, err := mesh.LoadOBJ(path)
+			model, err := mesh.LoadOBJ(path)
 			if err != nil {
 				return err
 			}
-			m.meshes[basePath] = &mesh
+			m.models[basePath] = &model
 		}
 
 		return nil
@@ -67,11 +67,11 @@ func (m *MediaCache) Image(name string) *image.NRGBA {
 	}
 }
 
-func (m *MediaCache) Mesh(name string) *mesh.Mesh {
-	if mesh, ok := m.meshes[name]; ok {
-		return mesh
+func (m *MediaCache) Mesh(name string) *mesh.Model {
+	if model, ok := m.models[name]; ok {
+		return model
 	} else {
-		log.Printf("unknown mesh: %v\n", name)
+		log.Printf("unknown model: %v\n", name)
 		return nil
 	}
 }

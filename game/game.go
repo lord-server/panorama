@@ -38,8 +38,8 @@ func LoadPNG(path string) (*image.NRGBA, error) {
 
 type Node struct {
 	DrawType DrawType
-	Tiles    []*image.NRGBA
-	Mesh     *mesh.Mesh
+	Textures []*image.NRGBA
+	Model    *mesh.Model
 }
 
 type Game struct {
@@ -48,27 +48,81 @@ type Game struct {
 	unknown Node
 }
 
-func ResolveNode(descriptor NodeDescriptor, mediaCache *MediaCache) Node {
+func makeNormalNode(drawtype DrawType, tiles []*image.NRGBA) Node {
+	textures := make([]*image.NRGBA, 6)
+	model := mesh.Cube()
+
+	if len(tiles) == 0 {
+		return Node{
+			DrawType: drawtype,
+			Textures: textures,
+			Model:    model,
+		}
+	}
+
+	for i := 0; i < 6; i++ {
+		if i >= len(tiles) {
+			textures[i] = tiles[len(tiles)-1]
+			continue
+		}
+
+		textures[i] = tiles[i]
+	}
+
+	return Node{
+		DrawType: drawtype,
+		Textures: textures,
+		Model:    model,
+	}
+}
+
+func makeMeshNode(drawtype DrawType, model *mesh.Model, tiles []*image.NRGBA) Node {
+	textures := make([]*image.NRGBA, len(model.Meshes))
+	if len(tiles) == 0 {
+		return Node{
+			DrawType: drawtype,
+			Textures: textures,
+			Model:    model,
+		}
+	}
+
+	for i := range model.Meshes {
+		if i >= len(tiles) {
+			break
+		}
+		textures[i] = tiles[i]
+	}
+
+	return Node{
+		DrawType: drawtype,
+		Model:    model,
+		Textures: textures,
+	}
+}
+
+func ResolveNode(descriptor NodeDescriptor, mediaCache *MediaCache, name string) Node {
 	tiles := make([]*image.NRGBA, len(descriptor.Tiles))
+
 	for i, tileName := range descriptor.Tiles {
 		tiles[i] = mediaCache.Image(tileName)
 	}
 
-	var nodeMesh *mesh.Mesh
-
 	switch descriptor.DrawType {
 	case DrawTypeNormal, DrawTypeAllFaces, DrawTypeLiquid, DrawTypeFlowingLiquid, DrawTypeGlasslike, DrawTypeGlasslikeFramed:
-		nodeMesh = mesh.Cube()
+		return makeNormalNode(descriptor.DrawType, tiles)
 	case DrawTypeMesh:
-		if descriptor.Mesh != nil {
-			nodeMesh = mediaCache.Mesh(*descriptor.Mesh)
+		if descriptor.Mesh == nil {
+			break
 		}
+
+		model := mediaCache.Mesh(*descriptor.Mesh)
+		return makeMeshNode(descriptor.DrawType, model, tiles)
 	}
 
 	return Node{
 		DrawType: descriptor.DrawType,
-		Tiles:    tiles,
-		Mesh:     nodeMesh,
+		Textures: []*image.NRGBA{},
+		Model:    nil,
 	}
 }
 
@@ -93,7 +147,7 @@ func LoadGame(desc string, path string) (Game, error) {
 
 	nodes := make(map[string]Node)
 	for name, gameNode := range descriptor.Nodes {
-		node := ResolveNode(gameNode, mediaCache)
+		node := ResolveNode(gameNode, mediaCache, name)
 
 		nodes[name] = node
 	}
@@ -103,8 +157,8 @@ func LoadGame(desc string, path string) (Game, error) {
 		Nodes:   nodes,
 		unknown: Node{
 			DrawType: DrawTypeNormal,
-			Tiles:    []*image.NRGBA{mediaCache.dummyImage},
-			Mesh:     nil,
+			Textures: []*image.NRGBA{mediaCache.dummyImage},
+			Model:    nil,
 		},
 	}, nil
 }

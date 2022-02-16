@@ -61,13 +61,13 @@ func main() {
 		nr := render.NewNodeRasterizer()
 
 		var wg sync.WaitGroup
-		for x := -10; x < 10; x++ {
+		for x := -30; x < 30; x++ {
 			os.MkdirAll(fmt.Sprintf("tiles/%v", x), os.ModePerm)
 			xx := x
 			wg.Add(1)
 			go func() {
 				defer wg.Done()
-				for y := -10; y < 10; y++ {
+				for y := -30; y < 30; y++ {
 					yy := y
 					output := render.RenderTile(xx-52, yy*2-3, &nr, &world, &game)
 					filename := fmt.Sprintf("%v.png", yy)
