@@ -125,12 +125,12 @@ func (lhs Vector3) ClampScalar(min, max float32) Vector3 {
 	return Vec3(x, y, z)
 }
 
-func (v Vector3) XY() Vector2 {
-	return Vec2(v.X, v.Y)
+func (lhs Vector3) XY() Vector2 {
+	return Vec2(lhs.X, lhs.Y)
 }
 
-func (v Vector3) MaxComponent() float32 {
-	return maxFloat32(v.X, maxFloat32(v.Y, v.Z))
+func (lhs Vector3) MaxComponent() float32 {
+	return maxFloat32(lhs.X, maxFloat32(lhs.Y, lhs.Z))
 }
 
 type Vector4 struct {
@@ -162,8 +162,8 @@ func (lhs Vector4) ClampScalar(min, max float32) Vector4 {
 	return Vec4(x, y, z, w)
 }
 
-func (v Vector4) XYZ() Vector3 {
-	return Vec3(v.X, v.Y, v.Z)
+func (lhs Vector4) XYZ() Vector3 {
+	return Vec3(lhs.X, lhs.Y, lhs.Z)
 }
 
 func minFloat32(a, b float32) float32 {

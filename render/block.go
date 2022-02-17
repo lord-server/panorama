@@ -5,11 +5,11 @@ import (
 	"math"
 
 	"github.com/weqqr/panorama/game"
-	"github.com/weqqr/panorama/imaging"
+	"github.com/weqqr/panorama/raster"
 	"github.com/weqqr/panorama/world"
 )
 
-func RenderBlock(target *imaging.RenderBuffer, nr *NodeRasterizer, block *world.MapBlock, game *game.Game, offsetX, offsetY int, depth float32) {
+func Block(target *raster.RenderBuffer, nr *NodeRasterizer, block *world.MapBlock, game *game.Game, offsetX, offsetY int, depth float32) {
 	rect := image.Rect(0, 0, TileBlockWidth, TileBlockHeight)
 
 	// FIXME: nodes must define their origin points

@@ -90,7 +90,10 @@ func inflate(reader *bytes.Reader) ([]byte, error) {
 		panic(err)
 	}
 
-	reader.Seek(position+counter.count, io.SeekStart)
+	_, err = reader.Seek(position+counter.count, io.SeekStart)
+	if err != nil {
+		return nil, err
+	}
 
 	return data, err
 }
@@ -124,12 +127,18 @@ func decodeLegacyBlock(reader *bytes.Reader, version uint8) (*MapBlock, error) {
 		// - uint16 lighting_complete
 		// - uint8 content_width
 		// - uint8 params_width
-		reader.Seek(1+2+1+1, io.SeekCurrent)
+		_, err := reader.Seek(1+2+1+1, io.SeekCurrent)
+		if err != nil {
+			return nil, err
+		}
 	} else {
 		// - uint8 flags
 		// - uint8 content_width
 		// - uint8 params_width
-		reader.Seek(1+1+1, io.SeekCurrent)
+		_, err := reader.Seek(1+1+1, io.SeekCurrent)
+		if err != nil {
+			return nil, err
+		}
 	}
 
 	nodeData, err := inflate(reader)
@@ -143,7 +152,10 @@ func decodeLegacyBlock(reader *bytes.Reader, version uint8) (*MapBlock, error) {
 	}
 
 	// - uint8 staticObjectVersion
-	reader.Seek(1, io.SeekCurrent)
+	_, err = reader.Seek(1, io.SeekCurrent)
+	if err != nil {
+		return nil, err
+	}
 
 	staticObjectCount, err := readU16(reader)
 	if err != nil {
@@ -153,17 +165,26 @@ func decodeLegacyBlock(reader *bytes.Reader, version uint8) (*MapBlock, error) {
 	for i := 0; i < int(staticObjectCount); i++ {
 		// - uint8 type
 		// - int32 x, y, z
-		reader.Seek(1+4+4+4, io.SeekCurrent)
+		_, err = reader.Seek(1+4+4+4, io.SeekCurrent)
+		if err != nil {
+			return nil, err
+		}
 		dataSize, err := readU16(reader)
 		if err != nil {
 			panic(err)
 		}
-		reader.Seek(int64(dataSize), io.SeekCurrent)
+		_, err = reader.Seek(int64(dataSize), io.SeekCurrent)
+		if err != nil {
+			return nil, err
+		}
 	}
 
 	// - uint32 timestamp
 	// - uint8 mappingVersion
-	reader.Seek(4+1, io.SeekCurrent)
+	_, err = reader.Seek(4+1, io.SeekCurrent)
+	if err != nil {
+		return nil, err
+	}
 
 	mappings, err := readMappings(reader)
 	if err != nil {

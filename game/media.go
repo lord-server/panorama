@@ -9,6 +9,7 @@ import (
 	"strings"
 
 	"github.com/weqqr/panorama/mesh"
+	"github.com/weqqr/panorama/raster"
 )
 
 type MediaCache struct {
@@ -40,7 +41,7 @@ func (m *MediaCache) fetchMedia(path string) error {
 		basePath := filepath.Base(path)
 		switch filepath.Ext(path) {
 		case ".png":
-			img, _ := LoadPNG(path)
+			img, _ := raster.LoadPNG(path)
 			m.images[basePath] = img
 		case ".obj":
 			log.Println(path)

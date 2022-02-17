@@ -7,9 +7,9 @@ import (
 	"sync"
 
 	"github.com/weqqr/panorama/game"
-	"github.com/weqqr/panorama/imaging"
 	"github.com/weqqr/panorama/lm"
 	"github.com/weqqr/panorama/mesh"
+	"github.com/weqqr/panorama/raster"
 	"github.com/weqqr/panorama/world"
 )
 
@@ -23,13 +23,13 @@ var (
 
 type NodeRasterizer struct {
 	mutex *sync.RWMutex
-	cache map[string]*imaging.RenderBuffer
+	cache map[string]*raster.RenderBuffer
 }
 
 func NewNodeRasterizer() NodeRasterizer {
 	return NodeRasterizer{
 		mutex: &sync.RWMutex{},
-		cache: make(map[string]*imaging.RenderBuffer),
+		cache: make(map[string]*raster.RenderBuffer),
 	}
 }
 
@@ -62,11 +62,11 @@ func sampleTexture(tex *image.NRGBA, texcoord lm.Vector2) lm.Vector4 {
 	return lm.Vec4(float32(c.R)/255, float32(c.G)/255, float32(c.B)/255, float32(c.A)/255)
 }
 
-var LightDir lm.Vector3 = lm.Vec3(-0.6, 1, -0.8).Normalize()
+var LightDir = lm.Vec3(-0.6, 1, -0.8).Normalize()
 var LightIntensity = 0.95 / LightDir.MaxComponent()
 var Projection = lm.DimetricProjection()
 
-func drawTriangle(target *imaging.RenderBuffer, tex *image.NRGBA, a, b, c mesh.Vertex) {
+func drawTriangle(target *raster.RenderBuffer, tex *image.NRGBA, a, b, c mesh.Vertex) {
 	originX := float32(target.Color.Bounds().Dx() / 2)
 	originY := float32(target.Color.Bounds().Dy() / 2)
 	origin := lm.Vec2(originX, originY)
@@ -133,8 +133,8 @@ func drawTriangle(target *imaging.RenderBuffer, tex *image.NRGBA, a, b, c mesh.V
 	}
 }
 
-func (r *NodeRasterizer) Render(nodeName string, node *game.Node) *imaging.RenderBuffer {
-	if node.DrawType == game.DrawTypeAirLlke || node.Model == nil || len(node.Textures) == 0 {
+func (r *NodeRasterizer) Render(nodeName string, node *game.Node) *raster.RenderBuffer {
+	if node.DrawType == game.DrawTypeAirlike || node.Model == nil || len(node.Textures) == 0 {
 		return nil
 	}
 
@@ -146,7 +146,7 @@ func (r *NodeRasterizer) Render(nodeName string, node *game.Node) *imaging.Rende
 	r.mutex.RUnlock()
 
 	rect := image.Rect(0, 0, BaseResolution, BaseResolution+BaseResolution/8)
-	target := imaging.NewRenderBuffer(rect)
+	target := raster.NewRenderBuffer(rect)
 
 	for j, mesh := range node.Model.Meshes {
 		triangleCount := len(mesh.Vertices) / 3

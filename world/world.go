@@ -13,25 +13,25 @@ type Backend interface {
 	Close()
 }
 
-type PgBackend struct {
+type PostgresBackend struct {
 	conn *pgxpool.Pool
 }
 
-func NewPgBackend(dsn string) (*PgBackend, error) {
+func NewPostgresBackend(dsn string) (*PostgresBackend, error) {
 	conn, err := pgxpool.Connect(context.Background(), dsn)
 	if err != nil {
 		return nil, err
 	}
-	return &PgBackend{
+	return &PostgresBackend{
 		conn: conn,
 	}, nil
 }
 
-func (p *PgBackend) Close() {
+func (p *PostgresBackend) Close() {
 	p.conn.Close()
 }
 
-func (p *PgBackend) GetBlockData(x, y, z int) ([]byte, error) {
+func (p *PostgresBackend) GetBlockData(x, y, z int) ([]byte, error) {
 	var data []byte
 	err := p.conn.QueryRow(context.Background(), "SELECT data FROM blocks WHERE posx=$1 and posy=$2 and posz=$3", x, y, z).Scan(&data)
 	if errors.Is(err, pgx.ErrNoRows) {

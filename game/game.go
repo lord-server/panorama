@@ -3,37 +3,14 @@ package game
 import (
 	"encoding/json"
 	"image"
-	"image/draw"
-	"image/png"
 	"os"
 
 	"github.com/weqqr/panorama/mesh"
 )
 
-type GameDescriptor struct {
+type gameDescriptor struct {
 	Aliases map[string]string         `json:"aliases"`
 	Nodes   map[string]NodeDescriptor `json:"nodes"`
-}
-
-func toNRGBA(img image.Image) *image.NRGBA {
-	dst := image.NewNRGBA(img.Bounds())
-	draw.Draw(dst, img.Bounds(), img, img.Bounds().Min, draw.Src)
-	return dst
-}
-
-func LoadPNG(path string) (*image.NRGBA, error) {
-	file, err := os.Open(path)
-	if err != nil {
-		return nil, err
-	}
-	defer file.Close()
-
-	img, err := png.Decode(file)
-	if err != nil {
-		return nil, err
-	}
-
-	return toNRGBA(img), nil
 }
 
 type Node struct {
@@ -100,7 +77,7 @@ func makeMeshNode(drawtype DrawType, model *mesh.Model, tiles []*image.NRGBA) No
 	}
 }
 
-func ResolveNode(descriptor NodeDescriptor, mediaCache *MediaCache, name string) Node {
+func ResolveNode(descriptor NodeDescriptor, mediaCache *MediaCache) Node {
 	tiles := make([]*image.NRGBA, len(descriptor.Tiles))
 
 	for i, tileName := range descriptor.Tiles {
@@ -132,7 +109,7 @@ func LoadGame(desc string, path string) (Game, error) {
 		return Game{}, err
 	}
 
-	var descriptor GameDescriptor
+	var descriptor gameDescriptor
 	err = json.Unmarshal(descJSON, &descriptor)
 	if err != nil {
 		return Game{}, err
@@ -147,7 +124,7 @@ func LoadGame(desc string, path string) (Game, error) {
 
 	nodes := make(map[string]Node)
 	for name, gameNode := range descriptor.Nodes {
-		node := ResolveNode(gameNode, mediaCache, name)
+		node := ResolveNode(gameNode, mediaCache)
 
 		nodes[name] = node
 	}

@@ -5,13 +5,13 @@ import (
 	"math"
 
 	"github.com/weqqr/panorama/game"
-	"github.com/weqqr/panorama/imaging"
+	"github.com/weqqr/panorama/raster"
 	"github.com/weqqr/panorama/world"
 )
 
-func RenderTile(tileX, tileY int, nr *NodeRasterizer, w *world.World, game *game.Game) *image.NRGBA {
+func Tile(tileX, tileY int, nr *NodeRasterizer, w *world.World, game *game.Game) *image.NRGBA {
 	rect := image.Rect(0, 0, TileBlockWidth, TileBlockWidth)
-	target := imaging.NewRenderBuffer(rect)
+	target := raster.NewRenderBuffer(rect)
 
 	centerX := tileY - tileX
 	centerY := 0
@@ -41,7 +41,7 @@ func RenderTile(tileX, tileY int, nr *NodeRasterizer, w *world.World, game *game
 					tileOffsetY := world.MapBlockSize*BaseResolution/4*(z+x) - world.MapBlockSize*YOffsetCoef*y
 
 					depthOffset := -float32(z+x)/math.Sqrt2*world.MapBlockSize - 0.5*float32(y)*world.MapBlockSize - 2*float32(i)*math.Sqrt2*world.MapBlockSize
-					RenderBlock(target, nr, block, game, tileOffsetX, tileOffsetY, depthOffset)
+					Block(target, nr, block, game, tileOffsetX, tileOffsetY, depthOffset)
 				}
 			}
 		}

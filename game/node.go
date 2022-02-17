@@ -9,7 +9,7 @@ type DrawType int
 
 const (
 	DrawTypeNormal DrawType = iota
-	DrawTypeAirLlke
+	DrawTypeAirlike
 	DrawTypeLiquid
 	DrawTypeFlowingLiquid
 	DrawTypeGlasslike
@@ -21,14 +21,14 @@ const (
 	DrawTypeFirelike
 	DrawTypeFencelike
 	DrawTypeRaillike
-	DrawTypeNodebox
+	DrawTypeNodeBox
 	DrawTypeMesh
 	DrawTypePlantlikeRooted
 )
 
 var DrawTypeNames = map[string]DrawType{
 	"normal":                    DrawTypeNormal,
-	"airlike":                   DrawTypeAirLlke,
+	"airlike":                   DrawTypeAirlike,
 	"liquid":                    DrawTypeLiquid,
 	"flowingliquid":             DrawTypeFlowingLiquid,
 	"glasslike":                 DrawTypeGlasslike,
@@ -42,7 +42,7 @@ var DrawTypeNames = map[string]DrawType{
 	"firelike":                  DrawTypeFirelike,
 	"fencelike":                 DrawTypeFencelike,
 	"raillike":                  DrawTypeRaillike,
-	"nodebox":                   DrawTypeNodebox,
+	"nodebox":                   DrawTypeNodeBox,
 	"mesh":                      DrawTypeMesh,
 	"plantlike_rooted":          DrawTypePlantlikeRooted,
 }
@@ -81,5 +81,6 @@ func (n *NodeDescriptor) UnmarshalJSON(data []byte) error {
 	}
 
 	*n = NodeDescriptor(*inner)
+
 	return nil
 }
