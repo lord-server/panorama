@@ -2,6 +2,8 @@ package main
 
 import (
 	"fmt"
+	"github.com/weqqr/panorama/render"
+	"github.com/weqqr/panorama/render/isometric"
 	"image"
 	"image/draw"
 	"log"
@@ -13,7 +15,6 @@ import (
 	"github.com/nfnt/resize"
 	"github.com/weqqr/panorama/game"
 	"github.com/weqqr/panorama/raster"
-	"github.com/weqqr/panorama/render"
 	"github.com/weqqr/panorama/world"
 )
 
@@ -29,7 +30,7 @@ func tilePath(x, y, zoom int) string {
 	return fmt.Sprintf("tiles/%v/%v/%v.png", zoom, x, y)
 }
 
-func renderTiles(config Config, min, max int) {
+func renderTiles(config Config, renderer render.Renderer, min, max int) {
 	game, err := game.LoadGame(config.Game.Desc, config.Game.Path)
 	if err != nil {
 		log.Panic(err)
@@ -46,7 +47,6 @@ func renderTiles(config Config, min, max int) {
 	log.Printf("Connected to %v", config.World.Backend)
 
 	world := world.NewWorldWithBackend(backend)
-	nr := render.NewNodeRasterizer()
 
 	var wg sync.WaitGroup
 	for x := min; x < max; x++ {
@@ -57,7 +57,7 @@ func renderTiles(config Config, min, max int) {
 			defer wg.Done()
 			for y := min; y < max; y++ {
 				yy := y
-				output := render.Tile(xx-52, yy*2-3, &nr, &world, &game)
+				output := renderer.RenderTile(render.TilePosition{xx - 52, yy*2 - 3}, &world, &game)
 				path := tilePath(xx, yy, 0)
 				err := raster.SavePNG(output, path)
 				if err != nil {
@@ -125,25 +125,13 @@ func serveTiles() {
 }
 
 func main() {
-	web := true
-	render := true
-	downscale := true
-
 	config := LoadConfig("panorama.toml")
 	log.Printf("path: %v\n", config.Game.Path)
 	log.Printf("description: `%v`\n", config.Game.Desc)
 
 	tileMin, tileMax := -3, 3
 
-	if render {
-		renderTiles(config, tileMin, tileMax)
-	}
-
-	if downscale {
-		downscaleTiles(tileMin, tileMax)
-	}
-
-	if web {
-		serveTiles()
-	}
+	renderer := isometric.NewRenderer()
+	renderTiles(config, &renderer, tileMin, tileMax)
+	serveTiles()
 }

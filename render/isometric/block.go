@@ -1,4 +1,4 @@
-package render
+package isometric
 
 import (
 	"image"
@@ -9,7 +9,7 @@ import (
 	"github.com/weqqr/panorama/world"
 )
 
-func Block(target *raster.RenderBuffer, nr *NodeRasterizer, block *world.MapBlock, game *game.Game, offsetX, offsetY int, depth float32) {
+func renderBlock(target *raster.RenderBuffer, nr *NodeRasterizer, block *world.MapBlock, game *game.Game, offsetX, offsetY int, depth float32) {
 	rect := image.Rect(0, 0, TileBlockWidth, TileBlockHeight)
 
 	// FIXME: nodes must define their origin points
