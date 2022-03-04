@@ -2,19 +2,19 @@ package main
 
 import (
 	"fmt"
-	"github.com/weqqr/panorama/render"
-	"github.com/weqqr/panorama/render/isometric"
 	"image"
 	"image/draw"
 	"log"
 	"math"
 	"net/http"
 	"os"
+	"path"
 	"sync"
 
 	"github.com/nfnt/resize"
 	"github.com/weqqr/panorama/game"
 	"github.com/weqqr/panorama/raster"
+	"github.com/weqqr/panorama/render"
 	"github.com/weqqr/panorama/world"
 )
 
@@ -30,24 +30,7 @@ func tilePath(x, y, zoom int) string {
 	return fmt.Sprintf("tiles/%v/%v/%v.png", zoom, x, y)
 }
 
-func renderTiles(config Config, renderer render.Renderer, min, max int) {
-	game, err := game.LoadGame(config.Game.Desc, config.Game.Path)
-	if err != nil {
-		log.Panic(err)
-	}
-
-	log.Printf("Loaded %v nodes, %v aliases\n", len(game.Nodes), len(game.Aliases))
-
-	log.Printf("Using %v as backend", config.World.Backend)
-
-	backend, err := world.NewPostgresBackend(config.World.Connection)
-	if err != nil {
-		log.Panic(err)
-	}
-	log.Printf("Connected to %v", config.World.Backend)
-
-	world := world.NewWorldWithBackend(backend)
-
+func renderTiles(game *game.Game, world *world.World, renderer render.Renderer, min, max int) {
 	var wg sync.WaitGroup
 	for x := min; x < max; x++ {
 		os.MkdirAll(fmt.Sprintf("tiles/0/%v", x), os.ModePerm)
@@ -57,7 +40,7 @@ func renderTiles(config Config, renderer render.Renderer, min, max int) {
 			defer wg.Done()
 			for y := min; y < max; y++ {
 				yy := y
-				output := renderer.RenderTile(render.TilePosition{xx - 52, yy*2 - 3}, &world, &game)
+				output := renderer.RenderTile(render.TilePosition{xx, yy * 2}, world, game)
 				path := tilePath(xx, yy, 0)
 				err := raster.SavePNG(output, path)
 				if err != nil {
@@ -126,12 +109,8 @@ func serveTiles() {
 
 func main() {
 	config := LoadConfig("panorama.toml")
-	log.Printf("path: %v\n", config.Game.Path)
-	log.Printf("description: `%v`\n", config.Game.Desc)
+	log.Printf("game path: %v\n", config.GamePath)
 
-	tileMin, tileMax := -3, 3
-
-	renderer := isometric.NewRenderer()
-	renderTiles(config, &renderer, tileMin, tileMax)
-	serveTiles()
+	descPath := path.Join(config.WorldPath, "panorama_nodes.json")
+	log.Printf("game description: `%v`\n", descPath)
 }
