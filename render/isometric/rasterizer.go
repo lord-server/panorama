@@ -4,7 +4,6 @@ import (
 	"image"
 	"image/color"
 	"math"
-	"sync"
 
 	"github.com/weqqr/panorama/game"
 	"github.com/weqqr/panorama/lm"
@@ -22,13 +21,11 @@ var (
 )
 
 type NodeRasterizer struct {
-	mutex *sync.RWMutex
 	cache map[string]*raster.RenderBuffer
 }
 
 func NewNodeRasterizer() NodeRasterizer {
 	return NodeRasterizer{
-		mutex: &sync.RWMutex{},
 		cache: make(map[string]*raster.RenderBuffer),
 	}
 }
@@ -138,12 +135,9 @@ func (r *NodeRasterizer) Render(nodeName string, node *game.Node) *raster.Render
 		return nil
 	}
 
-	r.mutex.RLock()
 	if target, ok := r.cache[nodeName]; ok {
-		defer r.mutex.RUnlock()
 		return target
 	}
-	r.mutex.RUnlock()
 
 	rect := image.Rect(0, 0, BaseResolution, BaseResolution+BaseResolution/8)
 	target := raster.NewRenderBuffer(rect)
@@ -160,8 +154,6 @@ func (r *NodeRasterizer) Render(nodeName string, node *game.Node) *raster.Render
 		}
 	}
 
-	r.mutex.Lock()
-	defer r.mutex.Unlock()
 	r.cache[nodeName] = target
 
 	return target
