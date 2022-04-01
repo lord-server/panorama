@@ -9,7 +9,7 @@ import (
 	"github.com/weqqr/panorama/world"
 )
 
-func renderBlock(target *raster.RenderBuffer, nr *NodeRasterizer, block *world.MapBlock, game *game.Game, offsetX, offsetY int, depth float32) {
+func renderBlock(target *raster.RenderBuffer, nr *NodeRasterizer, block *world.MapBlock, g *game.Game, offsetX, offsetY int, depth float32) {
 	rect := image.Rect(0, 0, TileBlockWidth, TileBlockHeight)
 
 	// FIXME: nodes must define their origin points
@@ -20,7 +20,7 @@ func renderBlock(target *raster.RenderBuffer, nr *NodeRasterizer, block *world.M
 			for x := world.MapBlockSize - 1; x >= 0; x-- {
 				node := block.GetNode(x, y, z)
 				nodeName := block.ResolveName(node.ID)
-				gameNode := game.Node(nodeName)
+				gameNode := g.Node(nodeName)
 
 				renderedNode := nr.Render(nodeName, &gameNode)
 

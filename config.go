@@ -7,17 +7,19 @@ import (
 	"github.com/BurntSushi/toml"
 )
 
-type MapConfig struct {
-	CenterX int `toml:"center_x"`
-	CenterZ int `toml:"center_z"`
-	XSize   int `toml:"x_size"`
-	ZSize   int `toml:"z_size"`
+type RegionConfig struct {
+	XBounds    [2]int `toml:"x_bounds"`
+	YBounds    [2]int `toml:"y_bounds"`
+	UpperLimit int    `toml:"upper_limit"`
+	LowerLimit int    `toml:"lower_limit"`
 }
 
 type Config struct {
-	GamePath  string `toml:"game_path"`
-	WorldPath string `toml:"world_path"`
-	MapConfig MapConfig
+	ListenAddress string       `toml:"listen_address"`
+	GamePath      string       `toml:"game_path"`
+	WorldPath     string       `toml:"world_path"`
+	WorldDSN      string       `toml:"world_dsn"`
+	RegionConfig  RegionConfig `toml:"region"`
 }
 
 func LoadConfig(path string) Config {

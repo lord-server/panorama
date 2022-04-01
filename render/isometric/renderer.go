@@ -1,25 +1,34 @@
 package isometric
 
 import (
+	"image"
+	"math"
+
 	"github.com/weqqr/panorama/game"
 	"github.com/weqqr/panorama/raster"
 	"github.com/weqqr/panorama/render"
 	"github.com/weqqr/panorama/world"
-	"image"
-	"math"
 )
 
 type Renderer struct {
 	nr NodeRasterizer
+
+	lowerLimit int
+	upperLimit int
 }
 
-func NewRenderer() Renderer {
+func NewRenderer(lowerLimit, upperLimit int) Renderer {
 	return Renderer{
 		nr: NewNodeRasterizer(),
+
+		lowerLimit: lowerLimit,
+		upperLimit: upperLimit,
 	}
 }
 
 func (r *Renderer) RenderTile(tilePos render.TilePosition, w *world.World, game *game.Game) *image.NRGBA {
+	tilePos.Y *= 2
+
 	rect := image.Rect(0, 0, TileBlockWidth, TileBlockWidth)
 	target := raster.NewRenderBuffer(rect)
 
@@ -27,10 +36,7 @@ func (r *Renderer) RenderTile(tilePos render.TilePosition, w *world.World, game 
 	centerY := 0
 	centerZ := tilePos.Y + tilePos.X
 
-	upperLimit := 5
-	lowerLimit := -5
-
-	for i := lowerLimit; i < upperLimit; i++ {
+	for i := r.lowerLimit; i < r.upperLimit; i++ {
 		for z := -2; z <= 2; z++ {
 			for x := -2; x <= 2; x++ {
 				blockX := centerX + x + i
