@@ -2,6 +2,11 @@ body {
     margin: 0;
 }
 
-#map {
-    height: 100%;
+html, body, #map {
+    height: 100vh;
+}
+
+.cursor-position {
+    background-color: white;
+    padding: 4px;
 }
