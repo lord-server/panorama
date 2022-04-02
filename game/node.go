@@ -91,10 +91,60 @@ func (t *ParamType) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
+type NodeBox struct {
+	Type  string
+	Fixed [][]float32
+}
+
+func (n *NodeBox) UnmarshalJSON(data []byte) error {
+	type nodeBox struct {
+		Type  string        `json:"type"`
+		Fixed []interface{} `json:"fixed"`
+	}
+	inner := &nodeBox{}
+	if err := json.Unmarshal(data, inner); err != nil {
+		return err
+	}
+
+	n.Type = inner.Type
+	n.Fixed = make([][]float32, 0)
+	if inner.Type != "fixed" {
+		return nil
+	}
+
+	if len(inner.Fixed) == 0 {
+		return nil
+	}
+
+	if _, ok := inner.Fixed[0].(float64); ok {
+		box := make([]float32, 0)
+		for i := 0; i < 6; i++ {
+			v, _ := inner.Fixed[i].(float64)
+			box = append(box, float32(v))
+		}
+		n.Fixed = append(n.Fixed, box)
+	}
+
+	if _, ok := inner.Fixed[0].([]interface{}); ok {
+		for _, boxInterface := range inner.Fixed {
+			boxFloat64 := boxInterface.([]interface{})
+			box := make([]float32, 0)
+			for i := 0; i < 6; i++ {
+				v, _ := boxFloat64[i].(float64)
+				box = append(box, float32(v))
+			}
+			n.Fixed = append(n.Fixed, box)
+		}
+	}
+
+	return nil
+}
+
 type NodeDescriptor struct {
 	DrawType  DrawType  `json:"drawtype"`
 	ParamType ParamType `json:"paramtype"`
 	Tiles     []string  `json:"tiles"`
+	NodeBox   *NodeBox  `json:"node_box"`
 	Mesh      *string   `json:"mesh"`
 }
 

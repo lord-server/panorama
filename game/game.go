@@ -54,6 +54,40 @@ func makeNormalNode(drawtype DrawType, tiles []*image.NRGBA) NodeDefinition {
 	}
 }
 
+func makeNodeBox(drawtype DrawType, nodeBox *NodeBox, tiles []*image.NRGBA) NodeDefinition {
+	textures := make([]*image.NRGBA, 6*len(nodeBox.Fixed))
+	model := mesh.NewModel()
+
+	if len(tiles) == 0 {
+		return NodeDefinition{
+			DrawType: drawtype,
+			Textures: textures,
+			Model:    &model,
+		}
+	}
+
+	for _, box := range nodeBox.Fixed {
+		model.Meshes = append(model.Meshes, mesh.Cuboid(box[0], box[1], box[2], box[3], box[4], box[5])...)
+	}
+
+	for i := 0; i < len(nodeBox.Fixed); i++ {
+		for j := 0; j < 6; j++ {
+			if j >= len(tiles) {
+				textures[6*i+j] = tiles[len(tiles)-1]
+				continue
+			}
+
+			textures[6*i+j] = tiles[j]
+		}
+	}
+
+	return NodeDefinition{
+		DrawType: drawtype,
+		Textures: textures,
+		Model:    &model,
+	}
+}
+
 func makeMeshNode(drawtype DrawType, model *mesh.Model, tiles []*image.NRGBA) NodeDefinition {
 	textures := make([]*image.NRGBA, len(model.Meshes))
 	if len(tiles) == 0 {
@@ -88,6 +122,12 @@ func ResolveNode(descriptor NodeDescriptor, mediaCache *MediaCache) NodeDefiniti
 	switch descriptor.DrawType {
 	case DrawTypeNormal, DrawTypeAllFaces, DrawTypeLiquid, DrawTypeFlowingLiquid, DrawTypeGlasslike, DrawTypeGlasslikeFramed:
 		return makeNormalNode(descriptor.DrawType, tiles)
+	case DrawTypeNodeBox:
+		if descriptor.NodeBox == nil {
+			break
+		}
+
+		return makeNodeBox(descriptor.DrawType, descriptor.NodeBox, tiles)
 	case DrawTypeMesh:
 		if descriptor.Mesh == nil {
 			break
