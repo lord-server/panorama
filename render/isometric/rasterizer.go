@@ -20,13 +20,19 @@ var (
 	TileBlockHeight = BaseResolution/2*world.MapBlockSize - 1 + YOffsetCoef*world.MapBlockSize
 )
 
+type RenderableNode struct {
+	Name   string
+	Light  float32
+	Param2 uint8
+}
+
 type NodeRasterizer struct {
-	cache map[string]*raster.RenderBuffer
+	cache map[RenderableNode]*raster.RenderBuffer
 }
 
 func NewNodeRasterizer() NodeRasterizer {
 	return NodeRasterizer{
-		cache: make(map[string]*raster.RenderBuffer),
+		cache: make(map[RenderableNode]*raster.RenderBuffer),
 	}
 }
 
@@ -63,7 +69,7 @@ var LightDir = lm.Vec3(-0.6, 1, -0.8).Normalize()
 var LightIntensity = 0.95 / LightDir.MaxComponent()
 var Projection = lm.DimetricProjection()
 
-func drawTriangle(target *raster.RenderBuffer, tex *image.NRGBA, a, b, c mesh.Vertex) {
+func drawTriangle(target *raster.RenderBuffer, tex *image.NRGBA, light float32, a, b, c mesh.Vertex) {
 	originX := float32(target.Color.Bounds().Dx() / 2)
 	originY := float32(target.Color.Bounds().Dy() / 2)
 	origin := lm.Vec2(originX, originY)
@@ -93,7 +99,7 @@ func drawTriangle(target *raster.RenderBuffer, tex *image.NRGBA, a, b, c mesh.Ve
 				Add(b.Normal.MulScalar(barycentric.Y)).
 				Add(c.Normal.MulScalar(barycentric.Z))
 
-			lighting := LightIntensity * lm.Clamp(lm.Abs(normal.Dot(LightDir))*0.8+0.2, 0.0, 1.0)
+			lighting := LightIntensity * light * lm.Clamp(lm.Abs(normal.Dot(LightDir))*0.8+0.2, 0.0, 1.0)
 
 			var finalColor color.NRGBA
 			if tex != nil {
@@ -130,19 +136,19 @@ func drawTriangle(target *raster.RenderBuffer, tex *image.NRGBA, a, b, c mesh.Ve
 	}
 }
 
-func (r *NodeRasterizer) Render(nodeName string, node *game.Node) *raster.RenderBuffer {
-	if node.DrawType == game.DrawTypeAirlike || node.Model == nil || len(node.Textures) == 0 {
+func (r *NodeRasterizer) Render(node RenderableNode, nodeDef *game.NodeDefinition) *raster.RenderBuffer {
+	if nodeDef.DrawType == game.DrawTypeAirlike || nodeDef.Model == nil || len(nodeDef.Textures) == 0 {
 		return nil
 	}
 
-	if target, ok := r.cache[nodeName]; ok {
+	if target, ok := r.cache[node]; ok {
 		return target
 	}
 
 	rect := image.Rect(0, 0, BaseResolution, BaseResolution+BaseResolution/8)
 	target := raster.NewRenderBuffer(rect)
 
-	for j, mesh := range node.Model.Meshes {
+	for j, mesh := range nodeDef.Model.Meshes {
 		triangleCount := len(mesh.Vertices) / 3
 
 		for i := 0; i < triangleCount; i++ {
@@ -150,11 +156,11 @@ func (r *NodeRasterizer) Render(nodeName string, node *game.Node) *raster.Render
 			b := mesh.Vertices[i*3+1]
 			c := mesh.Vertices[i*3+2]
 
-			drawTriangle(target, node.Textures[j], a, b, c)
+			drawTriangle(target, nodeDef.Textures[j], node.Light, a, b, c)
 		}
 	}
 
-	r.cache[nodeName] = target
+	r.cache[node] = target
 
 	return target
 }

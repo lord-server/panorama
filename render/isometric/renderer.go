@@ -43,20 +43,21 @@ func (r *Renderer) RenderTile(tilePos render.TilePosition, w *world.World, game 
 				blockY := centerY + i
 				blockZ := centerZ + z + i
 
-				block, err := w.GetBlock(blockX, blockY, blockZ)
-				if err != nil {
-					panic(err)
-				}
+				neighborhood := BlockNeighborhood{}
 
-				if block == nil {
-					continue
-				}
+				neighborhood.FetchBlock(1, 1, 1, blockX, blockY, blockZ, w)
+				neighborhood.FetchBlock(0, 1, 1, blockX-1, blockY, blockZ, w)
+				neighborhood.FetchBlock(2, 1, 1, blockX+1, blockY, blockZ, w)
+				neighborhood.FetchBlock(1, 0, 1, blockX, blockY-1, blockZ, w)
+				neighborhood.FetchBlock(1, 2, 1, blockX, blockY+1, blockZ, w)
+				neighborhood.FetchBlock(1, 1, 0, blockX, blockY, blockZ-1, w)
+				neighborhood.FetchBlock(1, 1, 2, blockX, blockY, blockZ+2, w)
 
 				tileOffsetX := world.MapBlockSize * BaseResolution / 2 * (z - x)
 				tileOffsetY := world.MapBlockSize * BaseResolution / 4 * (z + x)
 
 				depthOffset := -float32(z+x)/math.Sqrt2*world.MapBlockSize - 2*float32(i)*math.Sqrt2*world.MapBlockSize
-				renderBlock(target, &r.nr, block, game, tileOffsetX, tileOffsetY, depthOffset)
+				renderBlock(target, &r.nr, &neighborhood, game, tileOffsetX, tileOffsetY, depthOffset)
 			}
 		}
 	}

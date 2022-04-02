@@ -9,7 +9,78 @@ import (
 	"github.com/weqqr/panorama/world"
 )
 
-func renderBlock(target *raster.RenderBuffer, nr *NodeRasterizer, block *world.MapBlock, g *game.Game, offsetX, offsetY int, depth float32) {
+func decodeLight(param1 uint8) float32 {
+	var LUT = [16]float32{
+		0.000,
+		0.024,
+		0.059,
+		0.118,
+		0.196,
+		0.286,
+		0.384,
+		0.471,
+		0.545,
+		0.608,
+		0.659,
+		0.710,
+		0.769,
+		0.835,
+		0.918,
+		1.000,
+	}
+	return LUT[param1&0xF]
+}
+
+type BlockNeighborhood struct {
+	blocks [27]*world.MapBlock
+}
+
+func (b *BlockNeighborhood) FetchBlock(bx, by, bz, wx, wy, wz int, w *world.World) {
+	block, err := w.GetBlock(wx, wy, wz)
+
+	if err != nil {
+		return
+	}
+
+	b.SetBlock(bx, by, bz, block)
+}
+
+func (b *BlockNeighborhood) SetBlock(bx, by, bz int, block *world.MapBlock) {
+	b.blocks[bz*9+by*3+bx] = block
+}
+
+func (b *BlockNeighborhood) GetBlockAt(x, y, z int) *world.MapBlock {
+	bx := x/16 + 1
+	by := y/16 + 1
+	bz := z/16 + 1
+
+	return b.blocks[bz*9+by*3+bx]
+}
+
+func (b *BlockNeighborhood) GetNode(x, y, z int) (string, uint8, uint8) {
+	block := b.GetBlockAt(x, y, z)
+
+	if block == nil {
+		return "air", 0, 0
+	}
+
+	node := block.GetNode(x%16, y%16, z%16)
+	name := block.ResolveName(node.ID)
+	return name, node.Param1, node.Param2
+}
+
+func (b *BlockNeighborhood) GetParam1(x, y, z int) uint8 {
+	block := b.GetBlockAt(x, y, z)
+
+	if block == nil {
+		return 0
+	}
+
+	node := block.GetNode(x%16, y%16, z%16)
+	return node.Param1
+}
+
+func renderBlock(target *raster.RenderBuffer, nr *NodeRasterizer, neighborhood *BlockNeighborhood, g *game.Game, offsetX, offsetY int, depth float32) {
 	rect := image.Rect(0, 0, TileBlockWidth, TileBlockHeight)
 
 	// FIXME: nodes must define their origin points
@@ -18,11 +89,26 @@ func renderBlock(target *raster.RenderBuffer, nr *NodeRasterizer, block *world.M
 	for z := world.MapBlockSize - 1; z >= 0; z-- {
 		for y := world.MapBlockSize - 1; y >= 0; y-- {
 			for x := world.MapBlockSize - 1; x >= 0; x-- {
-				node := block.GetNode(x, y, z)
-				nodeName := block.ResolveName(node.ID)
-				gameNode := g.Node(nodeName)
+				name, param1, param2 := neighborhood.GetNode(x, y, z)
+				nodeDef := g.NodeDef(name)
 
-				renderedNode := nr.Render(nodeName, &gameNode)
+				light := decodeLight(param1)
+				if l := decodeLight(neighborhood.GetParam1(x+1, y, z)); l > light {
+					light = l
+				}
+				if l := decodeLight(neighborhood.GetParam1(x, y+1, z)); l > light {
+					light = l
+				}
+				if l := decodeLight(neighborhood.GetParam1(x, y, z+1)); l > light {
+					light = l
+				}
+
+				renderableNode := RenderableNode{
+					Name:   name,
+					Light:  light,
+					Param2: param2,
+				}
+				renderedNode := nr.Render(renderableNode, &nodeDef)
 
 				tileOffsetX := originX + BaseResolution*(z-x)/2 + offsetX
 				tileOffsetY := originY + BaseResolution/4*(z+x) - YOffsetCoef*y + offsetY

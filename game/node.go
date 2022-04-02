@@ -63,10 +63,39 @@ func (t *DrawType) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
+type ParamType int
+
+const (
+	ParamTypeLight = iota
+	ParamTypeNone
+)
+
+var ParamTypeNames = map[string]ParamType{
+	"none":  ParamTypeNone,
+	"light": ParamTypeLight,
+}
+
+func (t *ParamType) UnmarshalJSON(data []byte) error {
+	var name string
+	err := json.Unmarshal(data, &name)
+	if err != nil {
+		return err
+	}
+
+	if paramtype, ok := ParamTypeNames[name]; ok {
+		*t = paramtype
+	} else {
+		return fmt.Errorf("invalid paramtype: `%s`", name)
+	}
+
+	return nil
+}
+
 type NodeDescriptor struct {
-	DrawType DrawType `json:"drawtype"`
-	Tiles    []string `json:"tiles"`
-	Mesh     *string  `json:"mesh"`
+	DrawType  DrawType  `json:"drawtype"`
+	ParamType ParamType `json:"paramtype"`
+	Tiles     []string  `json:"tiles"`
+	Mesh      *string   `json:"mesh"`
 }
 
 func (n *NodeDescriptor) UnmarshalJSON(data []byte) error {

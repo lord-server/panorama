@@ -13,24 +13,25 @@ type gameDescriptor struct {
 	Nodes   map[string]NodeDescriptor `json:"nodes"`
 }
 
-type Node struct {
-	DrawType DrawType
-	Textures []*image.NRGBA
-	Model    *mesh.Model
+type NodeDefinition struct {
+	DrawType  DrawType
+	ParamType ParamType
+	Textures  []*image.NRGBA
+	Model     *mesh.Model
 }
 
 type Game struct {
 	Aliases map[string]string
-	Nodes   map[string]Node
-	unknown Node
+	Nodes   map[string]NodeDefinition
+	unknown NodeDefinition
 }
 
-func makeNormalNode(drawtype DrawType, tiles []*image.NRGBA) Node {
+func makeNormalNode(drawtype DrawType, tiles []*image.NRGBA) NodeDefinition {
 	textures := make([]*image.NRGBA, 6)
 	model := mesh.Cube()
 
 	if len(tiles) == 0 {
-		return Node{
+		return NodeDefinition{
 			DrawType: drawtype,
 			Textures: textures,
 			Model:    model,
@@ -46,17 +47,17 @@ func makeNormalNode(drawtype DrawType, tiles []*image.NRGBA) Node {
 		textures[i] = tiles[i]
 	}
 
-	return Node{
+	return NodeDefinition{
 		DrawType: drawtype,
 		Textures: textures,
 		Model:    model,
 	}
 }
 
-func makeMeshNode(drawtype DrawType, model *mesh.Model, tiles []*image.NRGBA) Node {
+func makeMeshNode(drawtype DrawType, model *mesh.Model, tiles []*image.NRGBA) NodeDefinition {
 	textures := make([]*image.NRGBA, len(model.Meshes))
 	if len(tiles) == 0 {
-		return Node{
+		return NodeDefinition{
 			DrawType: drawtype,
 			Textures: textures,
 			Model:    model,
@@ -70,14 +71,14 @@ func makeMeshNode(drawtype DrawType, model *mesh.Model, tiles []*image.NRGBA) No
 		textures[i] = tiles[i]
 	}
 
-	return Node{
+	return NodeDefinition{
 		DrawType: drawtype,
 		Model:    model,
 		Textures: textures,
 	}
 }
 
-func ResolveNode(descriptor NodeDescriptor, mediaCache *MediaCache) Node {
+func ResolveNode(descriptor NodeDescriptor, mediaCache *MediaCache) NodeDefinition {
 	tiles := make([]*image.NRGBA, len(descriptor.Tiles))
 
 	for i, tileName := range descriptor.Tiles {
@@ -96,10 +97,11 @@ func ResolveNode(descriptor NodeDescriptor, mediaCache *MediaCache) Node {
 		return makeMeshNode(descriptor.DrawType, model, tiles)
 	}
 
-	return Node{
-		DrawType: descriptor.DrawType,
-		Textures: []*image.NRGBA{},
-		Model:    nil,
+	return NodeDefinition{
+		DrawType:  descriptor.DrawType,
+		ParamType: descriptor.ParamType,
+		Textures:  []*image.NRGBA{},
+		Model:     nil,
 	}
 }
 
@@ -122,7 +124,7 @@ func LoadGame(desc string, path string) (Game, error) {
 		return Game{}, err
 	}
 
-	nodes := make(map[string]Node)
+	nodes := make(map[string]NodeDefinition)
 	for name, gameNode := range descriptor.Nodes {
 		node := ResolveNode(gameNode, mediaCache)
 
@@ -132,7 +134,7 @@ func LoadGame(desc string, path string) (Game, error) {
 	return Game{
 		Aliases: descriptor.Aliases,
 		Nodes:   nodes,
-		unknown: Node{
+		unknown: NodeDefinition{
 			DrawType: DrawTypeNormal,
 			Textures: []*image.NRGBA{mediaCache.dummyImage},
 			Model:    nil,
@@ -140,7 +142,7 @@ func LoadGame(desc string, path string) (Game, error) {
 	}, nil
 }
 
-func (g *Game) Node(node string) Node {
+func (g *Game) NodeDef(node string) NodeDefinition {
 	if def, ok := g.Nodes[node]; ok {
 		return def
 	}
