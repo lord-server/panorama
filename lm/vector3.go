@@ -36,6 +36,13 @@ func (lhs Vector3) DivScalar(rhs float32) Vector3 {
 	return Vec3(x, y, z)
 }
 
+func (lhs Vector3) PowScalar(power float32) Vector3 {
+	x := float32(math.Pow(float64(lhs.X), float64(power)))
+	y := float32(math.Pow(float64(lhs.Y), float64(power)))
+	z := float32(math.Pow(float64(lhs.Z), float64(power)))
+	return Vec3(x, y, z)
+}
+
 func (lhs Vector3) Cross(rhs Vector3) Vector3 {
 	x := lhs.Y*rhs.Z - lhs.Z*rhs.Y
 	y := lhs.Z*rhs.X - lhs.X*rhs.Z

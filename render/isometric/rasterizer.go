@@ -12,6 +12,7 @@ import (
 	"github.com/weqqr/panorama/world"
 )
 
+const Gamma = 2.2
 const BaseResolution = 16
 
 var (
@@ -65,11 +66,11 @@ func sampleTexture(tex *image.NRGBA, texcoord lm.Vector2) lm.Vector4 {
 	return lm.Vec4(float32(c.R)/255, float32(c.G)/255, float32(c.B)/255, float32(c.A)/255)
 }
 
-var LightDir = lm.Vec3(-0.6, 1, -0.8).Normalize()
-var LightIntensity = 0.95 / LightDir.MaxComponent()
+var SunLightDir = lm.Vec3(-0.5, 1, -0.8).Normalize()
+var SunLightIntensity = 0.95 / SunLightDir.MaxComponent()
 var Projection = lm.DimetricProjection()
 
-func drawTriangle(target *raster.RenderBuffer, tex *image.NRGBA, light float32, a, b, c mesh.Vertex) {
+func drawTriangle(target *raster.RenderBuffer, tex *image.NRGBA, lighting float32, a, b, c mesh.Vertex) {
 	originX := float32(target.Color.Bounds().Dx() / 2)
 	originY := float32(target.Color.Bounds().Dy() / 2)
 	origin := lm.Vec2(originX, originY)
@@ -99,7 +100,7 @@ func drawTriangle(target *raster.RenderBuffer, tex *image.NRGBA, light float32, 
 				Add(b.Normal.MulScalar(barycentric.Y)).
 				Add(c.Normal.MulScalar(barycentric.Z))
 
-			lighting := LightIntensity * light * lm.Clamp(lm.Abs(normal.Dot(LightDir))*0.8+0.2, 0.0, 1.0)
+			lighting := SunLightIntensity * lighting * lm.Clamp(lm.Abs(normal.Dot(SunLightDir))*0.8+0.2, 0.0, 1.0)
 
 			var finalColor color.NRGBA
 			if tex != nil {
@@ -107,7 +108,7 @@ func drawTriangle(target *raster.RenderBuffer, tex *image.NRGBA, light float32, 
 					Add(b.Texcoord.MulScalar(barycentric.Y)).
 					Add(c.Texcoord.MulScalar(barycentric.Z))
 				rgba := sampleTexture(tex, texcoord)
-				col := rgba.XYZ().MulScalar(lighting).ClampScalar(0.0, 1.0)
+				col := rgba.XYZ().PowScalar(Gamma).MulScalar(lighting).PowScalar(1.0/Gamma).ClampScalar(0.0, 1.0)
 
 				finalColor = color.NRGBA{
 					R: uint8(255 * col.X),

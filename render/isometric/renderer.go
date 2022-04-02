@@ -46,11 +46,11 @@ func (r *Renderer) RenderTile(tilePos render.TilePosition, w *world.World, game 
 				neighborhood := BlockNeighborhood{}
 
 				neighborhood.FetchBlock(1, 1, 1, blockX, blockY, blockZ, w)
-				neighborhood.FetchBlock(0, 1, 1, blockX-1, blockY, blockZ, w)
+				// neighborhood.FetchBlock(0, 1, 1, blockX-1, blockY, blockZ, w)
 				neighborhood.FetchBlock(2, 1, 1, blockX+1, blockY, blockZ, w)
-				neighborhood.FetchBlock(1, 0, 1, blockX, blockY-1, blockZ, w)
+				// neighborhood.FetchBlock(1, 0, 1, blockX, blockY-1, blockZ, w)
 				neighborhood.FetchBlock(1, 2, 1, blockX, blockY+1, blockZ, w)
-				neighborhood.FetchBlock(1, 1, 0, blockX, blockY, blockZ-1, w)
+				// neighborhood.FetchBlock(1, 1, 0, blockX, blockY, blockZ-1, w)
 				neighborhood.FetchBlock(1, 1, 2, blockX, blockY, blockZ+2, w)
 
 				tileOffsetX := world.MapBlockSize * BaseResolution / 2 * (z - x)
