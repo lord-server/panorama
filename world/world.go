@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 
+	lru "github.com/hashicorp/golang-lru"
 	"github.com/jackc/pgx/v4"
 	"github.com/jackc/pgx/v4/pgxpool"
 )
@@ -22,6 +23,7 @@ func NewPostgresBackend(dsn string) (*PostgresBackend, error) {
 	if err != nil {
 		return nil, err
 	}
+
 	return &PostgresBackend{
 		conn: conn,
 	}, nil
@@ -46,16 +48,31 @@ func (p *PostgresBackend) GetBlockData(x, y, z int) ([]byte, error) {
 }
 
 type World struct {
-	backend Backend
+	backend    Backend
+	blockCache *lru.Cache
 }
 
 func NewWorldWithBackend(backend Backend) World {
+	blockCache, err := lru.New(1024)
+	if err != nil {
+		panic(err)
+	}
 	return World{
-		backend: backend,
+		backend:    backend,
+		blockCache: blockCache,
 	}
 }
 
 func (w *World) GetBlock(x, y, z int) (*MapBlock, error) {
+	type blockPos struct {
+		x, y, z int
+	}
+
+	cachedBlock, ok := w.blockCache.Get(blockPos{x, y, z})
+	if ok {
+		return cachedBlock.(*MapBlock), nil
+	}
+
 	data, err := w.backend.GetBlockData(x, y, z)
 	if err != nil {
 		return nil, err
@@ -69,6 +86,8 @@ func (w *World) GetBlock(x, y, z int) (*MapBlock, error) {
 	if err != nil {
 		return nil, err
 	}
+
+	w.blockCache.Add(blockPos{x, y, z}, block)
 
 	return block, nil
 }
