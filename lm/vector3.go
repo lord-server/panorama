@@ -76,3 +76,21 @@ func (lhs Vector3) XY() Vector2 {
 func (lhs Vector3) MaxComponent() float32 {
 	return maxFloat32(lhs.X, maxFloat32(lhs.Y, lhs.Z))
 }
+
+func (lhs Vector3) RotateXY(angle float32) Vector3 {
+	cos := float32(math.Cos(float64(angle)))
+	sin := float32(math.Sin(float64(angle)))
+	return Vec3(lhs.X*cos-lhs.Y*sin, lhs.X*sin+lhs.Y*cos, lhs.Z)
+}
+
+func (lhs Vector3) RotateXZ(angle float32) Vector3 {
+	cos := float32(math.Cos(float64(angle)))
+	sin := float32(math.Sin(float64(angle)))
+	return Vec3(lhs.X*cos-lhs.Z*sin, lhs.Y, lhs.X*sin+lhs.Z*cos)
+}
+
+func (lhs Vector3) RotateYZ(angle float32) Vector3 {
+	cos := float32(math.Cos(float64(angle)))
+	sin := float32(math.Sin(float64(angle)))
+	return Vec3(lhs.X, lhs.Y*cos-lhs.Z*sin, lhs.Y*sin+lhs.Z*cos)
+}

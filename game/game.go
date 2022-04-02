@@ -14,10 +14,11 @@ type gameDescriptor struct {
 }
 
 type NodeDefinition struct {
-	DrawType  DrawType
-	ParamType ParamType
-	Textures  []*image.NRGBA
-	Model     *mesh.Model
+	DrawType   DrawType
+	ParamType  ParamType
+	ParamType2 ParamType2
+	Textures   []*image.NRGBA
+	Model      *mesh.Model
 }
 
 type Game struct {
@@ -54,13 +55,12 @@ func makeNormalNode(drawtype DrawType, tiles []*image.NRGBA) NodeDefinition {
 	}
 }
 
-func makeNodeBox(drawtype DrawType, nodeBox *NodeBox, tiles []*image.NRGBA) NodeDefinition {
+func makeNodeBox(nodeBox *NodeBox, tiles []*image.NRGBA) NodeDefinition {
 	textures := make([]*image.NRGBA, 6*len(nodeBox.Fixed))
 	model := mesh.NewModel()
 
 	if len(tiles) == 0 {
 		return NodeDefinition{
-			DrawType: drawtype,
 			Textures: textures,
 			Model:    &model,
 		}
@@ -82,17 +82,15 @@ func makeNodeBox(drawtype DrawType, nodeBox *NodeBox, tiles []*image.NRGBA) Node
 	}
 
 	return NodeDefinition{
-		DrawType: drawtype,
 		Textures: textures,
 		Model:    &model,
 	}
 }
 
-func makeMeshNode(drawtype DrawType, model *mesh.Model, tiles []*image.NRGBA) NodeDefinition {
+func makeMeshNode(model *mesh.Model, tiles []*image.NRGBA) NodeDefinition {
 	textures := make([]*image.NRGBA, len(model.Meshes))
 	if len(tiles) == 0 {
 		return NodeDefinition{
-			DrawType: drawtype,
 			Textures: textures,
 			Model:    model,
 		}
@@ -106,7 +104,6 @@ func makeMeshNode(drawtype DrawType, model *mesh.Model, tiles []*image.NRGBA) No
 	}
 
 	return NodeDefinition{
-		DrawType: drawtype,
 		Model:    model,
 		Textures: textures,
 	}
@@ -119,30 +116,31 @@ func ResolveNode(descriptor NodeDescriptor, mediaCache *MediaCache) NodeDefiniti
 		tiles[i] = mediaCache.Image(tileName)
 	}
 
+	var nd NodeDefinition
+
 	switch descriptor.DrawType {
 	case DrawTypeNormal, DrawTypeAllFaces, DrawTypeLiquid, DrawTypeFlowingLiquid, DrawTypeGlasslike, DrawTypeGlasslikeFramed:
-		return makeNormalNode(descriptor.DrawType, tiles)
+		nd = makeNormalNode(descriptor.DrawType, tiles)
 	case DrawTypeNodeBox:
 		if descriptor.NodeBox == nil {
 			break
 		}
 
-		return makeNodeBox(descriptor.DrawType, descriptor.NodeBox, tiles)
+		nd = makeNodeBox(descriptor.NodeBox, tiles)
 	case DrawTypeMesh:
 		if descriptor.Mesh == nil {
 			break
 		}
 
 		model := mediaCache.Mesh(*descriptor.Mesh)
-		return makeMeshNode(descriptor.DrawType, model, tiles)
+		nd = makeMeshNode(model, tiles)
 	}
 
-	return NodeDefinition{
-		DrawType:  descriptor.DrawType,
-		ParamType: descriptor.ParamType,
-		Textures:  []*image.NRGBA{},
-		Model:     nil,
-	}
+	nd.DrawType = descriptor.DrawType
+	nd.ParamType = descriptor.ParamType
+	nd.ParamType2 = descriptor.ParamType2
+
+	return nd
 }
 
 func LoadGame(desc string, path string) (Game, error) {

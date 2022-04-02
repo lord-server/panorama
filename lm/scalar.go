@@ -29,3 +29,7 @@ func maxFloat32(a, b float32) float32 {
 	}
 	return b
 }
+
+func Radians(degrees float32) float32 {
+	return degrees * math.Pi / 180.0
+}

@@ -137,6 +137,39 @@ func drawTriangle(target *raster.RenderBuffer, tex *image.NRGBA, lighting float3
 	}
 }
 
+func transformToFaceDir(v lm.Vector3, facedir uint8) lm.Vector3 {
+	axis := (facedir >> 2) & 0x7
+	dir := facedir & 0x3
+
+	// Left click with screwdriver
+	switch dir {
+	case 0: // no-op
+	case 1:
+		v = v.RotateXZ(lm.Radians(-90))
+	case 2:
+		v = v.RotateXZ(lm.Radians(180))
+	case 3:
+		v = v.RotateXZ(lm.Radians(90))
+	}
+
+	// Right click with screwdriver
+	switch axis {
+	case 0: // no-op
+	case 1:
+		v = v.RotateYZ(lm.Radians(90))
+	case 2:
+		v = v.RotateYZ(lm.Radians(-90))
+	case 3:
+		v = v.RotateXY(lm.Radians(-90))
+	case 4:
+		v = v.RotateXY(lm.Radians(90))
+	case 5:
+		v = v.RotateXY(lm.Radians(180))
+	}
+
+	return v
+}
+
 func (r *NodeRasterizer) Render(node RenderableNode, nodeDef *game.NodeDefinition) *raster.RenderBuffer {
 	if nodeDef.DrawType == game.DrawTypeAirlike || nodeDef.Model == nil || len(nodeDef.Textures) == 0 {
 		return nil
@@ -156,6 +189,23 @@ func (r *NodeRasterizer) Render(node RenderableNode, nodeDef *game.NodeDefinitio
 			a := mesh.Vertices[i*3]
 			b := mesh.Vertices[i*3+1]
 			c := mesh.Vertices[i*3+2]
+
+			if nodeDef.ParamType2 == game.ParamType2FaceDir {
+				a.Position = transformToFaceDir(a.Position, node.Param2)
+				b.Position = transformToFaceDir(b.Position, node.Param2)
+				c.Position = transformToFaceDir(c.Position, node.Param2)
+				a.Normal = transformToFaceDir(a.Normal, node.Param2)
+				b.Normal = transformToFaceDir(b.Normal, node.Param2)
+				c.Normal = transformToFaceDir(c.Normal, node.Param2)
+			}
+
+			a.Position.Z = -a.Position.Z
+			b.Position.Z = -b.Position.Z
+			c.Position.Z = -c.Position.Z
+
+			a.Position.X = -a.Position.X
+			b.Position.X = -b.Position.X
+			c.Position.X = -c.Position.X
 
 			drawTriangle(target, nodeDef.Textures[j], node.Light, a, b, c)
 		}

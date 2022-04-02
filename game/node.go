@@ -76,7 +76,7 @@ var ParamTypeNames = map[string]ParamType{
 }
 
 func (t *ParamType) UnmarshalJSON(data []byte) error {
-	var name string
+	name := "light"
 	err := json.Unmarshal(data, &name)
 	if err != nil {
 		return err
@@ -86,6 +86,54 @@ func (t *ParamType) UnmarshalJSON(data []byte) error {
 		*t = paramtype
 	} else {
 		return fmt.Errorf("invalid paramtype: `%s`", name)
+	}
+
+	return nil
+}
+
+type ParamType2 int
+
+const (
+	ParamType2FlowingLiquid = iota
+	ParamType2WallMounted
+	ParamType2FaceDir
+	ParamType2Leveled
+	ParamType2DegRotate
+	ParamType2MeshOptions
+	ParamType2Color
+	ParamType2ColorFaceDir
+	ParamType2ColorWallMounted
+	ParamType2GlassLikeLiquidLevel
+	ParamType2ColorDegRotate
+	ParamType2None
+)
+
+var ParamType2Names = map[string]ParamType2{
+	"flowingliquid":        ParamType2FlowingLiquid,
+	"wallmounted":          ParamType2WallMounted,
+	"facedir":              ParamType2FaceDir,
+	"leveled":              ParamType2Leveled,
+	"degrotate":            ParamType2DegRotate,
+	"meshoptions":          ParamType2MeshOptions,
+	"color":                ParamType2Color,
+	"colorfacedir":         ParamType2ColorFaceDir,
+	"colorwallmounted":     ParamType2ColorWallMounted,
+	"glasslikeliquidlevel": ParamType2GlassLikeLiquidLevel,
+	"colordegrotate":       ParamType2ColorDegRotate,
+	"none":                 ParamType2None,
+}
+
+func (t *ParamType2) UnmarshalJSON(data []byte) error {
+	name := "none"
+	err := json.Unmarshal(data, &name)
+	if err != nil {
+		return err
+	}
+
+	if paramtype2, ok := ParamType2Names[name]; ok {
+		*t = paramtype2
+	} else {
+		return fmt.Errorf("invalid paramtype2: `%s`", name)
 	}
 
 	return nil
@@ -141,18 +189,21 @@ func (n *NodeBox) UnmarshalJSON(data []byte) error {
 }
 
 type NodeDescriptor struct {
-	DrawType  DrawType  `json:"drawtype"`
-	ParamType ParamType `json:"paramtype"`
-	Tiles     []string  `json:"tiles"`
-	NodeBox   *NodeBox  `json:"node_box"`
-	Mesh      *string   `json:"mesh"`
+	DrawType   DrawType   `json:"drawtype"`
+	ParamType  ParamType  `json:"paramtype"`
+	ParamType2 ParamType2 `json:"paramtype2"`
+	Tiles      []string   `json:"tiles"`
+	NodeBox    *NodeBox   `json:"node_box"`
+	Mesh       *string    `json:"mesh"`
 }
 
 func (n *NodeDescriptor) UnmarshalJSON(data []byte) error {
 	type nodeDescriptor NodeDescriptor
 	inner := &nodeDescriptor{
-		DrawType: DrawTypeNormal,
-		Tiles:    []string{},
+		DrawType:   DrawTypeNormal,
+		Tiles:      []string{},
+		ParamType:  ParamTypeLight,
+		ParamType2: ParamType2None,
 	}
 
 	if err := json.Unmarshal(data, inner); err != nil {

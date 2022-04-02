@@ -60,7 +60,7 @@ func main() {
 	tiler := NewTiler(&config.RegionConfig)
 
 	if args.FullRender {
-		tiler.FullRender(&game, &world)
+		tiler.FullRender(&game, &world, config.RendererWorkers)
 	}
 
 	if args.Serve {

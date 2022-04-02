@@ -15,11 +15,12 @@ type RegionConfig struct {
 }
 
 type Config struct {
-	ListenAddress string       `toml:"listen_address"`
-	GamePath      string       `toml:"game_path"`
-	WorldPath     string       `toml:"world_path"`
-	WorldDSN      string       `toml:"world_dsn"`
-	RegionConfig  RegionConfig `toml:"region"`
+	ListenAddress   string       `toml:"listen_address"`
+	GamePath        string       `toml:"game_path"`
+	WorldPath       string       `toml:"world_path"`
+	WorldDSN        string       `toml:"world_dsn"`
+	RegionConfig    RegionConfig `toml:"region"`
+	RendererWorkers int          `toml:"renderer_workers"`
 }
 
 func LoadConfig(path string) Config {

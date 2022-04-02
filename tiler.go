@@ -35,29 +35,39 @@ func NewTiler(region *RegionConfig) Tiler {
 	}
 }
 
-func (t *Tiler) FullRender(game *game.Game, world *world.World) {
+func worker(wg *sync.WaitGroup, game *game.Game, world *world.World, renderer isometric.Renderer, positions <-chan render.TilePosition) {
+	for position := range positions {
+		output := renderer.RenderTile(position, world, game)
+		tilePath := tilePath(position.X, position.Y, 0)
+		err := raster.SavePNG(output, tilePath)
+		if err != nil {
+			return
+		}
+		log.Printf("saved %v", tilePath)
+	}
+
+	wg.Done()
+}
+
+func (t *Tiler) FullRender(game *game.Game, world *world.World, workers int) {
 	var wg sync.WaitGroup
+	positions := make(chan render.TilePosition)
+
+	for i := 0; i < workers; i++ {
+		wg.Add(1)
+		renderer := isometric.NewRenderer(t.lowerLimit, t.upperLimit)
+		go worker(&wg, game, world, renderer, positions)
+	}
+
 	for x := t.xMin; x < t.xMax; x++ {
 		os.MkdirAll(fmt.Sprintf("tiles/0/%v", x), os.ModePerm)
-		xx := x
-		wg.Add(1)
-		go func() {
-			defer wg.Done()
 
-			renderer := isometric.NewRenderer(t.lowerLimit, t.upperLimit)
-
-			for y := t.yMin; y < t.yMax; y++ {
-				yy := y
-				output := renderer.RenderTile(render.TilePosition{xx, yy}, world, game)
-				tilePath := tilePath(xx, yy, 0)
-				err := raster.SavePNG(output, tilePath)
-				if err != nil {
-					return
-				}
-				log.Printf("saved %v", tilePath)
-			}
-		}()
+		for y := t.yMin; y < t.yMax; y++ {
+			positions <- render.TilePosition{X: x, Y: y}
+		}
 	}
+
+	close(positions)
 
 	wg.Wait()
 }
