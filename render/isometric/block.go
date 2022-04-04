@@ -89,7 +89,24 @@ func renderBlock(target *raster.RenderBuffer, nr *NodeRasterizer, neighborhood *
 	for z := world.MapBlockSize - 1; z >= 0; z-- {
 		for y := world.MapBlockSize - 1; y >= 0; y-- {
 			for x := world.MapBlockSize - 1; x >= 0; x-- {
+				tileOffsetX := originX + BaseResolution*(z-x)/2 + offsetX
+				tileOffsetY := originY + BaseResolution/4*(z+x) - YOffsetCoef*y + offsetY
+
+				// Fast path: Don't bother with nodes outside viewport
+				nodeTileTooLow := tileOffsetX <= target.Color.Rect.Min.X-BaseResolution || tileOffsetY <= target.Color.Rect.Min.Y-BaseResolution-BaseResolution/8
+				nodeTileTooHigh := tileOffsetX >= target.Color.Rect.Max.X || tileOffsetY >= target.Color.Rect.Max.Y
+
+				if nodeTileTooLow || nodeTileTooHigh {
+					continue
+				}
+
 				name, param1, param2 := neighborhood.GetNode(x, y, z)
+
+				// Fast path: checking for air immediately is faster than fetching NodeDefinition
+				if name == "air" {
+					continue
+				}
+
 				nodeDef := g.NodeDef(name)
 
 				light := decodeLight(param1)
@@ -109,9 +126,6 @@ func renderBlock(target *raster.RenderBuffer, nr *NodeRasterizer, neighborhood *
 					Param2: param2,
 				}
 				renderedNode := nr.Render(renderableNode, &nodeDef)
-
-				tileOffsetX := originX + BaseResolution*(z-x)/2 + offsetX
-				tileOffsetY := originY + BaseResolution/4*(z+x) - YOffsetCoef*y + offsetY
 
 				depthOffset := -float32(z+x)/math.Sqrt2 - 0.5*(float32(y)) + depth
 				target.OverlayDepthAware(renderedNode, image.Pt(tileOffsetX, tileOffsetY), depthOffset)
