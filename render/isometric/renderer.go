@@ -18,12 +18,12 @@ type Renderer struct {
 	upperLimit int
 }
 
-func NewRenderer(lowerLimit, upperLimit int) Renderer {
+func NewRenderer(lowerLimit, upperLimit int) render.Renderer {
 	baseWidth := BaseResolution
 	baseHeight := BaseResolution + BaseResolution/8
 	scale := float32(BaseResolution * math.Sqrt2 / 2)
 
-	return Renderer{
+	return &Renderer{
 		nr: render.NewNodeRasterizer(baseWidth, baseHeight, scale, lm.DimetricProjection()),
 
 		lowerLimit: lowerLimit,

@@ -7,6 +7,8 @@ import (
 	"path"
 
 	"github.com/weqqr/panorama/game"
+	"github.com/weqqr/panorama/render/isometric"
+	"github.com/weqqr/panorama/render/topdown"
 	"github.com/weqqr/panorama/world"
 )
 
@@ -24,7 +26,7 @@ func serveTiles(addr string) {
 }
 
 type Args struct {
-	FullRender bool
+	FullRender string
 	Serve      bool
 	ConfigPath string
 }
@@ -32,7 +34,7 @@ type Args struct {
 var args Args
 
 func init() {
-	flag.BoolVar(&args.FullRender, "fullrender", false, "Render entire map")
+	flag.StringVar(&args.FullRender, "fullrender", "", "Render entire map with specified renderer")
 	flag.BoolVar(&args.Serve, "serve", false, "Serve tiles over the web")
 	flag.StringVar(&args.ConfigPath, "config", "panorama.toml", "Path to config file")
 	flag.Parse()
@@ -59,8 +61,11 @@ func main() {
 
 	tiler := NewTiler(&config.RegionConfig)
 
-	if args.FullRender {
-		tiler.FullRender(&game, &world, config.RendererWorkers)
+	switch args.FullRender {
+	case "isometric":
+		tiler.FullRender(&game, &world, config.RendererWorkers, "isometric", isometric.NewRenderer)
+	case "topdown":
+		tiler.FullRender(&game, &world, config.RendererWorkers, "topdown", topdown.NewRenderer)
 	}
 
 	if args.Serve {

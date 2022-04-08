@@ -20,8 +20,8 @@ type Renderer struct {
 	upperLimit int
 }
 
-func NewRenderer(lowerLimit, upperLimit int) Renderer {
-	return Renderer{
+func NewRenderer(lowerLimit, upperLimit int) render.Renderer {
+	return &Renderer{
 		nr: render.NewNodeRasterizer(BaseResolution, BaseResolution, BaseResolution, lm.TopDownProjection()),
 
 		lowerLimit: lowerLimit,
