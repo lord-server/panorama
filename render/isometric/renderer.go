@@ -5,21 +5,26 @@ import (
 	"math"
 
 	"github.com/weqqr/panorama/game"
+	"github.com/weqqr/panorama/lm"
 	"github.com/weqqr/panorama/raster"
 	"github.com/weqqr/panorama/render"
 	"github.com/weqqr/panorama/world"
 )
 
 type Renderer struct {
-	nr NodeRasterizer
+	nr render.NodeRasterizer
 
 	lowerLimit int
 	upperLimit int
 }
 
 func NewRenderer(lowerLimit, upperLimit int) Renderer {
+	baseWidth := BaseResolution
+	baseHeight := BaseResolution + BaseResolution/8
+	scale := float32(BaseResolution * math.Sqrt2 / 2)
+
 	return Renderer{
-		nr: NewNodeRasterizer(),
+		nr: render.NewNodeRasterizer(baseWidth, baseHeight, scale, lm.DimetricProjection()),
 
 		lowerLimit: lowerLimit,
 		upperLimit: upperLimit,

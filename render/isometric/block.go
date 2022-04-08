@@ -6,7 +6,16 @@ import (
 
 	"github.com/weqqr/panorama/game"
 	"github.com/weqqr/panorama/raster"
+	"github.com/weqqr/panorama/render"
 	"github.com/weqqr/panorama/world"
+)
+
+const BaseResolution = 16
+
+var (
+	YOffsetCoef     = int(math.Round(BaseResolution * (1 + math.Sqrt2) / 4))
+	TileBlockWidth  = world.MapBlockSize * BaseResolution
+	TileBlockHeight = BaseResolution/2*world.MapBlockSize - 1 + YOffsetCoef*world.MapBlockSize
 )
 
 func decodeLight(param1 uint8) float32 {
@@ -80,10 +89,11 @@ func (b *BlockNeighborhood) GetParam1(x, y, z int) uint8 {
 	return node.Param1
 }
 
-func renderBlock(target *raster.RenderBuffer, nr *NodeRasterizer, neighborhood *BlockNeighborhood, g *game.Game, offsetX, offsetY int, depth float32) {
+func renderBlock(target *raster.RenderBuffer, nr *render.NodeRasterizer, neighborhood *BlockNeighborhood, g *game.Game, offsetX, offsetY int, depth float32) {
 	rect := image.Rect(0, 0, TileBlockWidth, TileBlockHeight)
 
 	// FIXME: nodes must define their origin points
+	// FIXME: Magic numbers and sloppy usage of BaseResolution
 	originX, originY := rect.Dx()/2-BaseResolution/2, rect.Dy()/2+BaseResolution/4+2
 
 	for z := world.MapBlockSize - 1; z >= 0; z-- {
@@ -120,7 +130,7 @@ func renderBlock(target *raster.RenderBuffer, nr *NodeRasterizer, neighborhood *
 					light = l
 				}
 
-				renderableNode := RenderableNode{
+				renderableNode := render.RenderableNode{
 					Name:   name,
 					Light:  light,
 					Param2: param2,

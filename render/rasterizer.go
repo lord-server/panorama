@@ -1,25 +1,16 @@
-package isometric
+package render
 
 import (
 	"image"
 	"image/color"
-	"math"
 
 	"github.com/weqqr/panorama/game"
 	"github.com/weqqr/panorama/lm"
 	"github.com/weqqr/panorama/mesh"
 	"github.com/weqqr/panorama/raster"
-	"github.com/weqqr/panorama/world"
 )
 
 const Gamma = 2.2
-const BaseResolution = 16
-
-var (
-	YOffsetCoef     = int(math.Round(BaseResolution * (1 + math.Sqrt2) / 4))
-	TileBlockWidth  = world.MapBlockSize * BaseResolution
-	TileBlockHeight = BaseResolution/2*world.MapBlockSize - 1 + YOffsetCoef*world.MapBlockSize
-)
 
 type RenderableNode struct {
 	Name   string
@@ -28,11 +19,20 @@ type RenderableNode struct {
 }
 
 type NodeRasterizer struct {
+	targetWidth  int
+	targetHeight int
+	scale        float32
+	projection   lm.Matrix3
+
 	cache map[RenderableNode]*raster.RenderBuffer
 }
 
-func NewNodeRasterizer() NodeRasterizer {
+func NewNodeRasterizer(width, height int, scale float32, projection lm.Matrix3) NodeRasterizer {
 	return NodeRasterizer{
+		targetWidth:  width,
+		targetHeight: height,
+		scale:        scale,
+
 		cache: make(map[RenderableNode]*raster.RenderBuffer),
 	}
 }
@@ -70,7 +70,7 @@ var SunLightDir = lm.Vec3(-0.5, 1, -0.8).Normalize()
 var SunLightIntensity = 0.95 / SunLightDir.MaxComponent()
 var Projection = lm.DimetricProjection()
 
-func drawTriangle(target *raster.RenderBuffer, tex *image.NRGBA, lighting float32, a, b, c mesh.Vertex) {
+func (r *NodeRasterizer) drawTriangle(target *raster.RenderBuffer, tex *image.NRGBA, lighting float32, a, b, c mesh.Vertex) {
 	originX := float32(target.Color.Bounds().Dx() / 2)
 	originY := float32(target.Color.Bounds().Dy() / 2)
 	origin := lm.Vec2(originX, originY)
@@ -79,9 +79,9 @@ func drawTriangle(target *raster.RenderBuffer, tex *image.NRGBA, lighting float3
 	b.Position = Projection.MulVec(b.Position)
 	c.Position = Projection.MulVec(c.Position)
 
-	pa := a.Position.XY().Mul(lm.Vec2(1, -1)).MulScalar(BaseResolution * math.Sqrt2 / 2).Add(origin)
-	pb := b.Position.XY().Mul(lm.Vec2(1, -1)).MulScalar(BaseResolution * math.Sqrt2 / 2).Add(origin)
-	pc := c.Position.XY().Mul(lm.Vec2(1, -1)).MulScalar(BaseResolution * math.Sqrt2 / 2).Add(origin)
+	pa := a.Position.XY().Mul(lm.Vec2(1, -1)).MulScalar(r.scale).Add(origin)
+	pb := b.Position.XY().Mul(lm.Vec2(1, -1)).MulScalar(r.scale).Add(origin)
+	pc := c.Position.XY().Mul(lm.Vec2(1, -1)).MulScalar(r.scale).Add(origin)
 
 	bboxMin := pa.Min(pb).Min(pc)
 	bboxMax := pa.Max(pb).Max(pc)
@@ -179,7 +179,7 @@ func (r *NodeRasterizer) Render(node RenderableNode, nodeDef *game.NodeDefinitio
 		return target
 	}
 
-	rect := image.Rect(0, 0, BaseResolution, BaseResolution+BaseResolution/8)
+	rect := image.Rect(0, 0, r.targetWidth, r.targetHeight)
 	target := raster.NewRenderBuffer(rect)
 
 	for j, mesh := range nodeDef.Model.Meshes {
@@ -207,7 +207,7 @@ func (r *NodeRasterizer) Render(node RenderableNode, nodeDef *game.NodeDefinitio
 			b.Position.X = -b.Position.X
 			c.Position.X = -c.Position.X
 
-			drawTriangle(target, nodeDef.Textures[j], node.Light, a, b, c)
+			r.drawTriangle(target, nodeDef.Textures[j], node.Light, a, b, c)
 		}
 	}
 
