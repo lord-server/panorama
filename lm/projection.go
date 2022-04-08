@@ -26,3 +26,18 @@ func DimetricProjection() Matrix3 {
 
 	return rotateX.Mul(&rotateY)
 }
+
+func TopDownProjection() Matrix3 {
+	alpha := math.Pi / 6
+
+	cosAlpha := float32(math.Cos(alpha))
+	sinAlpha := float32(math.Sin(alpha))
+
+	rotateX := NewMatrix3([9]float32{
+		1, 0, 0,
+		0, cosAlpha, sinAlpha,
+		0, -sinAlpha, cosAlpha,
+	})
+
+	return rotateX
+}

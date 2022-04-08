@@ -9,7 +9,7 @@ import (
 	"github.com/weqqr/panorama/game"
 	"github.com/weqqr/panorama/raster"
 	"github.com/weqqr/panorama/render"
-	"github.com/weqqr/panorama/render/isometric"
+	"github.com/weqqr/panorama/render/topdown"
 	"github.com/weqqr/panorama/world"
 )
 
@@ -35,7 +35,7 @@ func NewTiler(region *RegionConfig) Tiler {
 	}
 }
 
-func worker(wg *sync.WaitGroup, game *game.Game, world *world.World, renderer isometric.Renderer, positions <-chan render.TilePosition) {
+func worker(wg *sync.WaitGroup, game *game.Game, world *world.World, renderer render.Renderer, positions <-chan render.TilePosition) {
 	for position := range positions {
 		output := renderer.RenderTile(position, world, game)
 		tilePath := tilePath(position.X, position.Y, 0)
@@ -55,8 +55,8 @@ func (t *Tiler) FullRender(game *game.Game, world *world.World, workers int) {
 
 	for i := 0; i < workers; i++ {
 		wg.Add(1)
-		renderer := isometric.NewRenderer(t.lowerLimit, t.upperLimit)
-		go worker(&wg, game, world, renderer, positions)
+		renderer := topdown.NewRenderer(t.lowerLimit, t.upperLimit)
+		go worker(&wg, game, world, &renderer, positions)
 	}
 
 	for x := t.xMin; x < t.xMax; x++ {

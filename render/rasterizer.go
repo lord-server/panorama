@@ -32,6 +32,7 @@ func NewNodeRasterizer(width, height int, scale float32, projection lm.Matrix3) 
 		targetWidth:  width,
 		targetHeight: height,
 		scale:        scale,
+		projection:   projection,
 
 		cache: make(map[RenderableNode]*raster.RenderBuffer),
 	}
@@ -68,16 +69,15 @@ func sampleTexture(tex *image.NRGBA, texcoord lm.Vector2) lm.Vector4 {
 
 var SunLightDir = lm.Vec3(-0.5, 1, -0.8).Normalize()
 var SunLightIntensity = 0.95 / SunLightDir.MaxComponent()
-var Projection = lm.DimetricProjection()
 
 func (r *NodeRasterizer) drawTriangle(target *raster.RenderBuffer, tex *image.NRGBA, lighting float32, a, b, c mesh.Vertex) {
 	originX := float32(target.Color.Bounds().Dx() / 2)
 	originY := float32(target.Color.Bounds().Dy() / 2)
 	origin := lm.Vec2(originX, originY)
 
-	a.Position = Projection.MulVec(a.Position)
-	b.Position = Projection.MulVec(b.Position)
-	c.Position = Projection.MulVec(c.Position)
+	a.Position = r.projection.MulVec(a.Position)
+	b.Position = r.projection.MulVec(b.Position)
+	c.Position = r.projection.MulVec(c.Position)
 
 	pa := a.Position.XY().Mul(lm.Vec2(1, -1)).MulScalar(r.scale).Add(origin)
 	pb := b.Position.XY().Mul(lm.Vec2(1, -1)).MulScalar(r.scale).Add(origin)
