@@ -1,0 +1,23 @@
+# Path to the game directory
+game_path = ""
+
+# Path to the game directory
+world_path = ""
+
+# DSN string, used to connect to PostgreSQL
+world_dsn = ""
+
+# Address to serve the map from
+listen_address = ":33333"
+
+# Number of worker threads used for rendering
+renderer_workers = 2
+
+[region]
+# Rectangular region containing the map, defined as [minimum, maximum], measured in tiles
+x_bounds = [-5, -5]
+y_bounds = [-2, 2]
+
+# Upper and lower Y limit, measured in nodes
+upper_limit = 80
+lower_limit = -80
