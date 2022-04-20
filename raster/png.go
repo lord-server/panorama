@@ -5,6 +5,7 @@ import (
 	"image/draw"
 	"image/png"
 	"os"
+	"path/filepath"
 )
 
 func toNRGBA(img image.Image) *image.NRGBA {
@@ -29,6 +30,11 @@ func LoadPNG(path string) (*image.NRGBA, error) {
 }
 
 func SavePNG(img *image.NRGBA, name string) error {
+	err := os.MkdirAll(filepath.Dir(name), os.ModePerm)
+	if err != nil {
+		return err
+	}
+
 	file, err := os.Create(name)
 	if err != nil {
 		return err

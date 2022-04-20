@@ -6,7 +6,9 @@ import (
 	"net/http"
 	"path"
 
+	"github.com/weqqr/panorama/config"
 	"github.com/weqqr/panorama/game"
+	"github.com/weqqr/panorama/tiler"
 	"github.com/weqqr/panorama/world"
 )
 
@@ -34,12 +36,12 @@ var args Args
 func init() {
 	flag.BoolVar(&args.FullRender, "fullrender", false, "Render entire map")
 	flag.BoolVar(&args.Serve, "serve", false, "Serve tiles over the web")
-	flag.StringVar(&args.ConfigPath, "config", "panorama.toml", "Path to config file")
+	flag.StringVar(&args.ConfigPath, "config", "config.toml", "Path to config file")
 	flag.Parse()
 }
 
 func main() {
-	config := LoadConfig(args.ConfigPath)
+	config := config.LoadConfig(args.ConfigPath)
 	log.Printf("game path: %v\n", config.GamePath)
 
 	descPath := path.Join(config.WorldPath, "panorama_nodes.json")
@@ -57,10 +59,11 @@ func main() {
 
 	world := world.NewWorldWithBackend(backend)
 
-	tiler := NewTiler(&config.RegionConfig)
+	tiler := tiler.NewTiler(&config.RegionConfig)
 
 	if args.FullRender {
 		tiler.FullRender(&game, &world, config.RendererWorkers)
+		tiler.DownscaleTiles()
 	}
 
 	if args.Serve {
