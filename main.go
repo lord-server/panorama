@@ -67,6 +67,7 @@ func main() {
 	}
 
 	if args.Serve {
+		log.Printf("serving tiles @ %v", config.ListenAddress)
 		serveTiles(config.ListenAddress)
 	}
 }

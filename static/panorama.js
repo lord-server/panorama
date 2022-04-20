@@ -41,7 +41,7 @@ map.on('click mouseover mousemove', e => {
 
 L.tileLayer('/tiles/{z}/{x}/{y}.png', {
     maxZoom: 0,
-    minZoom: -7,
+    minZoom: -3,
     tileSize: 256,
     noWrap: true,
 }).addTo(map);

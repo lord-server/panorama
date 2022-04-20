@@ -1,8 +1,8 @@
 # Path to the game directory
-game_path = ""
+game_path = "/var/lib/panorama/game"
 
 # Path to the game directory
-world_path = ""
+world_path = "/var/lib/panorama/world"
 
 # DSN string, used to connect to PostgreSQL
 world_dsn = ""
