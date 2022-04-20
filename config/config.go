@@ -18,6 +18,7 @@ type Config struct {
 	ListenAddress   string       `toml:"listen_address"`
 	GamePath        string       `toml:"game_path"`
 	WorldPath       string       `toml:"world_path"`
+	TilesPath       string       `toml:"tiles_path"`
 	WorldDSN        string       `toml:"world_dsn"`
 	RegionConfig    RegionConfig `toml:"region"`
 	RendererWorkers int          `toml:"renderer_workers"`

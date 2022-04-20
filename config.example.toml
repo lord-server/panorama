@@ -7,6 +7,9 @@ world_path = "/var/lib/panorama/world"
 # DSN string, used to connect to PostgreSQL
 world_dsn = ""
 
+# Path to the tile storage
+tiles_path = "/var/lib/panorama/tiles"
+
 # Address to serve the map from
 listen_address = ":33333"
 

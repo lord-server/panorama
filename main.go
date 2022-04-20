@@ -12,11 +12,11 @@ import (
 	"github.com/weqqr/panorama/world"
 )
 
-func serveTiles(addr string) {
+func serveTiles(addr string, tilesPath string) {
 	staticFS := http.FileServer(http.Dir("./static"))
 	http.Handle("/", staticFS)
 
-	tilesFS := http.FileServer(http.Dir("./tiles"))
+	tilesFS := http.FileServer(http.Dir(tilesPath))
 	http.Handle("/tiles/", http.StripPrefix("/tiles/", tilesFS))
 
 	err := http.ListenAndServe(addr, nil)
@@ -59,7 +59,7 @@ func main() {
 
 	world := world.NewWorldWithBackend(backend)
 
-	tiler := tile.NewTiler(&config.RegionConfig)
+	tiler := tile.NewTiler(&config.RegionConfig, config.TilesPath)
 
 	if args.FullRender {
 		tiler.FullRender(&game, &world, config.RendererWorkers)
@@ -68,6 +68,6 @@ func main() {
 
 	if args.Serve {
 		log.Printf("serving tiles @ %v", config.ListenAddress)
-		serveTiles(config.ListenAddress)
+		serveTiles(config.ListenAddress, config.TilesPath)
 	}
 }

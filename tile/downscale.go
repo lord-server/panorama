@@ -59,7 +59,7 @@ func floorDiv(a, b int) int {
 }
 
 // downscalePositions produces downscaled images for given zoom level and returns a list of produced tile positions
-func downscalePositions(zoom int, positions []render.TilePosition) []render.TilePosition {
+func (t *Tiler) downscalePositions(zoom int, positions []render.TilePosition) []render.TilePosition {
 	const quadrantSize = 128
 
 	var nextPositions []render.TilePosition
@@ -70,7 +70,7 @@ func downscalePositions(zoom int, positions []render.TilePosition) []render.Tile
 		for quadrantY := 0; quadrantY < 2; quadrantY++ {
 			for quadrantX := 0; quadrantX < 2; quadrantX++ {
 				log.Printf("quad")
-				source, err := raster.LoadPNG(tilePath(pos.X*2+quadrantX, pos.Y*2+quadrantY, zoom-1))
+				source, err := raster.LoadPNG(t.tilePath(pos.X*2+quadrantX, pos.Y*2+quadrantY, zoom-1))
 				if err != nil {
 					continue
 				}
@@ -83,7 +83,7 @@ func downscalePositions(zoom int, positions []render.TilePosition) []render.Tile
 			}
 		}
 
-		err := raster.SavePNG(target, tilePath(pos.X, pos.Y, zoom))
+		err := raster.SavePNG(target, t.tilePath(pos.X, pos.Y, zoom))
 		if err != nil {
 			panic(err)
 		}

@@ -24,9 +24,11 @@ type Tiler struct {
 	xMax, yMax int
 	upperLimit int
 	lowerLimit int
+
+	tilesPath string
 }
 
-func NewTiler(region *config.RegionConfig) Tiler {
+func NewTiler(region *config.RegionConfig, tilesPath string) Tiler {
 	return Tiler{
 		xMin:       region.XBounds[0],
 		yMin:       region.YBounds[0],
@@ -34,17 +36,19 @@ func NewTiler(region *config.RegionConfig) Tiler {
 		yMax:       region.YBounds[1],
 		upperLimit: region.UpperLimit,
 		lowerLimit: region.LowerLimit,
+
+		tilesPath: tilesPath,
 	}
 }
 
-func tilePath(x, y, zoom int) string {
-	return fmt.Sprintf("tiles/%v/%v/%v.png", -zoom, x, y)
+func (t *Tiler) tilePath(x, y, zoom int) string {
+	return fmt.Sprintf("%v/%v/%v/%v.png", t.tilesPath, -zoom, x, y)
 }
 
-func worker(wg *sync.WaitGroup, game *game.Game, world *world.World, renderer isometric.Renderer, positions <-chan render.TilePosition) {
+func (t *Tiler) worker(wg *sync.WaitGroup, game *game.Game, world *world.World, renderer isometric.Renderer, positions <-chan render.TilePosition) {
 	for position := range positions {
 		output := renderer.RenderTile(position, world, game)
-		tilePath := tilePath(position.X, position.Y, 0)
+		tilePath := t.tilePath(position.X, position.Y, 0)
 		err := raster.SavePNG(output, tilePath)
 		if err != nil {
 			return
@@ -62,7 +66,7 @@ func (t *Tiler) FullRender(game *game.Game, world *world.World, workers int) {
 	for i := 0; i < workers; i++ {
 		wg.Add(1)
 		renderer := isometric.NewRenderer(t.lowerLimit, t.upperLimit)
-		go worker(&wg, game, world, renderer, positions)
+		go t.worker(&wg, game, world, renderer, positions)
 	}
 
 	for x := t.xMin; x < t.xMax; x++ {
@@ -124,6 +128,6 @@ func (t *Tiler) DownscaleTiles() {
 	positions = uniquePositions(positions)
 
 	for zoom := 1; zoom <= zoomLevels; zoom++ {
-		positions = downscalePositions(zoom, positions)
+		positions = t.downscalePositions(zoom, positions)
 	}
 }
