@@ -8,7 +8,7 @@ import (
 
 	"github.com/weqqr/panorama/config"
 	"github.com/weqqr/panorama/game"
-	"github.com/weqqr/panorama/tiler"
+	"github.com/weqqr/panorama/tile"
 	"github.com/weqqr/panorama/world"
 )
 
@@ -44,7 +44,7 @@ func main() {
 	config := config.LoadConfig(args.ConfigPath)
 	log.Printf("game path: %v\n", config.GamePath)
 
-	descPath := path.Join(config.WorldPath, "panorama_nodes.json")
+	descPath := path.Join(config.WorldPath, "nodes_dump.json")
 	log.Printf("game description: `%v`\n", descPath)
 
 	game, err := game.LoadGame(descPath, config.GamePath)
@@ -59,7 +59,7 @@ func main() {
 
 	world := world.NewWorldWithBackend(backend)
 
-	tiler := tiler.NewTiler(&config.RegionConfig)
+	tiler := tile.NewTiler(&config.RegionConfig)
 
 	if args.FullRender {
 		tiler.FullRender(&game, &world, config.RendererWorkers)
