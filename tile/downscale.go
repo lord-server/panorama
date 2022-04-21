@@ -3,7 +3,6 @@ package tile
 import (
 	"image"
 	"image/draw"
-	"log"
 	"math"
 	"sort"
 
@@ -69,7 +68,6 @@ func (t *Tiler) downscalePositions(zoom int, positions []render.TilePosition) []
 
 		for quadrantY := 0; quadrantY < 2; quadrantY++ {
 			for quadrantX := 0; quadrantX < 2; quadrantX++ {
-				log.Printf("quad")
 				source, err := raster.LoadPNG(t.tilePath(pos.X*2+quadrantX, pos.Y*2+quadrantY, zoom-1))
 				if err != nil {
 					continue

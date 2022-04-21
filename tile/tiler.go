@@ -99,7 +99,7 @@ func (t *Tiler) DownscaleTiles() {
 
 	// Collect tile positions
 	var positions []render.TilePosition
-	err = filepath.WalkDir(tileDir, func(path string, d fs.DirEntry, err error) error {
+	err = filepath.WalkDir(tileDir, func(path string, d fs.DirEntry, _ error) error {
 		if d.IsDir() {
 			return nil
 		}

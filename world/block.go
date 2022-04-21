@@ -199,10 +199,10 @@ func decodeLegacyBlock(reader *bytes.Reader, version uint8) (*MapBlock, error) {
 
 func decodeBlock(reader *bytes.Reader) (*MapBlock, error) {
 	z, err := zstd.NewReader(reader)
-	defer z.Close()
 	if err != nil {
 		return nil, err
 	}
+	defer z.Close()
 
 	data, err := io.ReadAll(z)
 	if err != nil {
