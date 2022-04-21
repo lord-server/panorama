@@ -6,6 +6,7 @@ import (
 	"log"
 	"math"
 	"os"
+	"path"
 	"path/filepath"
 	"strconv"
 	"strings"
@@ -92,7 +93,7 @@ func (t *Tiler) DownscaleTiles() {
 
 	log.Printf("Downscaling mapSize=%v zoomLevels=%v", mapSize, zoomLevels)
 
-	tileDir, err := filepath.Abs("tiles/0")
+	tileDir, err := filepath.Abs(path.Join(t.tilesPath, "0"))
 	if err != nil {
 		panic(err)
 	}
@@ -128,6 +129,7 @@ func (t *Tiler) DownscaleTiles() {
 	positions = uniquePositions(positions)
 
 	for zoom := 1; zoom <= zoomLevels; zoom++ {
+		log.Printf("Rescaling tiles for zoom level %v", zoom)
 		positions = t.downscalePositions(zoom, positions)
 	}
 }

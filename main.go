@@ -27,6 +27,7 @@ func serveTiles(addr string, tilesPath string) {
 
 type Args struct {
 	FullRender bool
+	Downscale  bool
 	Serve      bool
 	ConfigPath string
 }
@@ -35,6 +36,7 @@ var args Args
 
 func init() {
 	flag.BoolVar(&args.FullRender, "fullrender", false, "Render entire map")
+	flag.BoolVar(&args.Downscale, "downscale", false, "Downscale existing tiles (--fullrender does this automatically)")
 	flag.BoolVar(&args.Serve, "serve", false, "Serve tiles over the web")
 	flag.StringVar(&args.ConfigPath, "config", "config.toml", "Path to config file")
 	flag.Parse()
@@ -63,6 +65,9 @@ func main() {
 
 	if args.FullRender {
 		tiler.FullRender(&game, &world, config.RendererWorkers)
+	}
+
+	if args.Downscale || args.FullRender {
 		tiler.DownscaleTiles()
 	}
 

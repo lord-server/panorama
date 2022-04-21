@@ -12,4 +12,4 @@ COPY --from=builder /app/panorama ./
 COPY config.example.toml /etc/panorama/config.toml
 COPY static static
 
-ENTRYPOINT ["./panorama", "--config", "/etc/panorama/config.toml", "--serve"]
+ENTRYPOINT ["./panorama", "--config", "/etc/panorama/config.toml"]
