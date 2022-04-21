@@ -22,6 +22,8 @@ type Config struct {
 	WorldDSN        string       `toml:"world_dsn"`
 	RegionConfig    RegionConfig `toml:"region"`
 	RendererWorkers int          `toml:"renderer_workers"`
+	Title           string       `toml:"title"`
+	ZoomLevels      int          `toml:"zoom_levels"`
 }
 
 func LoadConfig(path string) Config {

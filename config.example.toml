@@ -16,6 +16,12 @@ listen_address = ":33333"
 # Number of worker threads used for rendering
 renderer_workers = 2
 
+# Web page title
+title = "Server map - Panorama"
+
+# Number of zoom levels
+zoom_levels = 8
+
 [region]
 # Rectangular region containing the map, defined as [minimum, maximum], measured in tiles
 x_bounds = [-5, -5]

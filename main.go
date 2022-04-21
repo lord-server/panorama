@@ -1,6 +1,7 @@
 package main
 
 import (
+	"encoding/json"
 	"flag"
 	"log"
 	"net/http"
@@ -12,12 +13,34 @@ import (
 	"github.com/weqqr/panorama/world"
 )
 
-func serveTiles(addr string, tilesPath string) {
+type metadataHandler struct {
+	config *config.Config
+}
+
+type MapMetadata struct {
+	Title      string `json:"title"`
+	ZoomLevels int    `json:"zoomLevels"`
+}
+
+func (m *metadataHandler) ServeHTTP(w http.ResponseWriter, request *http.Request) {
+	w.WriteHeader(http.StatusOK)
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(MapMetadata{
+		Title:      m.config.Title,
+		ZoomLevels: m.config.ZoomLevels,
+	})
+}
+
+func serveTiles(addr string, config *config.Config) {
 	staticFS := http.FileServer(http.Dir("./static"))
 	http.Handle("/", staticFS)
 
-	tilesFS := http.FileServer(http.Dir(tilesPath))
+	tilesFS := http.FileServer(http.Dir(config.TilesPath))
 	http.Handle("/tiles/", http.StripPrefix("/tiles/", tilesFS))
+
+	http.Handle("/metadata.json", &metadataHandler{
+		config: config,
+	})
 
 	err := http.ListenAndServe(addr, nil)
 	if err != nil {
@@ -73,6 +96,6 @@ func main() {
 
 	if args.Serve {
 		log.Printf("serving tiles @ %v", config.ListenAddress)
-		serveTiles(config.ListenAddress, config.TilesPath)
+		serveTiles(config.ListenAddress, &config)
 	}
 }
