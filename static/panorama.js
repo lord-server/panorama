@@ -54,9 +54,9 @@ class Map {
 
 async function main() {
     let meta = await fetch('/metadata.json').then(response => response.json());
-    document.title = meta['title'];
+    document.title = meta.title;
 
-    let map = new Map(parseInt(meta['zoomLevels'], 10));
+    let map = new Map(meta.zoomLevels);
 }
 
 main();

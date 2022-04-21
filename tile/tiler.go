@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"io/fs"
 	"log"
-	"math"
 	"os"
 	"path"
 	"path/filepath"
@@ -26,10 +25,12 @@ type Tiler struct {
 	upperLimit int
 	lowerLimit int
 
+	zoomLevels int
+
 	tilesPath string
 }
 
-func NewTiler(region *config.RegionConfig, tilesPath string) Tiler {
+func NewTiler(region *config.RegionConfig, zoomLevels int, tilesPath string) Tiler {
 	return Tiler{
 		xMin:       region.XBounds[0],
 		yMin:       region.YBounds[0],
@@ -37,6 +38,8 @@ func NewTiler(region *config.RegionConfig, tilesPath string) Tiler {
 		yMax:       region.YBounds[1],
 		upperLimit: region.UpperLimit,
 		lowerLimit: region.LowerLimit,
+
+		zoomLevels: zoomLevels,
 
 		tilesPath: tilesPath,
 	}
@@ -88,10 +91,7 @@ func (t *Tiler) FullRender(game *game.Game, world *world.World, workers int) {
 
 // DownscaleTiles rescales high-resolution tiles into lower resolution ones until it reaches adequate zoom level
 func (t *Tiler) DownscaleTiles() {
-	mapSize := math.Max(float64(t.xMax-t.xMin), float64(t.yMax-t.yMin))
-	zoomLevels := int(math.Ceil(math.Log2(mapSize)))
-
-	log.Printf("Downscaling mapSize=%v zoomLevels=%v", mapSize, zoomLevels)
+	log.Printf("Downscaling zoomLevels=%v", t.zoomLevels)
 
 	tileDir, err := filepath.Abs(path.Join(t.tilesPath, "0"))
 	if err != nil {
@@ -128,7 +128,7 @@ func (t *Tiler) DownscaleTiles() {
 
 	positions = uniquePositions(positions)
 
-	for zoom := 1; zoom <= zoomLevels; zoom++ {
+	for zoom := 1; zoom <= t.zoomLevels; zoom++ {
 		log.Printf("Rescaling tiles for zoom level %v", zoom)
 		positions = t.downscalePositions(zoom, positions)
 	}

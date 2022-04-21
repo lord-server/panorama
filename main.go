@@ -84,7 +84,7 @@ func main() {
 
 	world := world.NewWorldWithBackend(backend)
 
-	tiler := tile.NewTiler(&config.RegionConfig, config.TilesPath)
+	tiler := tile.NewTiler(&config.RegionConfig, config.ZoomLevels, config.TilesPath)
 
 	if args.FullRender {
 		tiler.FullRender(&game, &world, config.RendererWorkers)
