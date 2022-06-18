@@ -26,26 +26,26 @@ type Config struct {
 	ZoomLevels      int          `toml:"zoom_levels"`
 }
 
-func LoadConfig(path string) Config {
+func LoadConfig(path string) (Config, error) {
 	var config Config
 
 	file, err := os.Open(path)
 	if err != nil {
 		file.Close()
-		panic(err)
+		return config, err
 	}
 
 	defer file.Close()
 
 	data, err := io.ReadAll(file)
 	if err != nil {
-		panic(err)
+		return config, err
 	}
 
 	_, err = toml.Decode(string(data), &config)
 	if err != nil {
-		panic(err)
+		return config, err
 	}
 
-	return config
+	return config, nil
 }

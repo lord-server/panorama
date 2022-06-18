@@ -31,7 +31,7 @@ func (m *metadataHandler) ServeHTTP(w http.ResponseWriter, request *http.Request
 	})
 }
 
-func serveTiles(addr string, config *config.Config) {
+func serve(addr string, config *config.Config) {
 	staticFS := http.FileServer(http.Dir("./static"))
 	http.Handle("/", staticFS)
 
@@ -66,20 +66,25 @@ func init() {
 }
 
 func main() {
-	config := config.LoadConfig(args.ConfigPath)
-	log.Printf("game path: %v\n", config.GamePath)
+	log.Printf("Config path: `%v`", args.ConfigPath)
+	config, err := config.LoadConfig(args.ConfigPath)
+	if err != nil {
+		log.Fatalf("Unable to load config: %v\n", err)
+	}
+
+	log.Printf("Game path: `%v`\n", config.GamePath)
 
 	descPath := path.Join(config.WorldPath, "nodes_dump.json")
-	log.Printf("game description: `%v`\n", descPath)
+	log.Printf("Game description: `%v`\n", descPath)
 
 	game, err := game.LoadGame(descPath, config.GamePath)
 	if err != nil {
-		panic(err)
+		log.Fatalf("Unable to load game description: %v\n", err)
 	}
 
 	backend, err := world.NewPostgresBackend(config.WorldDSN)
 	if err != nil {
-		panic(err)
+		log.Fatalf("Unable to connect to world DB: %v\n", err)
 	}
 
 	world := world.NewWorldWithBackend(backend)
@@ -95,7 +100,7 @@ func main() {
 	}
 
 	if args.Serve {
-		log.Printf("serving tiles @ %v", config.ListenAddress)
-		serveTiles(config.ListenAddress, &config)
+		log.Printf("Serving tiles @ %v", config.ListenAddress)
+		serve(config.ListenAddress, &config)
 	}
 }
