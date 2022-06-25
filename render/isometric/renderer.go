@@ -37,8 +37,8 @@ func (r *Renderer) RenderTile(tilePos render.TilePosition, w *world.World, game 
 	centerZ := tilePos.Y + tilePos.X
 
 	for i := r.lowerLimit; i < r.upperLimit; i++ {
-		for z := -2; z <= 2; z++ {
-			for x := -2; x <= 2; x++ {
+		for z := -3; z <= 3; z++ {
+			for x := -3; x <= 3; x++ {
 				blockX := centerX + x + i
 				blockY := centerY + i
 				blockZ := centerZ + z + i
@@ -51,12 +51,12 @@ func (r *Renderer) RenderTile(tilePos render.TilePosition, w *world.World, game 
 				// neighborhood.FetchBlock(1, 0, 1, blockX, blockY-1, blockZ, w)
 				neighborhood.FetchBlock(1, 2, 1, blockX, blockY+1, blockZ, w)
 				// neighborhood.FetchBlock(1, 1, 0, blockX, blockY, blockZ-1, w)
-				neighborhood.FetchBlock(1, 1, 2, blockX, blockY, blockZ+2, w)
+				neighborhood.FetchBlock(1, 1, 2, blockX, blockY, blockZ+1, w)
 
-				tileOffsetX := world.MapBlockSize * BaseResolution / 2 * (z - x)
-				tileOffsetY := world.MapBlockSize * BaseResolution / 4 * (z + x)
+				tileOffsetX := BaseResolution / 2 * (z - x) * world.MapBlockSize
+				tileOffsetY := (BaseResolution/4*(z+x+2*i) - i*YOffsetCoef) * world.MapBlockSize
 
-				depthOffset := -float32(z+x)/math.Sqrt2*world.MapBlockSize - 2*float32(i)*math.Sqrt2*world.MapBlockSize
+				depthOffset := (-float32(z+x+2*i)/math.Sqrt2 - 0.5*float32(i)) * world.MapBlockSize
 				renderBlock(target, &r.nr, &neighborhood, game, tileOffsetX, tileOffsetY, depthOffset)
 			}
 		}

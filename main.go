@@ -92,6 +92,7 @@ func main() {
 	tiler := tile.NewTiler(&config.RegionConfig, config.ZoomLevels, config.TilesPath)
 
 	if args.FullRender {
+		log.Printf("Performing a full render using %v workers", config.RendererWorkers)
 		tiler.FullRender(&game, &world, config.RendererWorkers)
 	}
 
