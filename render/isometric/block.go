@@ -6,6 +6,7 @@ import (
 
 	"github.com/weqqr/panorama/game"
 	"github.com/weqqr/panorama/raster"
+	"github.com/weqqr/panorama/render"
 	"github.com/weqqr/panorama/world"
 )
 
@@ -80,20 +81,20 @@ func (b *BlockNeighborhood) GetParam1(x, y, z int) uint8 {
 	return node.Param1
 }
 
-func renderBlock(target *raster.RenderBuffer, nr *NodeRasterizer, neighborhood *BlockNeighborhood, g *game.Game, offsetX, offsetY int, depth float32) {
-	rect := image.Rect(0, 0, TileBlockWidth, TileBlockHeight)
+func renderBlock(target *raster.RenderBuffer, nr *render.NodeRasterizer, neighborhood *BlockNeighborhood, g *game.Game, offsetX, offsetY int, depth float32) {
+	rect := image.Rect(0, 0, render.TileBlockWidth, render.TileBlockHeight)
 
 	// FIXME: nodes must define their origin points
-	originX, originY := rect.Dx()/2-BaseResolution/2, rect.Dy()/2+BaseResolution/4+2
+	originX, originY := rect.Dx()/2-render.BaseResolution/2, rect.Dy()/2+render.BaseResolution/4+2
 
 	for z := world.MapBlockSize - 1; z >= 0; z-- {
 		for y := world.MapBlockSize - 1; y >= 0; y-- {
 			for x := world.MapBlockSize - 1; x >= 0; x-- {
-				tileOffsetX := originX + BaseResolution*(z-x)/2 + offsetX
-				tileOffsetY := originY + BaseResolution/4*(z+x) - YOffsetCoef*y + offsetY
+				tileOffsetX := originX + render.BaseResolution*(z-x)/2 + offsetX
+				tileOffsetY := originY + render.BaseResolution/4*(z+x) - render.YOffsetCoef*y + offsetY
 
 				// Fast path: Don't bother with nodes outside viewport
-				nodeTileTooLow := tileOffsetX <= target.Color.Rect.Min.X-BaseResolution || tileOffsetY <= target.Color.Rect.Min.Y-BaseResolution-BaseResolution/8
+				nodeTileTooLow := tileOffsetX <= target.Color.Rect.Min.X-render.BaseResolution || tileOffsetY <= target.Color.Rect.Min.Y-render.BaseResolution-render.BaseResolution/8
 				nodeTileTooHigh := tileOffsetX >= target.Color.Rect.Max.X || tileOffsetY >= target.Color.Rect.Max.Y
 
 				if nodeTileTooLow || nodeTileTooHigh {
@@ -120,7 +121,7 @@ func renderBlock(target *raster.RenderBuffer, nr *NodeRasterizer, neighborhood *
 					light = l
 				}
 
-				renderableNode := RenderableNode{
+				renderableNode := render.RenderableNode{
 					Name:   name,
 					Light:  light,
 					Param2: param2,

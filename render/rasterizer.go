@@ -1,4 +1,4 @@
-package isometric
+package render
 
 import (
 	"image"
