@@ -29,7 +29,7 @@ func NewRenderer(lowerLimit, upperLimit int) Renderer {
 func (r *Renderer) RenderTile(tilePos render.TilePosition, w *world.World, game *game.Game) *image.NRGBA {
 	tilePos.Y *= 2
 
-	rect := image.Rect(0, 0, render.TileBlockWidth, render.TileBlockWidth)
+	rect := image.Rect(0, 0, render.BaseTileSize, render.BaseTileSize)
 	target := raster.NewRenderBuffer(rect)
 
 	centerX := tilePos.Y - tilePos.X
@@ -43,18 +43,14 @@ func (r *Renderer) RenderTile(tilePos render.TilePosition, w *world.World, game 
 				blockY := centerY + i
 				blockZ := centerZ + z + i
 
-				neighborhood := BlockNeighborhood{}
-
+				neighborhood := render.BlockNeighborhood{}
 				neighborhood.FetchBlock(1, 1, 1, blockX, blockY, blockZ, w)
-				// neighborhood.FetchBlock(0, 1, 1, blockX-1, blockY, blockZ, w)
 				neighborhood.FetchBlock(2, 1, 1, blockX+1, blockY, blockZ, w)
-				// neighborhood.FetchBlock(1, 0, 1, blockX, blockY-1, blockZ, w)
 				neighborhood.FetchBlock(1, 2, 1, blockX, blockY+1, blockZ, w)
-				// neighborhood.FetchBlock(1, 1, 0, blockX, blockY, blockZ-1, w)
 				neighborhood.FetchBlock(1, 1, 2, blockX, blockY, blockZ+1, w)
 
 				tileOffsetX := render.BaseResolution / 2 * (z - x) * world.MapBlockSize
-				tileOffsetY := (render.BaseResolution/4*(z+x+2*i) - i*render.YOffsetCoef) * world.MapBlockSize
+				tileOffsetY := (render.BaseResolution/4*(z+x+2*i) - i*render.YOffset) * world.MapBlockSize
 
 				depthOffset := (-float32(z+x+2*i)/math.Sqrt2 - 0.5*float32(i)) * world.MapBlockSize
 				renderBlock(target, &r.nr, &neighborhood, game, tileOffsetX, tileOffsetY, depthOffset)

@@ -16,9 +16,9 @@ const Gamma = 2.2
 const BaseResolution = 16
 
 var (
-	YOffsetCoef     = int(math.Round(BaseResolution * (1 + math.Sqrt2) / 4))
-	TileBlockWidth  = world.MapBlockSize * BaseResolution
-	TileBlockHeight = BaseResolution/2*world.MapBlockSize - 1 + YOffsetCoef*world.MapBlockSize
+	YOffset         = int(math.Round(BaseResolution * (1 + math.Sqrt2) / 4))
+	BaseTileSize    = world.MapBlockSize * BaseResolution
+	TileBlockHeight = BaseResolution/2*world.MapBlockSize - 1 + YOffset*world.MapBlockSize
 )
 
 type RenderableNode struct {
