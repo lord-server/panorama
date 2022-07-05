@@ -8,8 +8,8 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/weqqr/panorama/mesh"
-	"github.com/weqqr/panorama/raster"
+	"github.com/weqqr/panorama/pkg/mesh"
+	"github.com/weqqr/panorama/pkg/raster"
 )
 
 type MediaCache struct {

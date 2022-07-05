@@ -5,11 +5,11 @@ import (
 	"log"
 	"path"
 
-	"github.com/weqqr/panorama/config"
-	"github.com/weqqr/panorama/game"
-	"github.com/weqqr/panorama/tile"
-	"github.com/weqqr/panorama/web"
-	"github.com/weqqr/panorama/world"
+	"github.com/weqqr/panorama/pkg/config"
+	"github.com/weqqr/panorama/pkg/game"
+	"github.com/weqqr/panorama/pkg/tile"
+	"github.com/weqqr/panorama/pkg/web"
+	"github.com/weqqr/panorama/pkg/world"
 )
 
 type Args struct {

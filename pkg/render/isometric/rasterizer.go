@@ -5,11 +5,11 @@ import (
 	"image/color"
 	"math"
 
-	"github.com/weqqr/panorama/game"
-	"github.com/weqqr/panorama/lm"
-	"github.com/weqqr/panorama/mesh"
-	"github.com/weqqr/panorama/raster"
-	"github.com/weqqr/panorama/world"
+	"github.com/weqqr/panorama/pkg/game"
+	"github.com/weqqr/panorama/pkg/lm"
+	"github.com/weqqr/panorama/pkg/mesh"
+	"github.com/weqqr/panorama/pkg/raster"
+	"github.com/weqqr/panorama/pkg/world"
 )
 
 const Gamma = 2.2

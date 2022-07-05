@@ -5,8 +5,8 @@ import (
 
 	"github.com/gofiber/fiber/v2"
 
-	"github.com/weqqr/panorama/config"
-	"github.com/weqqr/panorama/web/handlers"
+	"github.com/weqqr/panorama/pkg/config"
+	"github.com/weqqr/panorama/pkg/web/handlers"
 )
 
 func Serve(addr string, config *config.Config) {

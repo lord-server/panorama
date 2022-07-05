@@ -1,9 +1,10 @@
 package render
 
 import (
-	"github.com/weqqr/panorama/game"
-	"github.com/weqqr/panorama/world"
 	"image"
+
+	"github.com/weqqr/panorama/pkg/game"
+	"github.com/weqqr/panorama/pkg/world"
 )
 
 type TilePosition struct {

@@ -3,8 +3,9 @@ WORKDIR /app
 RUN apk add git
 COPY go.mod go.sum ./
 RUN go mod download && go mod verify
-COPY . .
-RUN go build -v -o panorama
+COPY cmd ./cmd
+COPY pkg ./pkg
+RUN go build -v ./cmd/panorama
 
 FROM alpine:latest
 WORKDIR /app

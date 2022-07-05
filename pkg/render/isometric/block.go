@@ -4,9 +4,9 @@ import (
 	"image"
 	"math"
 
-	"github.com/weqqr/panorama/game"
-	"github.com/weqqr/panorama/raster"
-	"github.com/weqqr/panorama/world"
+	"github.com/weqqr/panorama/pkg/game"
+	"github.com/weqqr/panorama/pkg/raster"
+	"github.com/weqqr/panorama/pkg/world"
 )
 
 func decodeLight(param1 uint8) float32 {

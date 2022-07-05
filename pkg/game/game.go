@@ -5,7 +5,7 @@ import (
 	"image"
 	"os"
 
-	"github.com/weqqr/panorama/mesh"
+	"github.com/weqqr/panorama/pkg/mesh"
 )
 
 type gameDescriptor struct {

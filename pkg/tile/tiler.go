@@ -11,12 +11,12 @@ import (
 	"strings"
 	"sync"
 
-	"github.com/weqqr/panorama/config"
-	"github.com/weqqr/panorama/game"
-	"github.com/weqqr/panorama/raster"
-	"github.com/weqqr/panorama/render"
-	"github.com/weqqr/panorama/render/isometric"
-	"github.com/weqqr/panorama/world"
+	"github.com/weqqr/panorama/pkg/config"
+	"github.com/weqqr/panorama/pkg/game"
+	"github.com/weqqr/panorama/pkg/raster"
+	"github.com/weqqr/panorama/pkg/render"
+	"github.com/weqqr/panorama/pkg/render/isometric"
+	"github.com/weqqr/panorama/pkg/world"
 )
 
 type Tiler struct {
