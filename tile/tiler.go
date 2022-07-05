@@ -74,7 +74,7 @@ func (t *Tiler) FullRender(game *game.Game, world *world.World, workers int) {
 	}
 
 	for x := t.xMin; x < t.xMax; x++ {
-		err := os.MkdirAll(fmt.Sprintf("tiles/0/%v", x), os.ModePerm)
+		err := os.MkdirAll(fmt.Sprintf("%v/%v", path.Join(t.tilesPath, "0"), x), os.ModePerm)
 		if err != nil {
 			panic(err)
 		}
