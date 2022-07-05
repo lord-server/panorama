@@ -15,7 +15,7 @@ import (
 	"github.com/weqqr/panorama/game"
 	"github.com/weqqr/panorama/raster"
 	"github.com/weqqr/panorama/render"
-	"github.com/weqqr/panorama/render/isometric"
+	"github.com/weqqr/panorama/render/topdown"
 	"github.com/weqqr/panorama/world"
 )
 
@@ -36,8 +36,8 @@ func NewTiler(region *config.RegionConfig, zoomLevels int, tilesPath string) Til
 		yMin:       region.YBounds[0],
 		xMax:       region.XBounds[1],
 		yMax:       region.YBounds[1],
-		upperLimit: region.UpperLimit,
-		lowerLimit: region.LowerLimit,
+		upperLimit: region.UpperLimit / world.MapBlockSize,
+		lowerLimit: region.LowerLimit / world.MapBlockSize,
 
 		zoomLevels: zoomLevels,
 
@@ -49,13 +49,14 @@ func (t *Tiler) tilePath(x, y, zoom int) string {
 	return fmt.Sprintf("%v/%v/%v/%v.png", t.tilesPath, -zoom, x, y)
 }
 
-func (t *Tiler) worker(wg *sync.WaitGroup, game *game.Game, world *world.World, renderer isometric.Renderer, positions <-chan render.TilePosition) {
+func (t *Tiler) renderTiles(wg *sync.WaitGroup, game *game.Game, world *world.World, renderer render.Renderer, positions <-chan render.TilePosition) {
 	for position := range positions {
 		output := renderer.RenderTile(position, world, game)
 		tilePath := t.tilePath(position.X, position.Y, 0)
 		err := raster.SavePNG(output, tilePath)
 		if err != nil {
-			return
+			log.Printf("unable to save %v: %v", tilePath, err)
+			continue
 		}
 		log.Printf("saved %v", tilePath)
 	}
@@ -69,8 +70,8 @@ func (t *Tiler) FullRender(game *game.Game, world *world.World, workers int) {
 
 	for i := 0; i < workers; i++ {
 		wg.Add(1)
-		renderer := isometric.NewRenderer(t.lowerLimit, t.upperLimit)
-		go t.worker(&wg, game, world, renderer, positions)
+		renderer := topdown.NewRenderer(t.lowerLimit, t.upperLimit)
+		go t.renderTiles(&wg, game, world, &renderer, positions)
 	}
 
 	for x := t.xMin; x < t.xMax; x++ {

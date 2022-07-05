@@ -26,3 +26,11 @@ func DimetricProjection() Matrix3 {
 
 	return rotateX.Mul(&rotateY)
 }
+
+func TopDownProjection() Matrix3 {
+	return NewMatrix3([9]float32{
+		1, 0, 0,
+		0, 1, 0,
+		0, 0, 1,
+	})
+}

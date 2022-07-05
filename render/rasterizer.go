@@ -28,12 +28,14 @@ type RenderableNode struct {
 }
 
 type NodeRasterizer struct {
-	cache map[RenderableNode]*raster.RenderBuffer
+	projection lm.Matrix3
+	cache      map[RenderableNode]*raster.RenderBuffer
 }
 
-func NewNodeRasterizer() NodeRasterizer {
+func NewNodeRasterizer(projection lm.Matrix3) NodeRasterizer {
 	return NodeRasterizer{
-		cache: make(map[RenderableNode]*raster.RenderBuffer),
+		projection: projection,
+		cache:      make(map[RenderableNode]*raster.RenderBuffer),
 	}
 }
 
@@ -68,16 +70,15 @@ func sampleTexture(tex *image.NRGBA, texcoord lm.Vector2) lm.Vector4 {
 
 var SunLightDir = lm.Vec3(-0.5, 1, -0.8).Normalize()
 var SunLightIntensity = 0.95 / SunLightDir.MaxComponent()
-var Projection = lm.DimetricProjection()
 
-func drawTriangle(target *raster.RenderBuffer, tex *image.NRGBA, lighting float32, a, b, c mesh.Vertex) {
+func (nr *NodeRasterizer) drawTriangle(target *raster.RenderBuffer, tex *image.NRGBA, lighting float32, a, b, c mesh.Vertex) {
 	originX := float32(target.Color.Bounds().Dx() / 2)
 	originY := float32(target.Color.Bounds().Dy() / 2)
 	origin := lm.Vec2(originX, originY)
 
-	a.Position = Projection.MulVec(a.Position)
-	b.Position = Projection.MulVec(b.Position)
-	c.Position = Projection.MulVec(c.Position)
+	a.Position = nr.projection.MulVec(a.Position)
+	b.Position = nr.projection.MulVec(b.Position)
+	c.Position = nr.projection.MulVec(c.Position)
 
 	pa := a.Position.XY().Mul(lm.Vec2(1, -1)).MulScalar(BaseResolution * math.Sqrt2 / 2).Add(origin)
 	pb := b.Position.XY().Mul(lm.Vec2(1, -1)).MulScalar(BaseResolution * math.Sqrt2 / 2).Add(origin)
@@ -170,12 +171,12 @@ func transformToFaceDir(v lm.Vector3, facedir uint8) lm.Vector3 {
 	return v
 }
 
-func (r *NodeRasterizer) Render(node RenderableNode, nodeDef *game.NodeDefinition) *raster.RenderBuffer {
+func (nr *NodeRasterizer) Render(node RenderableNode, nodeDef *game.NodeDefinition) *raster.RenderBuffer {
 	if nodeDef.DrawType == game.DrawTypeAirlike || nodeDef.Model == nil || len(nodeDef.Textures) == 0 {
 		return nil
 	}
 
-	if target, ok := r.cache[node]; ok {
+	if target, ok := nr.cache[node]; ok {
 		return target
 	}
 
@@ -207,11 +208,11 @@ func (r *NodeRasterizer) Render(node RenderableNode, nodeDef *game.NodeDefinitio
 			b.Position.X = -b.Position.X
 			c.Position.X = -c.Position.X
 
-			drawTriangle(target, nodeDef.Textures[j], node.Light, a, b, c)
+			nr.drawTriangle(target, nodeDef.Textures[j], node.Light, a, b, c)
 		}
 	}
 
-	r.cache[node] = target
+	nr.cache[node] = target
 
 	return target
 }
