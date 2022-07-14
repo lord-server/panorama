@@ -10,3 +10,7 @@ html, body, #map {
     background-color: white;
     padding: 4px;
 }
+
+.leaflet-container {
+    background-color: black;
+}
