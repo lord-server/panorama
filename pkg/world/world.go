@@ -53,7 +53,7 @@ type World struct {
 }
 
 func NewWorldWithBackend(backend Backend) World {
-	blockCache, err := lru.New(1024)
+	blockCache, err := lru.New(1024 * 16)
 	if err != nil {
 		panic(err)
 	}
@@ -69,7 +69,10 @@ func (w *World) GetBlock(x, y, z int) (*MapBlock, error) {
 	}
 
 	cachedBlock, ok := w.blockCache.Get(blockPos{x, y, z})
-	if ok {
+
+	if ok && cachedBlock == nil {
+		return nil, nil
+	} else if ok {
 		return cachedBlock.(*MapBlock), nil
 	}
 
@@ -79,6 +82,7 @@ func (w *World) GetBlock(x, y, z int) (*MapBlock, error) {
 	}
 
 	if data == nil {
+		w.blockCache.Add(blockPos{x, y, z}, nil)
 		return nil, nil
 	}
 

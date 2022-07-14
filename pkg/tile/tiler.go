@@ -52,8 +52,13 @@ func (t *Tiler) tilePath(x, y, zoom int) string {
 func (t *Tiler) worker(wg *sync.WaitGroup, game *game.Game, world *world.World, renderer isometric.Renderer, positions <-chan render.TilePosition) {
 	for position := range positions {
 		output := renderer.RenderTile(position, world, game)
+		// Don't save empty tiles
+		if !output.Dirty {
+			continue
+		}
+
 		tilePath := t.tilePath(position.X, position.Y, 0)
-		err := raster.SavePNG(output, tilePath)
+		err := raster.SavePNG(output.Color, tilePath)
 		if err != nil {
 			return
 		}

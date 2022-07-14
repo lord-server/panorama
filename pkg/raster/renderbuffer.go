@@ -5,16 +5,20 @@ import "image"
 type RenderBuffer struct {
 	Color *image.NRGBA
 	Depth *Depth
+	Dirty bool
 }
 
 func NewRenderBuffer(rect image.Rectangle) *RenderBuffer {
 	return &RenderBuffer{
 		Color: image.NewNRGBA(rect),
 		Depth: NewDepth(rect),
+		Dirty: false,
 	}
 }
 
 func (target *RenderBuffer) OverlayDepthAware(source *RenderBuffer, origin image.Point, depthOffset float32) {
+	target.Dirty = true
+
 	if source == nil {
 		return
 	}

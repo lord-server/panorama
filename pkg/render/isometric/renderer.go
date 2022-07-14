@@ -26,7 +26,7 @@ func NewRenderer(lowerLimit, upperLimit int) Renderer {
 	}
 }
 
-func (r *Renderer) RenderTile(tilePos render.TilePosition, w *world.World, game *game.Game) *image.NRGBA {
+func (r *Renderer) RenderTile(tilePos render.TilePosition, w *world.World, game *game.Game) *raster.RenderBuffer {
 	tilePos.Y *= 2
 
 	rect := image.Rect(0, 0, TileBlockWidth, TileBlockWidth)
@@ -62,7 +62,7 @@ func (r *Renderer) RenderTile(tilePos render.TilePosition, w *world.World, game 
 		}
 	}
 
-	return target.Color
+	return target
 }
 
 func (r *Renderer) ListTilesWithBlock(x, y, z int) []render.TilePosition {
