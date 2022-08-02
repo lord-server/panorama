@@ -70,9 +70,10 @@ func (w *World) GetBlock(x, y, z int) (*MapBlock, error) {
 
 	cachedBlock, ok := w.blockCache.Get(blockPos{x, y, z})
 
-	if ok && cachedBlock == nil {
-		return nil, nil
-	} else if ok {
+	if ok {
+		if cachedBlock == nil {
+			return nil, nil
+		}
 		return cachedBlock.(*MapBlock), nil
 	}
 

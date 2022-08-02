@@ -20,28 +20,16 @@ import (
 )
 
 type Tiler struct {
-	xMin, yMin int
-	xMax, yMax int
-	upperLimit int
-	lowerLimit int
-
+	region     config.Region
 	zoomLevels int
-
-	tilesPath string
+	tilesPath  string
 }
 
-func NewTiler(region *config.RegionConfig, zoomLevels int, tilesPath string) Tiler {
+func NewTiler(region config.Region, zoomLevels int, tilesPath string) Tiler {
 	return Tiler{
-		xMin:       region.XBounds[0],
-		yMin:       region.YBounds[0],
-		xMax:       region.XBounds[1],
-		yMax:       region.YBounds[1],
-		upperLimit: region.UpperLimit,
-		lowerLimit: region.LowerLimit,
-
+		region:     region,
 		zoomLevels: zoomLevels,
-
-		tilesPath: tilesPath,
+		tilesPath:  tilesPath,
 	}
 }
 

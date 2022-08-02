@@ -1,32 +1,49 @@
+# Parameters in `system` section define how Panorama interacts with system
+# environment, such as the file system or PostgreSQL server
+[system]
 # Path to the game directory
+# Default: "/var/lib/panorama/game"
 game_path = "/var/lib/panorama/game"
 
-# Path to the game directory
+# Path to the world directory
+# Default: "/var/lib/panorama/world"
 world_path = "/var/lib/panorama/world"
 
-# DSN string, used to connect to PostgreSQL
+# DSN string used for connecting to PostgreSQL
+# Default: ""
 world_dsn = ""
 
-# Path to the tile storage
+# Path to the tile storage directory
+# Default: "/var/lib/panorama/tiles"
 tiles_path = "/var/lib/panorama/tiles"
 
+# Parameters in `web` section can be used to tweak the web interface
+[web]
 # Address to serve the map from
+# Default: ":33333"
 listen_address = ":33333"
 
-# Number of worker threads used for rendering
-renderer_workers = 2
-
 # Web page title
-title = "Server map - Panorama"
+# Default: "Server map"
+title = "Server map"
+
+# Parameters in the `renderer` section
+[renderer]
+# Number of worker threads used for rendering
+# Default: 2
+workers = 2
 
 # Number of zoom levels
+# Default: 8
 zoom_levels = 8
 
+# Parameters in the `region` section define what portions of the map Panorama
+# renders and shows
 [region]
-# Rectangular region containing the map, defined as [minimum, maximum], measured in tiles
-x_bounds = [-5, -5]
-y_bounds = [-2, 2]
-
-# Upper and lower Y limit, measured in nodes
-upper_limit = 80
-lower_limit = -80
+# Cuboid region containing the map, defined by its minimum and maximum
+# coordinates, measured in nodes. If the region has no volume (e.g. x_bounds is
+# set to [0, 0]), the entire map will be rendered.
+# Default: [0, 0]
+x_bounds = [0, 0]
+y_bounds = [0, 0]
+z_bounds = [0, 0]
