@@ -7,23 +7,34 @@ import (
 	"github.com/BurntSushi/toml"
 )
 
-type RegionConfig struct {
-	XBounds    [2]int `toml:"x_bounds"`
-	YBounds    [2]int `toml:"y_bounds"`
-	UpperLimit int    `toml:"upper_limit"`
-	LowerLimit int    `toml:"lower_limit"`
+type Region struct {
+	XBounds [2]int `toml:"x_bounds"`
+	YBounds [2]int `toml:"y_bounds"`
+	ZBounds [2]int `toml:"z_bounds"`
+}
+
+type Web struct {
+	ListenAddress string `toml:"listen_address"`
+	Title         string `toml:"title"`
+}
+
+type Renderer struct {
+	Workers    int `toml:"workers"`
+	ZoomLevels int `toml:"zoom_levels"`
+}
+
+type System struct {
+	GamePath  string `toml:"game_path"`
+	TilesPath string `toml:"tiles_path"`
+	WorldPath string `toml:"world_path"`
+	WorldDSN  string `toml:"world_dsn"`
 }
 
 type Config struct {
-	ListenAddress   string       `toml:"listen_address"`
-	GamePath        string       `toml:"game_path"`
-	WorldPath       string       `toml:"world_path"`
-	TilesPath       string       `toml:"tiles_path"`
-	WorldDSN        string       `toml:"world_dsn"`
-	RegionConfig    RegionConfig `toml:"region"`
-	RendererWorkers int          `toml:"renderer_workers"`
-	Title           string       `toml:"title"`
-	ZoomLevels      int          `toml:"zoom_levels"`
+	System   System   `toml:"system"`
+	Web      Web      `toml:"web"`
+	Renderer Renderer `toml:"renderer"`
+	Region   Region   `toml:"region"`
 }
 
 func LoadConfig(path string) (Config, error) {
