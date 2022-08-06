@@ -1,17 +1,17 @@
 package lm
 
 type Matrix3 struct {
-	m [9]float32
+	m [9]float64
 }
 
-func NewMatrix3(m [9]float32) Matrix3 {
+func NewMatrix3(m [9]float64) Matrix3 {
 	return Matrix3{
 		m: m,
 	}
 }
 
 func (lhs *Matrix3) Mul(rhs *Matrix3) Matrix3 {
-	return NewMatrix3([9]float32{
+	return NewMatrix3([9]float64{
 		lhs.m[0]*rhs.m[0] + lhs.m[1]*rhs.m[3] + lhs.m[2]*rhs.m[6],
 		lhs.m[0]*rhs.m[1] + lhs.m[1]*rhs.m[4] + lhs.m[2]*rhs.m[7],
 		lhs.m[0]*rhs.m[2] + lhs.m[1]*rhs.m[5] + lhs.m[2]*rhs.m[8],

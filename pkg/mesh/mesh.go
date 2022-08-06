@@ -30,7 +30,7 @@ func NewModel() Model {
 	}
 }
 
-func Cuboid(x1, y1, z1, x2, y2, z2 float32) []Mesh {
+func Cuboid(x1, y1, z1, x2, y2, z2 float64) []Mesh {
 	yp := NewMesh()
 	yp.Vertices = []Vertex{
 		{Position: lm.Vec3(x1, y2, z1), Texcoord: lm.Vec2(0.0, 0.0), Normal: lm.Vec3(0.0, 1.0, 0.0)},

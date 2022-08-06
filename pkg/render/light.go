@@ -6,8 +6,8 @@ const (
 	FullIntensity    = 15
 )
 
-func DecodeLight(param1 uint8) float32 {
-	var LUT = [16]float32{
+func DecodeLight(param1 uint8) float64 {
+	var LUT = [16]float64{
 		0.000,
 		0.024,
 		0.059,

@@ -33,7 +33,7 @@ func (r *Renderer) renderNode(
 	pos spatial.NodePos,
 	neighborhood *render.BlockNeighborhood,
 	offset image.Point,
-	depthOffset float32,
+	depthOffset float64,
 ) {
 	name, param1, param2 := neighborhood.GetNode(pos)
 
@@ -72,7 +72,7 @@ func (r *Renderer) renderNode(
 	}
 	renderedNode := r.nr.Render(renderableNode, &nodeDef)
 
-	depthOffset = -float32(pos.Z+pos.X)/math.Sqrt2 - 0.5*(float32(pos.Y)) + depthOffset
+	depthOffset = -float64(pos.Z+pos.X)/math.Sqrt2 - 0.5*(float64(pos.Y)) + depthOffset
 	target.OverlayDepthAware(renderedNode, offset, depthOffset)
 }
 
@@ -81,7 +81,7 @@ func (r *Renderer) renderBlock(
 	blockPos spatial.BlockPos,
 	neighborhood *render.BlockNeighborhood,
 	offset image.Point,
-	depthOffset float32,
+	depthOffset float64,
 ) {
 	rect := image.Rect(0, 0, TileBlockWidth, TileBlockHeight)
 
@@ -147,7 +147,7 @@ func (r *Renderer) RenderTile(
 					Y: (BaseResolution*(z+x+2*i)/4 - i*YOffsetCoef) * spatial.BlockSize,
 				}
 
-				depthOffset := (-float32(z+x+2*i)/math.Sqrt2 - 0.5*float32(i)) * spatial.BlockSize
+				depthOffset := (-float64(z+x+2*i)/math.Sqrt2 - 0.5*float64(i)) * spatial.BlockSize
 				r.renderBlock(target, blockPos, &neighborhood, offset, depthOffset)
 			}
 		}
@@ -160,8 +160,10 @@ func ProjectRegion(region spatial.Region) spatial.TileRegion {
 	xMin := int(math.Floor(float64((region.ZBounds.Min - region.XBounds.Max)) / 2 / spatial.BlockSize))
 	xMax := int(math.Ceil(float64((region.ZBounds.Max - region.XBounds.Min)) / 2 / spatial.BlockSize))
 
-	yMin := int(math.Floor((float64(region.ZBounds.Min+region.XBounds.Min+2*region.YBounds.Max)/4 - float64(region.YBounds.Max*YOffsetCoef)/BaseResolution) / spatial.BlockSize))
-	yMax := int(math.Ceil((float64(region.ZBounds.Max+region.XBounds.Max+2*region.YBounds.Min)/4 - float64(region.YBounds.Min*YOffsetCoef)/BaseResolution) / spatial.BlockSize))
+	yMin := int(math.Floor((float64(region.ZBounds.Min+region.XBounds.Min+2*region.YBounds.Max)/4 -
+		float64(region.YBounds.Max*YOffsetCoef)/BaseResolution) / spatial.BlockSize))
+	yMax := int(math.Ceil((float64(region.ZBounds.Max+region.XBounds.Max+2*region.YBounds.Min)/4 -
+		float64(region.YBounds.Min*YOffsetCoef)/BaseResolution) / spatial.BlockSize))
 
 	return spatial.TileRegion{
 		XBounds: spatial.Bounds{

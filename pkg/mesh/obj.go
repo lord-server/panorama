@@ -28,7 +28,7 @@ func parseVector3(fields []string) (lm.Vector3, error) {
 		return lm.Vector3{}, err
 	}
 
-	return lm.Vec3(float32(x), float32(y), float32(z)), nil
+	return lm.Vec3(x, y, z), nil
 }
 
 func parseVector2(fields []string) (lm.Vector2, error) {
@@ -45,7 +45,7 @@ func parseVector2(fields []string) (lm.Vector2, error) {
 		return lm.Vector2{}, err
 	}
 
-	return lm.Vec2(float32(x), float32(y)), nil
+	return lm.Vec2(x, y), nil
 }
 
 type Triplet struct {

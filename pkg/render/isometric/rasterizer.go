@@ -23,7 +23,7 @@ var (
 
 type RenderableNode struct {
 	Name   string
-	Light  float32
+	Light  float64
 	Param2 uint8
 }
 
@@ -46,7 +46,7 @@ func cartesianToBarycentric(p lm.Vector2, a, b, c lm.Vector2) lm.Vector3 {
 }
 
 func sampleTriangle(x, y int, a, b, c lm.Vector2) (bool, lm.Vector3) {
-	p := lm.Vec2(float32(x), float32(y))
+	p := lm.Vec2(float64(x), float64(y))
 
 	samplePointOffset := lm.Vec2(0.5, 0.5)
 
@@ -60,20 +60,26 @@ func sampleTriangle(x, y int, a, b, c lm.Vector2) (bool, lm.Vector3) {
 }
 
 func sampleTexture(tex *image.NRGBA, texcoord lm.Vector2) lm.Vector4 {
-	x := int(texcoord.X * float32(tex.Rect.Dx()))
-	y := int(texcoord.Y * float32(tex.Rect.Dy()))
+	x := int(texcoord.X * float64(tex.Rect.Dx()))
+	y := int(texcoord.Y * float64(tex.Rect.Dy()))
 	c := tex.NRGBAAt(x, y)
-	return lm.Vec4(float32(c.R)/255, float32(c.G)/255, float32(c.B)/255, float32(c.A)/255)
+	return lm.Vector4{
+		X: float64(c.R) / 255,
+		Y: float64(c.G) / 255,
+		Z: float64(c.B) / 255,
+		W: float64(c.A) / 255,
+	}
 }
 
 var SunLightDir = lm.Vec3(-0.5, 1, -0.8).Normalize()
 var SunLightIntensity = 0.95 / SunLightDir.MaxComponent()
 var Projection = lm.DimetricProjection()
 
-func drawTriangle(target *raster.RenderBuffer, tex *image.NRGBA, lighting float32, a, b, c mesh.Vertex) {
-	originX := float32(target.Color.Bounds().Dx() / 2)
-	originY := float32(target.Color.Bounds().Dy() / 2)
-	origin := lm.Vec2(originX, originY)
+func drawTriangle(target *raster.RenderBuffer, tex *image.NRGBA, lighting float64, a, b, c mesh.Vertex) {
+	origin := lm.Vector2{
+		X: float64(target.Color.Bounds().Dx()) / 2,
+		Y: float64(target.Color.Bounds().Dy()) / 2,
+	}
 
 	a.Position = Projection.MulVec(a.Position)
 	b.Position = Projection.MulVec(b.Position)
@@ -100,7 +106,7 @@ func drawTriangle(target *raster.RenderBuffer, tex *image.NRGBA, lighting float3
 				Add(b.Normal.MulScalar(barycentric.Y)).
 				Add(c.Normal.MulScalar(barycentric.Z))
 
-			lighting := SunLightIntensity * lighting * lm.Clamp(lm.Abs(normal.Dot(SunLightDir))*0.8+0.2, 0.0, 1.0)
+			lighting := SunLightIntensity * lighting * lm.Clamp(math.Abs(normal.Dot(SunLightDir))*0.8+0.2, 0.0, 1.0)
 
 			var finalColor color.NRGBA
 			if tex != nil {

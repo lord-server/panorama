@@ -141,7 +141,7 @@ func (t *ParamType2) UnmarshalJSON(data []byte) error {
 
 type NodeBox struct {
 	Type  string
-	Fixed [][]float32
+	Fixed [][]float64
 }
 
 func (n *NodeBox) UnmarshalJSON(data []byte) error {
@@ -155,7 +155,7 @@ func (n *NodeBox) UnmarshalJSON(data []byte) error {
 	}
 
 	n.Type = inner.Type
-	n.Fixed = make([][]float32, 0)
+	n.Fixed = make([][]float64, 0)
 	if inner.Type != "fixed" {
 		return nil
 	}
@@ -165,10 +165,10 @@ func (n *NodeBox) UnmarshalJSON(data []byte) error {
 	}
 
 	if _, ok := inner.Fixed[0].(float64); ok {
-		box := make([]float32, 0)
+		box := make([]float64, 0)
 		for i := 0; i < 6; i++ {
 			v, _ := inner.Fixed[i].(float64)
-			box = append(box, float32(v))
+			box = append(box, v)
 		}
 		n.Fixed = append(n.Fixed, box)
 	}
@@ -176,10 +176,10 @@ func (n *NodeBox) UnmarshalJSON(data []byte) error {
 	if _, ok := inner.Fixed[0].([]interface{}); ok {
 		for _, boxInterface := range inner.Fixed {
 			boxFloat64 := boxInterface.([]interface{})
-			box := make([]float32, 0)
+			box := make([]float64, 0)
 			for i := 0; i < 6; i++ {
 				v, _ := boxFloat64[i].(float64)
-				box = append(box, float32(v))
+				box = append(box, v)
 			}
 			n.Fixed = append(n.Fixed, box)
 		}

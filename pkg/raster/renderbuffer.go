@@ -16,7 +16,7 @@ func NewRenderBuffer(rect image.Rectangle) *RenderBuffer {
 	}
 }
 
-func (target *RenderBuffer) OverlayDepthAware(source *RenderBuffer, origin image.Point, depthOffset float32) {
+func (target *RenderBuffer) OverlayDepthAware(source *RenderBuffer, origin image.Point, depthOffset float64) {
 	target.Dirty = true
 
 	if source == nil {
