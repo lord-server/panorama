@@ -11,21 +11,21 @@ import (
 	"strings"
 	"sync"
 
-	"github.com/weqqr/panorama/pkg/config"
 	"github.com/weqqr/panorama/pkg/game"
+	"github.com/weqqr/panorama/pkg/lm"
 	"github.com/weqqr/panorama/pkg/raster"
+	"github.com/weqqr/panorama/pkg/region"
 	"github.com/weqqr/panorama/pkg/render"
-	"github.com/weqqr/panorama/pkg/render/isometric"
 	"github.com/weqqr/panorama/pkg/world"
 )
 
 type Tiler struct {
-	region     config.Region
+	region     region.Region
 	zoomLevels int
 	tilesPath  string
 }
 
-func NewTiler(region config.Region, zoomLevels int, tilesPath string) Tiler {
+func NewTiler(region region.Region, zoomLevels int, tilesPath string) Tiler {
 	return Tiler{
 		region:     region,
 		zoomLevels: zoomLevels,
@@ -37,7 +37,7 @@ func (t *Tiler) tilePath(x, y, zoom int) string {
 	return fmt.Sprintf("%v/%v/%v/%v.png", t.tilesPath, -zoom, x, y)
 }
 
-func (t *Tiler) worker(wg *sync.WaitGroup, game *game.Game, world *world.World, renderer isometric.Renderer, positions <-chan render.TilePosition) {
+func (t *Tiler) worker(wg *sync.WaitGroup, game *game.Game, world *world.World, renderer render.Renderer, positions <-chan render.TilePosition) {
 	for position := range positions {
 		output := renderer.RenderTile(position, world, game)
 		// Don't save empty tiles
@@ -56,27 +56,28 @@ func (t *Tiler) worker(wg *sync.WaitGroup, game *game.Game, world *world.World, 
 	wg.Done()
 }
 
-func (t *Tiler) FullRender(game *game.Game, world *world.World, workers int) {
+type CreateRendererFunc func() render.Renderer
+
+func (t *Tiler) FullRender(game *game.Game, world *world.World, workers int, region region.TileRegion, createRenderer CreateRendererFunc) {
 	var wg sync.WaitGroup
 	positions := make(chan render.TilePosition)
 
 	for i := 0; i < workers; i++ {
 		wg.Add(1)
-		renderer := isometric.NewRenderer(t.lowerLimit, t.upperLimit)
+		renderer := createRenderer()
 		go t.worker(&wg, game, world, renderer, positions)
 	}
 
-	for x := t.xMin; x < t.xMax; x++ {
+	for x := region.XBounds.Min; x < region.XBounds.Max; x++ {
 		err := os.MkdirAll(fmt.Sprintf("%v/%v", path.Join(t.tilesPath, "0"), x), os.ModePerm)
 		if err != nil {
 			panic(err)
 		}
 
-		for y := t.yMin; y < t.yMax; y++ {
+		for y := region.YBounds.Min; y < region.YBounds.Max; y++ {
 			positions <- render.TilePosition{X: x, Y: y}
 		}
 	}
-
 	close(positions)
 
 	wg.Wait()
@@ -110,7 +111,10 @@ func (t *Tiler) DownscaleTiles() {
 			return nil
 		}
 
-		positions = append(positions, render.TilePosition{X: floorDiv(x, 2), Y: floorDiv(y, 2)})
+		positions = append(positions, render.TilePosition{
+			X: lm.FloorDiv(x, 2),
+			Y: lm.FloorDiv(y, 2),
+		})
 
 		return nil
 	})

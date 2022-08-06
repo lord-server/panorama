@@ -3,11 +3,11 @@ package tile
 import (
 	"image"
 	"image/draw"
-	"math"
 	"sort"
 
 	"github.com/nfnt/resize"
 
+	"github.com/weqqr/panorama/pkg/lm"
 	"github.com/weqqr/panorama/pkg/raster"
 	"github.com/weqqr/panorama/pkg/render"
 )
@@ -51,12 +51,6 @@ func uniquePositions(input []render.TilePosition) []render.TilePosition {
 	return input[:j]
 }
 
-// floorDiv returns the result of floor division. The difference compared to usual division
-// is that floor division always rounds down instead of rounding towards zero.
-func floorDiv(a, b int) int {
-	return int(math.Floor(float64(a) / float64(b)))
-}
-
 // downscalePositions produces downscaled images for given zoom level and returns a list of produced tile positions
 func (t *Tiler) downscalePositions(zoom int, positions []render.TilePosition) []render.TilePosition {
 	const quadrantSize = 128
@@ -86,7 +80,10 @@ func (t *Tiler) downscalePositions(zoom int, positions []render.TilePosition) []
 			panic(err)
 		}
 
-		nextPositions = append(nextPositions, render.TilePosition{X: floorDiv(pos.X, 2), Y: floorDiv(pos.Y, 2)})
+		nextPositions = append(nextPositions, render.TilePosition{
+			X: lm.FloorDiv(pos.X, 2),
+			Y: lm.FloorDiv(pos.Y, 2),
+		})
 	}
 
 	nextPositions = uniquePositions(nextPositions)

@@ -9,15 +9,15 @@ import (
 	"github.com/weqqr/panorama/pkg/web/handlers"
 )
 
-func Serve(addr string, config *config.Config) {
+func Serve(config *config.Config) {
 	app := fiber.New()
 
 	app.Static("/", "./static")
-	app.Static("/tiles", config.TilesPath, fiber.Static{
+	app.Static("/tiles", config.System.TilesPath, fiber.Static{
 		MaxAge: 5,
 	})
 
 	app.Get("/metadata.json", handlers.Metadata(config))
 
-	log.Fatal(app.Listen(config.ListenAddress))
+	log.Fatal(app.Listen(config.Web.ListenAddress))
 }

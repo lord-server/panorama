@@ -5,13 +5,8 @@ import (
 	"os"
 
 	"github.com/BurntSushi/toml"
+	"github.com/weqqr/panorama/pkg/region"
 )
-
-type Region struct {
-	XBounds [2]int `toml:"x_bounds"`
-	YBounds [2]int `toml:"y_bounds"`
-	ZBounds [2]int `toml:"z_bounds"`
-}
 
 type Web struct {
 	ListenAddress string `toml:"listen_address"`
@@ -31,10 +26,10 @@ type System struct {
 }
 
 type Config struct {
-	System   System   `toml:"system"`
-	Web      Web      `toml:"web"`
-	Renderer Renderer `toml:"renderer"`
-	Region   Region   `toml:"region"`
+	System   System        `toml:"system"`
+	Web      Web           `toml:"web"`
+	Renderer Renderer      `toml:"renderer"`
+	Region   region.Region `toml:"region"`
 }
 
 func LoadConfig(path string) (Config, error) {

@@ -1,9 +1,8 @@
 package render
 
 import (
-	"image"
-
 	"github.com/weqqr/panorama/pkg/game"
+	"github.com/weqqr/panorama/pkg/raster"
 	"github.com/weqqr/panorama/pkg/world"
 )
 
@@ -12,6 +11,7 @@ type TilePosition struct {
 }
 
 type Renderer interface {
-	RenderTile(pos TilePosition, w *world.World, game *game.Game) *image.NRGBA
-	ListTilesWithBlock(x, y, z int) []TilePosition
+	RenderTile(pos TilePosition, w *world.World, game *game.Game) *raster.RenderBuffer
+	// ListTilesWithBlock(x, y, z int) []TilePosition
+	// ListTilesInsideRegion(region config.Region) []TilePosition
 }

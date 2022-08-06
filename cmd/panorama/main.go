@@ -7,6 +7,8 @@ import (
 
 	"github.com/weqqr/panorama/pkg/config"
 	"github.com/weqqr/panorama/pkg/game"
+	"github.com/weqqr/panorama/pkg/render"
+	"github.com/weqqr/panorama/pkg/render/isometric"
 	"github.com/weqqr/panorama/pkg/tile"
 	"github.com/weqqr/panorama/pkg/web"
 	"github.com/weqqr/panorama/pkg/world"
@@ -36,28 +38,35 @@ func main() {
 		log.Fatalf("Unable to load config: %v\n", err)
 	}
 
-	log.Printf("Game path: `%v`\n", config.GamePath)
+	log.Printf("Game path: `%v`\n", config.System.GamePath)
 
-	descPath := path.Join(config.WorldPath, "nodes_dump.json")
+	descPath := path.Join(config.System.WorldPath, "nodes_dump.json")
 	log.Printf("Game description: `%v`\n", descPath)
 
-	game, err := game.LoadGame(descPath, config.GamePath)
+	game, err := game.LoadGame(descPath, config.System.GamePath)
 	if err != nil {
 		log.Fatalf("Unable to load game description: %v\n", err)
 	}
 
-	backend, err := world.NewPostgresBackend(config.WorldDSN)
+	backend, err := world.NewPostgresBackend(config.System.WorldDSN)
 	if err != nil {
 		log.Fatalf("Unable to connect to world DB: %v\n", err)
 	}
 
 	world := world.NewWorldWithBackend(backend)
 
-	tiler := tile.NewTiler(&config.RegionConfig, config.ZoomLevels, config.TilesPath)
+	tiler := tile.NewTiler(config.Region, config.Renderer.ZoomLevels, config.System.TilesPath)
 
 	if args.FullRender {
-		log.Printf("Performing a full render using %v workers", config.RendererWorkers)
-		tiler.FullRender(&game, &world, config.RendererWorkers)
+		log.Printf("Performing a full render using %v workers", config.Renderer.Workers)
+		tileRegion := isometric.ProjectRegion(config.Region)
+
+		log.Printf("Region: %v", config.Region)
+		log.Printf("TileRegion: %v", tileRegion)
+
+		tiler.FullRender(&game, &world, config.Renderer.Workers, tileRegion, func() render.Renderer {
+			return isometric.NewRenderer(config.Region, &game)
+		})
 	}
 
 	if args.Downscale || args.FullRender {
@@ -65,7 +74,7 @@ func main() {
 	}
 
 	if args.Serve {
-		log.Printf("Serving tiles @ %v", config.ListenAddress)
-		web.Serve(config.ListenAddress, &config)
+		log.Printf("Serving tiles @ %v", config.Web.ListenAddress)
+		web.Serve(&config)
 	}
 }
