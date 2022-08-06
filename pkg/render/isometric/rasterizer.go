@@ -9,7 +9,7 @@ import (
 	"github.com/weqqr/panorama/pkg/lm"
 	"github.com/weqqr/panorama/pkg/mesh"
 	"github.com/weqqr/panorama/pkg/raster"
-	"github.com/weqqr/panorama/pkg/world"
+	"github.com/weqqr/panorama/pkg/spatial"
 )
 
 const Gamma = 2.2
@@ -17,8 +17,8 @@ const BaseResolution = 16
 
 var (
 	YOffsetCoef     = int(math.Round(BaseResolution * (1 + math.Sqrt2) / 4))
-	TileBlockWidth  = world.MapBlockSize * BaseResolution
-	TileBlockHeight = BaseResolution/2*world.MapBlockSize - 1 + YOffsetCoef*world.MapBlockSize
+	TileBlockWidth  = spatial.BlockSize * BaseResolution
+	TileBlockHeight = BaseResolution/2*spatial.BlockSize - 1 + YOffsetCoef*spatial.BlockSize
 )
 
 type RenderableNode struct {

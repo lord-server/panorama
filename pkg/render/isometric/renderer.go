@@ -32,10 +32,15 @@ func (r *Renderer) renderBlock(target *raster.RenderBuffer, blockPos spatial.Blo
 	// FIXME: nodes must define their origin points
 	originX, originY := rect.Dx()/2-BaseResolution/2, rect.Dy()/2+BaseResolution/4+2
 
-	for z := world.MapBlockSize - 1; z >= 0; z-- {
-		for y := world.MapBlockSize - 1; y >= 0; y-- {
-			for x := world.MapBlockSize - 1; x >= 0; x-- {
+	for z := spatial.BlockSize - 1; z >= 0; z-- {
+		for y := spatial.BlockSize - 1; y >= 0; y-- {
+			for x := spatial.BlockSize - 1; x >= 0; x-- {
 				nodePos := spatial.NodePos{X: x, Y: y, Z: z}
+
+				nodeWorldPos := blockPos.AddNode(nodePos)
+				if !r.region.Intersects(nodeWorldPos.Region()) {
+					continue
+				}
 
 				tileOffsetX := originX + BaseResolution*(z-x)/2 + offsetX
 				tileOffsetY := originY + BaseResolution*(z+x)/4 + offsetY - YOffsetCoef*y
@@ -95,8 +100,8 @@ func (r *Renderer) RenderTile(tilePos render.TilePosition, w *world.World, game 
 	centerY := 0
 	centerZ := tilePos.Y + tilePos.X
 
-	yMin := int(math.Floor(float64(r.region.YBounds.Min) / float64(world.MapBlockSize)))
-	yMax := int(math.Ceil(float64(r.region.YBounds.Max) / float64(world.MapBlockSize)))
+	yMin := int(math.Floor(float64(r.region.YBounds.Min) / float64(spatial.BlockSize)))
+	yMax := int(math.Ceil(float64(r.region.YBounds.Max) / float64(spatial.BlockSize)))
 
 	for i := yMin; i < yMax; i++ {
 		for z := -3; z <= 3; z++ {
@@ -109,15 +114,15 @@ func (r *Renderer) RenderTile(tilePos render.TilePosition, w *world.World, game 
 
 				neighborhood := BlockNeighborhood{}
 
-				neighborhood.FetchBlock(w, spatial.BlockPos{0, 0, 0}, blockPos)
-				neighborhood.FetchBlock(w, spatial.BlockPos{1, 0, 0}, blockPos)
-				neighborhood.FetchBlock(w, spatial.BlockPos{0, 1, 0}, blockPos)
-				neighborhood.FetchBlock(w, spatial.BlockPos{0, 0, 1}, blockPos)
+				neighborhood.FetchBlock(w, spatial.BlockPos{X: 0, Y: 0, Z: 0}, blockPos)
+				neighborhood.FetchBlock(w, spatial.BlockPos{X: 1, Y: 0, Z: 0}, blockPos)
+				neighborhood.FetchBlock(w, spatial.BlockPos{X: 0, Y: 1, Z: 0}, blockPos)
+				neighborhood.FetchBlock(w, spatial.BlockPos{X: 0, Y: 0, Z: 1}, blockPos)
 
-				tileOffsetX := BaseResolution / 2 * (z - x) * world.MapBlockSize
-				tileOffsetY := (BaseResolution/4*(z+x+2*i) - i*YOffsetCoef) * world.MapBlockSize
+				tileOffsetX := BaseResolution / 2 * (z - x) * spatial.BlockSize
+				tileOffsetY := (BaseResolution/4*(z+x+2*i) - i*YOffsetCoef) * spatial.BlockSize
 
-				depthOffset := (-float32(z+x+2*i)/math.Sqrt2 - 0.5*float32(i)) * world.MapBlockSize
+				depthOffset := (-float32(z+x+2*i)/math.Sqrt2 - 0.5*float32(i)) * spatial.BlockSize
 				r.renderBlock(target, blockPos, &neighborhood, tileOffsetX, tileOffsetY, depthOffset)
 			}
 		}
@@ -127,11 +132,11 @@ func (r *Renderer) RenderTile(tilePos render.TilePosition, w *world.World, game 
 }
 
 func ProjectRegion(region spatial.Region) spatial.TileRegion {
-	xMin := int(math.Floor(float64((region.ZBounds.Min - region.XBounds.Max)) / 2 / world.MapBlockSize))
-	xMax := int(math.Ceil(float64((region.ZBounds.Max - region.XBounds.Min)) / 2 / world.MapBlockSize))
+	xMin := int(math.Floor(float64((region.ZBounds.Min - region.XBounds.Max)) / 2 / spatial.BlockSize))
+	xMax := int(math.Ceil(float64((region.ZBounds.Max - region.XBounds.Min)) / 2 / spatial.BlockSize))
 
-	yMin := int(math.Floor((float64(region.ZBounds.Min+region.XBounds.Min+2*region.YBounds.Max)/4 - float64(region.YBounds.Max*YOffsetCoef)/BaseResolution) / world.MapBlockSize))
-	yMax := int(math.Ceil((float64(region.ZBounds.Max+region.XBounds.Max+2*region.YBounds.Min)/4 - float64(region.YBounds.Min*YOffsetCoef)/BaseResolution) / world.MapBlockSize))
+	yMin := int(math.Floor((float64(region.ZBounds.Min+region.XBounds.Min+2*region.YBounds.Max)/4 - float64(region.YBounds.Max*YOffsetCoef)/BaseResolution) / spatial.BlockSize))
+	yMax := int(math.Ceil((float64(region.ZBounds.Max+region.XBounds.Max+2*region.YBounds.Min)/4 - float64(region.YBounds.Min*YOffsetCoef)/BaseResolution) / spatial.BlockSize))
 
 	return spatial.TileRegion{
 		XBounds: spatial.Bounds{
