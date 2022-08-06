@@ -7,6 +7,7 @@ import (
 	"io"
 
 	"github.com/klauspost/compress/zstd"
+	"github.com/weqqr/panorama/pkg/spatial"
 )
 
 const MapBlockSize = 16
@@ -267,8 +268,8 @@ func (b *MapBlock) ResolveName(id uint16) string {
 	return b.mappings[id]
 }
 
-func (b *MapBlock) GetNode(x, y, z int) Node {
-	index := z*MapBlockSize*MapBlockSize + y*MapBlockSize + x
+func (b *MapBlock) GetNode(pos spatial.NodePos) Node {
+	index := pos.Z*MapBlockSize*MapBlockSize + pos.Y*MapBlockSize + pos.X
 	idHi := uint16(b.nodeData[2*index])
 	idLo := uint16(b.nodeData[2*index+1])
 	param1 := b.nodeData[2*MapBlockVolume+index]

@@ -7,10 +7,11 @@ import (
 	lru "github.com/hashicorp/golang-lru"
 	"github.com/jackc/pgx/v4"
 	"github.com/jackc/pgx/v4/pgxpool"
+	"github.com/weqqr/panorama/pkg/spatial"
 )
 
 type Backend interface {
-	GetBlockData(x, y, z int) ([]byte, error)
+	GetBlockData(pos spatial.BlockPos) ([]byte, error)
 	Close()
 }
 
@@ -33,9 +34,9 @@ func (p *PostgresBackend) Close() {
 	p.conn.Close()
 }
 
-func (p *PostgresBackend) GetBlockData(x, y, z int) ([]byte, error) {
+func (p *PostgresBackend) GetBlockData(pos spatial.BlockPos) ([]byte, error) {
 	var data []byte
-	err := p.conn.QueryRow(context.Background(), "SELECT data FROM blocks WHERE posx=$1 and posy=$2 and posz=$3", x, y, z).Scan(&data)
+	err := p.conn.QueryRow(context.Background(), "SELECT data FROM blocks WHERE posx=$1 and posy=$2 and posz=$3", pos.X, pos.Y, pos.Z).Scan(&data)
 	if errors.Is(err, pgx.ErrNoRows) {
 		return nil, nil
 	}
@@ -63,12 +64,8 @@ func NewWorldWithBackend(backend Backend) World {
 	}
 }
 
-func (w *World) GetBlock(x, y, z int) (*MapBlock, error) {
-	type blockPos struct {
-		x, y, z int
-	}
-
-	cachedBlock, ok := w.blockCache.Get(blockPos{x, y, z})
+func (w *World) GetBlock(pos spatial.BlockPos) (*MapBlock, error) {
+	cachedBlock, ok := w.blockCache.Get(pos)
 
 	if ok {
 		if cachedBlock == nil {
@@ -77,13 +74,13 @@ func (w *World) GetBlock(x, y, z int) (*MapBlock, error) {
 		return cachedBlock.(*MapBlock), nil
 	}
 
-	data, err := w.backend.GetBlockData(x, y, z)
+	data, err := w.backend.GetBlockData(pos)
 	if err != nil {
 		return nil, err
 	}
 
 	if data == nil {
-		w.blockCache.Add(blockPos{x, y, z}, nil)
+		w.blockCache.Add(pos, nil)
 		return nil, nil
 	}
 
@@ -92,7 +89,7 @@ func (w *World) GetBlock(x, y, z int) (*MapBlock, error) {
 		return nil, err
 	}
 
-	w.blockCache.Add(blockPos{x, y, z}, block)
+	w.blockCache.Add(pos, block)
 
 	return block, nil
 }
