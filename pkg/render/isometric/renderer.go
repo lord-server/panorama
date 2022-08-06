@@ -11,6 +11,8 @@ import (
 	"github.com/weqqr/panorama/pkg/world"
 )
 
+const Epsilon = 0.0001
+
 type Renderer struct {
 	nr NodeRasterizer
 
@@ -26,7 +28,49 @@ func NewRenderer(region spatial.Region, game *game.Game) *Renderer {
 	}
 }
 
-func (r *Renderer) renderBlock(target *raster.RenderBuffer, blockPos spatial.BlockPos, neighborhood *BlockNeighborhood, offsetX, offsetY int, depth float32) {
+func (r *Renderer) renderNode(target *raster.RenderBuffer, pos spatial.NodePos, neighborhood *BlockNeighborhood, offset image.Point, depthOffset float32) {
+	name, param1, param2 := neighborhood.GetNode(pos)
+
+	// Fast path: checking for air immediately is faster than fetching NodeDefinition
+	if name == "air" {
+		return
+	}
+
+	nodeDef := r.game.NodeDef(name)
+
+	// Estimate lighting by sampling neighboring nodes and using the brightest one
+	neighborOffsets := []spatial.NodePos{
+		{X: 1, Y: 0, Z: 0},
+		{X: 0, Y: 1, Z: 0},
+		{X: 0, Y: 0, Z: 1},
+	}
+
+	maxParam1 := param1
+	for _, offset := range neighborOffsets {
+		neighborPos := pos.Add(offset)
+		if param1 := neighborhood.GetParam1(neighborPos); param1 > maxParam1 {
+			maxParam1 = param1
+		}
+	}
+
+	// Make underground edges visible (otherwise the edge becomes oddly thin and
+	// that doesn't look good)
+	if maxParam1 == render.ZeroIntensity {
+		maxParam1 = render.MapEdgeIntensity
+	}
+
+	renderableNode := RenderableNode{
+		Name:   name,
+		Light:  render.DecodeLight(maxParam1),
+		Param2: param2,
+	}
+	renderedNode := r.nr.Render(renderableNode, &nodeDef)
+
+	depthOffset = -float32(pos.Z+pos.X)/math.Sqrt2 - 0.5*(float32(pos.Y)) + depthOffset
+	target.OverlayDepthAware(renderedNode, offset, depthOffset)
+}
+
+func (r *Renderer) renderBlock(target *raster.RenderBuffer, blockPos spatial.BlockPos, neighborhood *BlockNeighborhood, offset image.Point, depthOffset float32) {
 	rect := image.Rect(0, 0, TileBlockWidth, TileBlockHeight)
 
 	// FIXME: nodes must define their origin points
@@ -36,55 +80,26 @@ func (r *Renderer) renderBlock(target *raster.RenderBuffer, blockPos spatial.Blo
 		for y := spatial.BlockSize - 1; y >= 0; y-- {
 			for x := spatial.BlockSize - 1; x >= 0; x-- {
 				nodePos := spatial.NodePos{X: x, Y: y, Z: z}
-
 				nodeWorldPos := blockPos.AddNode(nodePos)
+
 				if !r.region.Intersects(nodeWorldPos.Region()) {
 					continue
 				}
 
-				tileOffsetX := originX + BaseResolution*(z-x)/2 + offsetX
-				tileOffsetY := originY + BaseResolution*(z+x)/4 + offsetY - YOffsetCoef*y
+				offset := image.Point{
+					X: originX + BaseResolution*(z-x)/2 + offset.X,
+					Y: originY + BaseResolution*(z+x)/4 + offset.Y - YOffsetCoef*y,
+				}
 
 				// Fast path: Don't bother with nodes outside viewport
-				nodeTileTooLow := tileOffsetX <= target.Color.Rect.Min.X-BaseResolution || tileOffsetY <= target.Color.Rect.Min.Y-BaseResolution-BaseResolution/8
-				nodeTileTooHigh := tileOffsetX >= target.Color.Rect.Max.X || tileOffsetY >= target.Color.Rect.Max.Y
+				nodeTileTooLow := offset.X <= target.Color.Rect.Min.X-BaseResolution || offset.Y <= target.Color.Rect.Min.Y-BaseResolution-BaseResolution/8
+				nodeTileTooHigh := offset.X >= target.Color.Rect.Max.X || offset.Y >= target.Color.Rect.Max.Y
 
 				if nodeTileTooLow || nodeTileTooHigh {
 					continue
 				}
 
-				name, param1, param2 := neighborhood.GetNode(nodePos)
-
-				// Fast path: checking for air immediately is faster than fetching NodeDefinition
-				if name == "air" {
-					continue
-				}
-
-				nodeDef := r.game.NodeDef(name)
-
-				lightOffsets := []spatial.NodePos{
-					{X: 1, Y: 0, Z: 0},
-					{X: 0, Y: 1, Z: 0},
-					{X: 0, Y: 0, Z: 1},
-				}
-
-				light := decodeLight(param1)
-				for _, offset := range lightOffsets {
-					pos := nodePos.Add(offset)
-					if l := decodeLight(neighborhood.GetParam1(pos)); l > light {
-						light = l
-					}
-				}
-
-				renderableNode := RenderableNode{
-					Name:   name,
-					Light:  light,
-					Param2: param2,
-				}
-				renderedNode := r.nr.Render(renderableNode, &nodeDef)
-
-				depthOffset := -float32(z+x)/math.Sqrt2 - 0.5*(float32(y)) + depth
-				target.OverlayDepthAware(renderedNode, image.Pt(tileOffsetX, tileOffsetY), depthOffset)
+				r.renderNode(target, nodePos, neighborhood, offset, depthOffset)
 			}
 		}
 	}
@@ -119,11 +134,13 @@ func (r *Renderer) RenderTile(tilePos render.TilePosition, w *world.World, game 
 				neighborhood.FetchBlock(w, spatial.BlockPos{X: 0, Y: 1, Z: 0}, blockPos)
 				neighborhood.FetchBlock(w, spatial.BlockPos{X: 0, Y: 0, Z: 1}, blockPos)
 
-				tileOffsetX := BaseResolution / 2 * (z - x) * spatial.BlockSize
-				tileOffsetY := (BaseResolution/4*(z+x+2*i) - i*YOffsetCoef) * spatial.BlockSize
+				offset := image.Point{
+					X: BaseResolution * (z - x) / 2 * spatial.BlockSize,
+					Y: (BaseResolution*(z+x+2*i)/4 - i*YOffsetCoef) * spatial.BlockSize,
+				}
 
 				depthOffset := (-float32(z+x+2*i)/math.Sqrt2 - 0.5*float32(i)) * spatial.BlockSize
-				r.renderBlock(target, blockPos, &neighborhood, tileOffsetX, tileOffsetY, depthOffset)
+				r.renderBlock(target, blockPos, &neighborhood, offset, depthOffset)
 			}
 		}
 	}
