@@ -48,9 +48,9 @@ func (b *BlockNeighborhood) SetBlock(pos spatial.BlockPos, block *world.MapBlock
 }
 
 func (b *BlockNeighborhood) getBlockByNodePos(pos spatial.NodePos) *world.MapBlock {
-	bx := pos.X/world.MapBlockSize + neighborhoodCenter.X
-	by := pos.Y/world.MapBlockSize + neighborhoodCenter.Y
-	bz := pos.Z/world.MapBlockSize + neighborhoodCenter.Z
+	bx := pos.X/spatial.BlockSize + neighborhoodCenter.X
+	by := pos.Y/spatial.BlockSize + neighborhoodCenter.Y
+	bz := pos.Z/spatial.BlockSize + neighborhoodCenter.Z
 
 	return b.blocks[bz*9+by*3+bx]
 }
@@ -63,9 +63,9 @@ func (b *BlockNeighborhood) GetNode(pos spatial.NodePos) (string, uint8, uint8) 
 	}
 
 	node := block.GetNode(spatial.NodePos{
-		X: pos.X % world.MapBlockSize,
-		Y: pos.Y % world.MapBlockSize,
-		Z: pos.Z % world.MapBlockSize,
+		X: pos.X % spatial.BlockSize,
+		Y: pos.Y % spatial.BlockSize,
+		Z: pos.Z % spatial.BlockSize,
 	})
 	name := block.ResolveName(node.ID)
 	return name, node.Param1, node.Param2
@@ -79,9 +79,9 @@ func (b *BlockNeighborhood) GetParam1(pos spatial.NodePos) uint8 {
 	}
 
 	node := block.GetNode(spatial.NodePos{
-		X: pos.X % world.MapBlockSize,
-		Y: pos.Y % world.MapBlockSize,
-		Z: pos.Z % world.MapBlockSize,
+		X: pos.X % spatial.BlockSize,
+		Y: pos.Y % spatial.BlockSize,
+		Z: pos.Z % spatial.BlockSize,
 	})
 
 	return node.Param1

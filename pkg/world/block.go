@@ -10,8 +10,6 @@ import (
 	"github.com/weqqr/panorama/pkg/spatial"
 )
 
-const MapBlockSize = 16
-const MapBlockVolume = MapBlockSize * MapBlockSize * MapBlockSize
 const NodeSizeInBytes = 4
 
 type Node struct {
@@ -233,7 +231,7 @@ func decodeBlock(reader *bytes.Reader) (*MapBlock, error) {
 		return nil, err
 	}
 
-	nodeData := make([]byte, MapBlockVolume*NodeSizeInBytes)
+	nodeData := make([]byte, spatial.BlockVolume*NodeSizeInBytes)
 	_, err = io.ReadFull(reader, nodeData)
 	if err != nil {
 		return nil, err
@@ -269,11 +267,11 @@ func (b *MapBlock) ResolveName(id uint16) string {
 }
 
 func (b *MapBlock) GetNode(pos spatial.NodePos) Node {
-	index := pos.Z*MapBlockSize*MapBlockSize + pos.Y*MapBlockSize + pos.X
+	index := pos.Z*spatial.BlockSize*spatial.BlockSize + pos.Y*spatial.BlockSize + pos.X
 	idHi := uint16(b.nodeData[2*index])
 	idLo := uint16(b.nodeData[2*index+1])
-	param1 := b.nodeData[2*MapBlockVolume+index]
-	param2 := b.nodeData[3*MapBlockVolume+index]
+	param1 := b.nodeData[2*spatial.BlockVolume+index]
+	param2 := b.nodeData[3*spatial.BlockVolume+index]
 	return Node{
 		ID:     (idHi << 8) | idLo,
 		Param1: param1,

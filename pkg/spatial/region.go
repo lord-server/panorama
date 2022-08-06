@@ -14,7 +14,7 @@ type Region struct {
 	ZBounds Bounds `toml:"z_bounds"`
 }
 
-func (lhs *Region) Intersects(rhs Region) bool {
+func (lhs Region) Intersects(rhs Region) bool {
 	xOverlaps := lhs.XBounds.Min <= rhs.XBounds.Max && rhs.XBounds.Min <= lhs.XBounds.Max
 	yOverlaps := lhs.YBounds.Min <= rhs.YBounds.Max && rhs.YBounds.Min <= lhs.YBounds.Max
 	zOverlaps := lhs.ZBounds.Min <= rhs.ZBounds.Max && rhs.ZBounds.Min <= lhs.ZBounds.Max
