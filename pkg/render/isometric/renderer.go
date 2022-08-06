@@ -5,16 +5,21 @@ import (
 	"math"
 
 	"github.com/weqqr/panorama/pkg/game"
+	"github.com/weqqr/panorama/pkg/lm"
 	"github.com/weqqr/panorama/pkg/raster"
 	"github.com/weqqr/panorama/pkg/render"
 	"github.com/weqqr/panorama/pkg/spatial"
 	"github.com/weqqr/panorama/pkg/world"
 )
 
-const Epsilon = 0.0001
+var (
+	YOffsetCoef     = int(math.Round(render.BaseResolution * (1 + math.Sqrt2) / 4))
+	TileBlockWidth  = spatial.BlockSize * render.BaseResolution
+	TileBlockHeight = render.BaseResolution/2*spatial.BlockSize - 1 + YOffsetCoef*spatial.BlockSize
+)
 
 type Renderer struct {
-	nr NodeRasterizer
+	nr render.NodeRasterizer
 
 	region spatial.Region
 	game   *game.Game
@@ -22,7 +27,7 @@ type Renderer struct {
 
 func NewRenderer(region spatial.Region, game *game.Game) *Renderer {
 	return &Renderer{
-		nr:     NewNodeRasterizer(),
+		nr:     render.NewNodeRasterizer(lm.DimetricProjection()),
 		region: region,
 		game:   game,
 	}
@@ -65,7 +70,7 @@ func (r *Renderer) renderNode(
 		maxParam1 = render.MapEdgeIntensity
 	}
 
-	renderableNode := RenderableNode{
+	renderableNode := render.RenderableNode{
 		Name:   name,
 		Light:  render.DecodeLight(maxParam1),
 		Param2: param2,
@@ -86,7 +91,7 @@ func (r *Renderer) renderBlock(
 	rect := image.Rect(0, 0, TileBlockWidth, TileBlockHeight)
 
 	// FIXME: nodes must define their origin points
-	originX, originY := rect.Dx()/2-BaseResolution/2, rect.Dy()/2+BaseResolution/4+2
+	originX, originY := rect.Dx()/2-render.BaseResolution/2, rect.Dy()/2+render.BaseResolution/4+2
 
 	for z := spatial.BlockSize - 1; z >= 0; z-- {
 		for y := spatial.BlockSize - 1; y >= 0; y-- {
@@ -99,8 +104,8 @@ func (r *Renderer) renderBlock(
 				}
 
 				offset := image.Point{
-					X: originX + BaseResolution*(z-x)/2 + offset.X,
-					Y: originY + BaseResolution*(z+x)/4 + offset.Y - YOffsetCoef*y,
+					X: originX + render.BaseResolution*(z-x)/2 + offset.X,
+					Y: originY + render.BaseResolution*(z+x)/4 + offset.Y - YOffsetCoef*y,
 				}
 
 				r.renderNode(target, nodePos, neighborhood, offset, depthOffset)
@@ -143,8 +148,8 @@ func (r *Renderer) RenderTile(
 				neighborhood.FetchBlock(world, spatial.BlockPos{X: 0, Y: 0, Z: 1}, blockPos)
 
 				offset := image.Point{
-					X: BaseResolution * (z - x) / 2 * spatial.BlockSize,
-					Y: (BaseResolution*(z+x+2*i)/4 - i*YOffsetCoef) * spatial.BlockSize,
+					X: render.BaseResolution * (z - x) / 2 * spatial.BlockSize,
+					Y: (render.BaseResolution*(z+x+2*i)/4 - i*YOffsetCoef) * spatial.BlockSize,
 				}
 
 				depthOffset := (-float64(z+x+2*i)/math.Sqrt2 - 0.5*float64(i)) * spatial.BlockSize
@@ -161,9 +166,9 @@ func ProjectRegion(region spatial.Region) spatial.TileRegion {
 	xMax := int(math.Ceil(float64((region.ZBounds.Max - region.XBounds.Min)) / 2 / spatial.BlockSize))
 
 	yMin := int(math.Floor((float64(region.ZBounds.Min+region.XBounds.Min+2*region.YBounds.Max)/4 -
-		float64(region.YBounds.Max*YOffsetCoef)/BaseResolution) / spatial.BlockSize))
+		float64(region.YBounds.Max*YOffsetCoef)/render.BaseResolution) / spatial.BlockSize))
 	yMax := int(math.Ceil((float64(region.ZBounds.Max+region.XBounds.Max+2*region.YBounds.Min)/4 -
-		float64(region.YBounds.Min*YOffsetCoef)/BaseResolution) / spatial.BlockSize))
+		float64(region.YBounds.Min*YOffsetCoef)/render.BaseResolution) / spatial.BlockSize))
 
 	return spatial.TileRegion{
 		XBounds: spatial.Bounds{

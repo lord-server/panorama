@@ -1,4 +1,4 @@
-package isometric
+package render
 
 import (
 	"image"
@@ -9,17 +9,10 @@ import (
 	"github.com/weqqr/panorama/pkg/lm"
 	"github.com/weqqr/panorama/pkg/mesh"
 	"github.com/weqqr/panorama/pkg/raster"
-	"github.com/weqqr/panorama/pkg/spatial"
 )
 
 const Gamma = 2.2
 const BaseResolution = 16
-
-var (
-	YOffsetCoef     = int(math.Round(BaseResolution * (1 + math.Sqrt2) / 4))
-	TileBlockWidth  = spatial.BlockSize * BaseResolution
-	TileBlockHeight = BaseResolution/2*spatial.BlockSize - 1 + YOffsetCoef*spatial.BlockSize
-)
 
 type RenderableNode struct {
 	Name   string
@@ -29,11 +22,15 @@ type RenderableNode struct {
 
 type NodeRasterizer struct {
 	cache map[RenderableNode]*raster.RenderBuffer
+
+	projection lm.Matrix3
 }
 
-func NewNodeRasterizer() NodeRasterizer {
+func NewNodeRasterizer(projection lm.Matrix3) NodeRasterizer {
 	return NodeRasterizer{
 		cache: make(map[RenderableNode]*raster.RenderBuffer),
+
+		projection: projection,
 	}
 }
 
@@ -73,17 +70,16 @@ func sampleTexture(tex *image.NRGBA, texcoord lm.Vector2) lm.Vector4 {
 
 var SunLightDir = lm.Vec3(-0.5, 1, -0.8).Normalize()
 var SunLightIntensity = 0.95 / SunLightDir.MaxComponent()
-var Projection = lm.DimetricProjection()
 
-func drawTriangle(target *raster.RenderBuffer, tex *image.NRGBA, lighting float64, a, b, c mesh.Vertex) {
+func (r *NodeRasterizer) drawTriangle(target *raster.RenderBuffer, tex *image.NRGBA, lighting float64, a, b, c mesh.Vertex) {
 	origin := lm.Vector2{
 		X: float64(target.Color.Bounds().Dx()) / 2,
 		Y: float64(target.Color.Bounds().Dy()) / 2,
 	}
 
-	a.Position = Projection.MulVec(a.Position)
-	b.Position = Projection.MulVec(b.Position)
-	c.Position = Projection.MulVec(c.Position)
+	a.Position = r.projection.MulVec(a.Position)
+	b.Position = r.projection.MulVec(b.Position)
+	c.Position = r.projection.MulVec(c.Position)
 
 	pa := a.Position.XY().Mul(lm.Vec2(1, -1)).MulScalar(BaseResolution * math.Sqrt2 / 2).Add(origin)
 	pb := b.Position.XY().Mul(lm.Vec2(1, -1)).MulScalar(BaseResolution * math.Sqrt2 / 2).Add(origin)
@@ -213,7 +209,7 @@ func (r *NodeRasterizer) Render(node RenderableNode, nodeDef *game.NodeDefinitio
 			b.Position.X = -b.Position.X
 			c.Position.X = -c.Position.X
 
-			drawTriangle(target, nodeDef.Textures[j], node.Light, a, b, c)
+			r.drawTriangle(target, nodeDef.Textures[j], node.Light, a, b, c)
 		}
 	}
 
