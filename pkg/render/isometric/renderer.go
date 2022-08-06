@@ -28,7 +28,13 @@ func NewRenderer(region spatial.Region, game *game.Game) *Renderer {
 	}
 }
 
-func (r *Renderer) renderNode(target *raster.RenderBuffer, pos spatial.NodePos, neighborhood *BlockNeighborhood, offset image.Point, depthOffset float32) {
+func (r *Renderer) renderNode(
+	target *raster.RenderBuffer,
+	pos spatial.NodePos,
+	neighborhood *render.BlockNeighborhood,
+	offset image.Point,
+	depthOffset float32,
+) {
 	name, param1, param2 := neighborhood.GetNode(pos)
 
 	// Fast path: checking for air immediately is faster than fetching NodeDefinition
@@ -70,7 +76,13 @@ func (r *Renderer) renderNode(target *raster.RenderBuffer, pos spatial.NodePos, 
 	target.OverlayDepthAware(renderedNode, offset, depthOffset)
 }
 
-func (r *Renderer) renderBlock(target *raster.RenderBuffer, blockPos spatial.BlockPos, neighborhood *BlockNeighborhood, offset image.Point, depthOffset float32) {
+func (r *Renderer) renderBlock(
+	target *raster.RenderBuffer,
+	blockPos spatial.BlockPos,
+	neighborhood *render.BlockNeighborhood,
+	offset image.Point,
+	depthOffset float32,
+) {
 	rect := image.Rect(0, 0, TileBlockWidth, TileBlockHeight)
 
 	// FIXME: nodes must define their origin points
@@ -91,21 +103,17 @@ func (r *Renderer) renderBlock(target *raster.RenderBuffer, blockPos spatial.Blo
 					Y: originY + BaseResolution*(z+x)/4 + offset.Y - YOffsetCoef*y,
 				}
 
-				// Fast path: Don't bother with nodes outside viewport
-				nodeTileTooLow := offset.X <= target.Color.Rect.Min.X-BaseResolution || offset.Y <= target.Color.Rect.Min.Y-BaseResolution-BaseResolution/8
-				nodeTileTooHigh := offset.X >= target.Color.Rect.Max.X || offset.Y >= target.Color.Rect.Max.Y
-
-				if nodeTileTooLow || nodeTileTooHigh {
-					continue
-				}
-
 				r.renderNode(target, nodePos, neighborhood, offset, depthOffset)
 			}
 		}
 	}
 }
 
-func (r *Renderer) RenderTile(tilePos render.TilePosition, w *world.World, game *game.Game) *raster.RenderBuffer {
+func (r *Renderer) RenderTile(
+	tilePos render.TilePosition,
+	world *world.World,
+	game *game.Game,
+) *raster.RenderBuffer {
 	tilePos.Y *= 2
 
 	rect := image.Rect(0, 0, TileBlockWidth, TileBlockWidth)
@@ -127,12 +135,12 @@ func (r *Renderer) RenderTile(tilePos render.TilePosition, w *world.World, game 
 					Z: centerZ + z + i,
 				}
 
-				neighborhood := BlockNeighborhood{}
+				neighborhood := render.BlockNeighborhood{}
 
-				neighborhood.FetchBlock(w, spatial.BlockPos{X: 0, Y: 0, Z: 0}, blockPos)
-				neighborhood.FetchBlock(w, spatial.BlockPos{X: 1, Y: 0, Z: 0}, blockPos)
-				neighborhood.FetchBlock(w, spatial.BlockPos{X: 0, Y: 1, Z: 0}, blockPos)
-				neighborhood.FetchBlock(w, spatial.BlockPos{X: 0, Y: 0, Z: 1}, blockPos)
+				neighborhood.FetchBlock(world, spatial.BlockPos{X: 0, Y: 0, Z: 0}, blockPos)
+				neighborhood.FetchBlock(world, spatial.BlockPos{X: 1, Y: 0, Z: 0}, blockPos)
+				neighborhood.FetchBlock(world, spatial.BlockPos{X: 0, Y: 1, Z: 0}, blockPos)
+				neighborhood.FetchBlock(world, spatial.BlockPos{X: 0, Y: 0, Z: 1}, blockPos)
 
 				offset := image.Point{
 					X: BaseResolution * (z - x) / 2 * spatial.BlockSize,
