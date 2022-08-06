@@ -1,11 +1,6 @@
 package isometric
 
 import (
-	"image"
-	"math"
-
-	"github.com/weqqr/panorama/pkg/game"
-	"github.com/weqqr/panorama/pkg/raster"
 	"github.com/weqqr/panorama/pkg/world"
 )
 
@@ -78,58 +73,4 @@ func (b *BlockNeighborhood) GetParam1(x, y, z int) uint8 {
 
 	node := block.GetNode(x%16, y%16, z%16)
 	return node.Param1
-}
-
-func renderBlock(target *raster.RenderBuffer, nr *NodeRasterizer, neighborhood *BlockNeighborhood, g *game.Game, offsetX, offsetY int, depth float32) {
-	rect := image.Rect(0, 0, TileBlockWidth, TileBlockHeight)
-
-	// FIXME: nodes must define their origin points
-	originX, originY := rect.Dx()/2-BaseResolution/2, rect.Dy()/2+BaseResolution/4+2
-
-	for z := world.MapBlockSize - 1; z >= 0; z-- {
-		for y := world.MapBlockSize - 1; y >= 0; y-- {
-			for x := world.MapBlockSize - 1; x >= 0; x-- {
-				tileOffsetX := originX + BaseResolution*(z-x)/2 + offsetX
-				tileOffsetY := originY + BaseResolution/4*(z+x) - YOffsetCoef*y + offsetY
-
-				// Fast path: Don't bother with nodes outside viewport
-				nodeTileTooLow := tileOffsetX <= target.Color.Rect.Min.X-BaseResolution || tileOffsetY <= target.Color.Rect.Min.Y-BaseResolution-BaseResolution/8
-				nodeTileTooHigh := tileOffsetX >= target.Color.Rect.Max.X || tileOffsetY >= target.Color.Rect.Max.Y
-
-				if nodeTileTooLow || nodeTileTooHigh {
-					continue
-				}
-
-				name, param1, param2 := neighborhood.GetNode(x, y, z)
-
-				// Fast path: checking for air immediately is faster than fetching NodeDefinition
-				if name == "air" {
-					continue
-				}
-
-				nodeDef := g.NodeDef(name)
-
-				light := decodeLight(param1)
-				if l := decodeLight(neighborhood.GetParam1(x+1, y, z)); l > light {
-					light = l
-				}
-				if l := decodeLight(neighborhood.GetParam1(x, y+1, z)); l > light {
-					light = l
-				}
-				if l := decodeLight(neighborhood.GetParam1(x, y, z+1)); l > light {
-					light = l
-				}
-
-				renderableNode := RenderableNode{
-					Name:   name,
-					Light:  light,
-					Param2: param2,
-				}
-				renderedNode := nr.Render(renderableNode, &nodeDef)
-
-				depthOffset := -float32(z+x)/math.Sqrt2 - 0.5*(float32(y)) + depth
-				target.OverlayDepthAware(renderedNode, image.Pt(tileOffsetX, tileOffsetY), depthOffset)
-			}
-		}
-	}
 }
