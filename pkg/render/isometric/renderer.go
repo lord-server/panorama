@@ -6,19 +6,19 @@ import (
 
 	"github.com/weqqr/panorama/pkg/game"
 	"github.com/weqqr/panorama/pkg/raster"
-	"github.com/weqqr/panorama/pkg/region"
 	"github.com/weqqr/panorama/pkg/render"
+	"github.com/weqqr/panorama/pkg/spatial"
 	"github.com/weqqr/panorama/pkg/world"
 )
 
 type Renderer struct {
 	nr NodeRasterizer
 
-	region region.Region
+	region spatial.Region
 	game   *game.Game
 }
 
-func NewRenderer(region region.Region, game *game.Game) *Renderer {
+func NewRenderer(region spatial.Region, game *game.Game) *Renderer {
 	return &Renderer{
 		nr:     NewNodeRasterizer(),
 		region: region,
@@ -26,7 +26,7 @@ func NewRenderer(region region.Region, game *game.Game) *Renderer {
 	}
 }
 
-func (r *Renderer) renderBlock(target *raster.RenderBuffer, neighborhood *BlockNeighborhood, offsetX, offsetY int, depth float32) {
+func (r *Renderer) renderBlock(target *raster.RenderBuffer, blockPos spatial.BlockPos, neighborhood *BlockNeighborhood, offsetX, offsetY int, depth float32) {
 	rect := image.Rect(0, 0, TileBlockWidth, TileBlockHeight)
 
 	// FIXME: nodes must define their origin points
@@ -35,8 +35,10 @@ func (r *Renderer) renderBlock(target *raster.RenderBuffer, neighborhood *BlockN
 	for z := world.MapBlockSize - 1; z >= 0; z-- {
 		for y := world.MapBlockSize - 1; y >= 0; y-- {
 			for x := world.MapBlockSize - 1; x >= 0; x-- {
+				nodePos := spatial.NodePos{X: x, Y: y, Z: z}
+
 				tileOffsetX := originX + BaseResolution*(z-x)/2 + offsetX
-				tileOffsetY := originY + BaseResolution/4*(z+x) - YOffsetCoef*y + offsetY
+				tileOffsetY := originY + BaseResolution*(z+x)/4 + offsetY - YOffsetCoef*y
 
 				// Fast path: Don't bother with nodes outside viewport
 				nodeTileTooLow := tileOffsetX <= target.Color.Rect.Min.X-BaseResolution || tileOffsetY <= target.Color.Rect.Min.Y-BaseResolution-BaseResolution/8
@@ -46,7 +48,7 @@ func (r *Renderer) renderBlock(target *raster.RenderBuffer, neighborhood *BlockN
 					continue
 				}
 
-				name, param1, param2 := neighborhood.GetNode(x, y, z)
+				name, param1, param2 := neighborhood.GetNode(nodePos)
 
 				// Fast path: checking for air immediately is faster than fetching NodeDefinition
 				if name == "air" {
@@ -55,15 +57,18 @@ func (r *Renderer) renderBlock(target *raster.RenderBuffer, neighborhood *BlockN
 
 				nodeDef := r.game.NodeDef(name)
 
+				lightOffsets := []spatial.NodePos{
+					{X: 1, Y: 0, Z: 0},
+					{X: 0, Y: 1, Z: 0},
+					{X: 0, Y: 0, Z: 1},
+				}
+
 				light := decodeLight(param1)
-				if l := decodeLight(neighborhood.GetParam1(x+1, y, z)); l > light {
-					light = l
-				}
-				if l := decodeLight(neighborhood.GetParam1(x, y+1, z)); l > light {
-					light = l
-				}
-				if l := decodeLight(neighborhood.GetParam1(x, y, z+1)); l > light {
-					light = l
+				for _, offset := range lightOffsets {
+					pos := nodePos.Add(offset)
+					if l := decodeLight(neighborhood.GetParam1(pos)); l > light {
+						light = l
+					}
 				}
 
 				renderableNode := RenderableNode{
@@ -96,25 +101,24 @@ func (r *Renderer) RenderTile(tilePos render.TilePosition, w *world.World, game 
 	for i := yMin; i < yMax; i++ {
 		for z := -3; z <= 3; z++ {
 			for x := -3; x <= 3; x++ {
-				blockX := centerX + x + i
-				blockY := centerY + i
-				blockZ := centerZ + z + i
+				blockPos := spatial.BlockPos{
+					X: centerX + x + i,
+					Y: centerY + i,
+					Z: centerZ + z + i,
+				}
 
 				neighborhood := BlockNeighborhood{}
 
-				neighborhood.FetchBlock(1, 1, 1, blockX, blockY, blockZ, w)
-				// neighborhood.FetchBlock(0, 1, 1, blockX-1, blockY, blockZ, w)
-				neighborhood.FetchBlock(2, 1, 1, blockX+1, blockY, blockZ, w)
-				// neighborhood.FetchBlock(1, 0, 1, blockX, blockY-1, blockZ, w)
-				neighborhood.FetchBlock(1, 2, 1, blockX, blockY+1, blockZ, w)
-				// neighborhood.FetchBlock(1, 1, 0, blockX, blockY, blockZ-1, w)
-				neighborhood.FetchBlock(1, 1, 2, blockX, blockY, blockZ+1, w)
+				neighborhood.FetchBlock(w, spatial.BlockPos{0, 0, 0}, blockPos)
+				neighborhood.FetchBlock(w, spatial.BlockPos{1, 0, 0}, blockPos)
+				neighborhood.FetchBlock(w, spatial.BlockPos{0, 1, 0}, blockPos)
+				neighborhood.FetchBlock(w, spatial.BlockPos{0, 0, 1}, blockPos)
 
 				tileOffsetX := BaseResolution / 2 * (z - x) * world.MapBlockSize
 				tileOffsetY := (BaseResolution/4*(z+x+2*i) - i*YOffsetCoef) * world.MapBlockSize
 
 				depthOffset := (-float32(z+x+2*i)/math.Sqrt2 - 0.5*float32(i)) * world.MapBlockSize
-				r.renderBlock(target, &neighborhood, tileOffsetX, tileOffsetY, depthOffset)
+				r.renderBlock(target, blockPos, &neighborhood, tileOffsetX, tileOffsetY, depthOffset)
 			}
 		}
 	}
@@ -122,19 +126,19 @@ func (r *Renderer) RenderTile(tilePos render.TilePosition, w *world.World, game 
 	return target
 }
 
-func ProjectRegion(r region.Region) region.TileRegion {
-	xMin := int(math.Floor(float64((r.ZBounds.Min - r.XBounds.Max)) / 2 / world.MapBlockSize))
-	xMax := int(math.Ceil(float64((r.ZBounds.Max - r.XBounds.Min)) / 2 / world.MapBlockSize))
+func ProjectRegion(region spatial.Region) spatial.TileRegion {
+	xMin := int(math.Floor(float64((region.ZBounds.Min - region.XBounds.Max)) / 2 / world.MapBlockSize))
+	xMax := int(math.Ceil(float64((region.ZBounds.Max - region.XBounds.Min)) / 2 / world.MapBlockSize))
 
-	yMin := int(math.Floor((float64(r.ZBounds.Min+r.XBounds.Min+2*r.YBounds.Max)/4 - float64(r.YBounds.Max*YOffsetCoef)/BaseResolution) / world.MapBlockSize))
-	yMax := int(math.Ceil((float64(r.ZBounds.Max+r.XBounds.Max+2*r.YBounds.Min)/4 - float64(r.YBounds.Min*YOffsetCoef)/BaseResolution) / world.MapBlockSize))
+	yMin := int(math.Floor((float64(region.ZBounds.Min+region.XBounds.Min+2*region.YBounds.Max)/4 - float64(region.YBounds.Max*YOffsetCoef)/BaseResolution) / world.MapBlockSize))
+	yMax := int(math.Ceil((float64(region.ZBounds.Max+region.XBounds.Max+2*region.YBounds.Min)/4 - float64(region.YBounds.Min*YOffsetCoef)/BaseResolution) / world.MapBlockSize))
 
-	return region.TileRegion{
-		XBounds: region.Bounds{
+	return spatial.TileRegion{
+		XBounds: spatial.Bounds{
 			Min: xMin,
 			Max: xMax,
 		},
-		YBounds: region.Bounds{
+		YBounds: spatial.Bounds{
 			Min: yMin,
 			Max: yMax,
 		},

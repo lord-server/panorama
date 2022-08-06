@@ -14,18 +14,18 @@ import (
 	"github.com/weqqr/panorama/pkg/game"
 	"github.com/weqqr/panorama/pkg/lm"
 	"github.com/weqqr/panorama/pkg/raster"
-	"github.com/weqqr/panorama/pkg/region"
 	"github.com/weqqr/panorama/pkg/render"
+	"github.com/weqqr/panorama/pkg/spatial"
 	"github.com/weqqr/panorama/pkg/world"
 )
 
 type Tiler struct {
-	region     region.Region
+	region     spatial.Region
 	zoomLevels int
 	tilesPath  string
 }
 
-func NewTiler(region region.Region, zoomLevels int, tilesPath string) Tiler {
+func NewTiler(region spatial.Region, zoomLevels int, tilesPath string) Tiler {
 	return Tiler{
 		region:     region,
 		zoomLevels: zoomLevels,
@@ -58,7 +58,7 @@ func (t *Tiler) worker(wg *sync.WaitGroup, game *game.Game, world *world.World, 
 
 type CreateRendererFunc func() render.Renderer
 
-func (t *Tiler) FullRender(game *game.Game, world *world.World, workers int, region region.TileRegion, createRenderer CreateRendererFunc) {
+func (t *Tiler) FullRender(game *game.Game, world *world.World, workers int, region spatial.TileRegion, createRenderer CreateRendererFunc) {
 	var wg sync.WaitGroup
 	positions := make(chan render.TilePosition)
 

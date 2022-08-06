@@ -1,6 +1,7 @@
 package isometric
 
 import (
+	"github.com/weqqr/panorama/pkg/spatial"
 	"github.com/weqqr/panorama/pkg/world"
 )
 
@@ -30,47 +31,58 @@ type BlockNeighborhood struct {
 	blocks [27]*world.MapBlock
 }
 
-func (b *BlockNeighborhood) FetchBlock(bx, by, bz, wx, wy, wz int, w *world.World) {
-	block, err := w.GetBlock(wx, wy, wz)
+var neighborhoodCenter = spatial.BlockPos{X: 1, Y: 1, Z: 1}
+
+func (b *BlockNeighborhood) FetchBlock(w *world.World, posOffset, worldPos spatial.BlockPos) {
+	block, err := w.GetBlock(worldPos.Add(posOffset))
 
 	if err != nil {
 		return
 	}
 
-	b.SetBlock(bx, by, bz, block)
+	b.SetBlock(neighborhoodCenter.Add(posOffset), block)
 }
 
-func (b *BlockNeighborhood) SetBlock(bx, by, bz int, block *world.MapBlock) {
-	b.blocks[bz*9+by*3+bx] = block
+func (b *BlockNeighborhood) SetBlock(pos spatial.BlockPos, block *world.MapBlock) {
+	b.blocks[pos.X*9+pos.Y*3+pos.Z] = block
 }
 
-func (b *BlockNeighborhood) GetBlockAt(x, y, z int) *world.MapBlock {
-	bx := x/16 + 1
-	by := y/16 + 1
-	bz := z/16 + 1
+func (b *BlockNeighborhood) getBlockByNodePos(pos spatial.NodePos) *world.MapBlock {
+	bx := pos.X/world.MapBlockSize + neighborhoodCenter.X
+	by := pos.Y/world.MapBlockSize + neighborhoodCenter.Y
+	bz := pos.Z/world.MapBlockSize + neighborhoodCenter.Z
 
 	return b.blocks[bz*9+by*3+bx]
 }
 
-func (b *BlockNeighborhood) GetNode(x, y, z int) (string, uint8, uint8) {
-	block := b.GetBlockAt(x, y, z)
+func (b *BlockNeighborhood) GetNode(pos spatial.NodePos) (string, uint8, uint8) {
+	block := b.getBlockByNodePos(pos)
 
 	if block == nil {
 		return "air", 0, 0
 	}
 
-	node := block.GetNode(x%16, y%16, z%16)
+	node := block.GetNode(spatial.NodePos{
+		X: pos.X % world.MapBlockSize,
+		Y: pos.Y % world.MapBlockSize,
+		Z: pos.Z % world.MapBlockSize,
+	})
 	name := block.ResolveName(node.ID)
 	return name, node.Param1, node.Param2
 }
 
-func (b *BlockNeighborhood) GetParam1(x, y, z int) uint8 {
-	block := b.GetBlockAt(x, y, z)
+func (b *BlockNeighborhood) GetParam1(pos spatial.NodePos) uint8 {
+	block := b.getBlockByNodePos(pos)
 
 	if block == nil {
 		return 0
 	}
 
-	node := block.GetNode(x%16, y%16, z%16)
+	node := block.GetNode(spatial.NodePos{
+		X: pos.X % world.MapBlockSize,
+		Y: pos.Y % world.MapBlockSize,
+		Z: pos.Z % world.MapBlockSize,
+	})
+
 	return node.Param1
 }
