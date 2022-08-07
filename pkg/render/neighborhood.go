@@ -9,9 +9,9 @@ type BlockNeighborhood struct {
 	blocks [27]*world.MapBlock
 }
 
-var neighborhoodCenter = spatial.BlockPos{X: 1, Y: 1, Z: 1}
+var neighborhoodCenter = spatial.BlockPosition{X: 1, Y: 1, Z: 1}
 
-func (b *BlockNeighborhood) FetchBlock(w *world.World, posOffset, worldPos spatial.BlockPos) {
+func (b *BlockNeighborhood) FetchBlock(w *world.World, posOffset, worldPos spatial.BlockPosition) {
 	block, err := w.GetBlock(worldPos.Add(posOffset))
 
 	if err != nil {
@@ -21,11 +21,11 @@ func (b *BlockNeighborhood) FetchBlock(w *world.World, posOffset, worldPos spati
 	b.SetBlock(neighborhoodCenter.Add(posOffset), block)
 }
 
-func (b *BlockNeighborhood) SetBlock(pos spatial.BlockPos, block *world.MapBlock) {
+func (b *BlockNeighborhood) SetBlock(pos spatial.BlockPosition, block *world.MapBlock) {
 	b.blocks[pos.X*9+pos.Y*3+pos.Z] = block
 }
 
-func (b *BlockNeighborhood) getBlockByNodePos(pos spatial.NodePos) *world.MapBlock {
+func (b *BlockNeighborhood) getBlockByNodePos(pos spatial.NodePosition) *world.MapBlock {
 	bx := pos.X/spatial.BlockSize + neighborhoodCenter.X
 	by := pos.Y/spatial.BlockSize + neighborhoodCenter.Y
 	bz := pos.Z/spatial.BlockSize + neighborhoodCenter.Z
@@ -33,14 +33,14 @@ func (b *BlockNeighborhood) getBlockByNodePos(pos spatial.NodePos) *world.MapBlo
 	return b.blocks[bz*9+by*3+bx]
 }
 
-func (b *BlockNeighborhood) GetNode(pos spatial.NodePos) (string, uint8, uint8) {
+func (b *BlockNeighborhood) GetNode(pos spatial.NodePosition) (string, uint8, uint8) {
 	block := b.getBlockByNodePos(pos)
 
 	if block == nil {
 		return "air", 0, 0
 	}
 
-	node := block.GetNode(spatial.NodePos{
+	node := block.GetNode(spatial.NodePosition{
 		X: pos.X % spatial.BlockSize,
 		Y: pos.Y % spatial.BlockSize,
 		Z: pos.Z % spatial.BlockSize,
@@ -49,14 +49,14 @@ func (b *BlockNeighborhood) GetNode(pos spatial.NodePos) (string, uint8, uint8) 
 	return name, node.Param1, node.Param2
 }
 
-func (b *BlockNeighborhood) GetParam1(pos spatial.NodePos) uint8 {
+func (b *BlockNeighborhood) GetParam1(pos spatial.NodePosition) uint8 {
 	block := b.getBlockByNodePos(pos)
 
 	if block == nil {
 		return 0
 	}
 
-	node := block.GetNode(spatial.NodePos{
+	node := block.GetNode(spatial.NodePosition{
 		X: pos.X % spatial.BlockSize,
 		Y: pos.Y % spatial.BlockSize,
 		Z: pos.Z % spatial.BlockSize,

@@ -266,7 +266,7 @@ func (b *MapBlock) ResolveName(id uint16) string {
 	return b.mappings[id]
 }
 
-func (b *MapBlock) GetNode(pos spatial.NodePos) Node {
+func (b *MapBlock) GetNode(pos spatial.NodePosition) Node {
 	index := pos.Z*spatial.BlockSize*spatial.BlockSize + pos.Y*spatial.BlockSize + pos.X
 	idHi := uint16(b.nodeData[2*index])
 	idLo := uint16(b.nodeData[2*index+1])

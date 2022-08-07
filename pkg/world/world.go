@@ -11,7 +11,7 @@ import (
 )
 
 type Backend interface {
-	GetBlockData(pos spatial.BlockPos) ([]byte, error)
+	GetBlockData(pos spatial.BlockPosition) ([]byte, error)
 	Close()
 }
 
@@ -34,7 +34,7 @@ func (p *PostgresBackend) Close() {
 	p.conn.Close()
 }
 
-func (p *PostgresBackend) GetBlockData(pos spatial.BlockPos) ([]byte, error) {
+func (p *PostgresBackend) GetBlockData(pos spatial.BlockPosition) ([]byte, error) {
 	var data []byte
 	err := p.conn.QueryRow(context.Background(), "SELECT data FROM blocks WHERE posx=$1 and posy=$2 and posz=$3", pos.X, pos.Y, pos.Z).Scan(&data)
 	if errors.Is(err, pgx.ErrNoRows) {
@@ -64,7 +64,7 @@ func NewWorldWithBackend(backend Backend) World {
 	}
 }
 
-func (w *World) GetBlock(pos spatial.BlockPos) (*MapBlock, error) {
+func (w *World) GetBlock(pos spatial.BlockPosition) (*MapBlock, error) {
 	cachedBlock, ok := w.blockCache.Get(pos)
 
 	if ok {

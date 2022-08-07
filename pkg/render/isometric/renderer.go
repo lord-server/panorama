@@ -35,7 +35,7 @@ func NewRenderer(region spatial.Region, game *game.Game) *Renderer {
 
 func (r *Renderer) renderNode(
 	target *raster.RenderBuffer,
-	pos spatial.NodePos,
+	pos spatial.NodePosition,
 	neighborhood *render.BlockNeighborhood,
 	offset image.Point,
 	depthOffset float64,
@@ -50,7 +50,7 @@ func (r *Renderer) renderNode(
 	nodeDef := r.game.NodeDef(name)
 
 	// Estimate lighting by sampling neighboring nodes and using the brightest one
-	neighborOffsets := []spatial.NodePos{
+	neighborOffsets := []spatial.NodePosition{
 		{X: 1, Y: 0, Z: 0},
 		{X: 0, Y: 1, Z: 0},
 		{X: 0, Y: 0, Z: 1},
@@ -83,7 +83,7 @@ func (r *Renderer) renderNode(
 
 func (r *Renderer) renderBlock(
 	target *raster.RenderBuffer,
-	blockPos spatial.BlockPos,
+	blockPos spatial.BlockPosition,
 	neighborhood *render.BlockNeighborhood,
 	offset image.Point,
 	depthOffset float64,
@@ -96,7 +96,7 @@ func (r *Renderer) renderBlock(
 	for z := spatial.BlockSize - 1; z >= 0; z-- {
 		for y := spatial.BlockSize - 1; y >= 0; y-- {
 			for x := spatial.BlockSize - 1; x >= 0; x-- {
-				nodePos := spatial.NodePos{X: x, Y: y, Z: z}
+				nodePos := spatial.NodePosition{X: x, Y: y, Z: z}
 				nodeWorldPos := blockPos.AddNode(nodePos)
 
 				if !r.region.Intersects(nodeWorldPos.Region()) {
@@ -134,7 +134,7 @@ func (r *Renderer) RenderTile(
 	for i := yMin; i < yMax; i++ {
 		for z := -3; z <= 3; z++ {
 			for x := -3; x <= 3; x++ {
-				blockPos := spatial.BlockPos{
+				blockPos := spatial.BlockPosition{
 					X: centerX + x + i,
 					Y: centerY + i,
 					Z: centerZ + z + i,
@@ -142,10 +142,10 @@ func (r *Renderer) RenderTile(
 
 				neighborhood := render.BlockNeighborhood{}
 
-				neighborhood.FetchBlock(world, spatial.BlockPos{X: 0, Y: 0, Z: 0}, blockPos)
-				neighborhood.FetchBlock(world, spatial.BlockPos{X: 1, Y: 0, Z: 0}, blockPos)
-				neighborhood.FetchBlock(world, spatial.BlockPos{X: 0, Y: 1, Z: 0}, blockPos)
-				neighborhood.FetchBlock(world, spatial.BlockPos{X: 0, Y: 0, Z: 1}, blockPos)
+				neighborhood.FetchBlock(world, spatial.BlockPosition{X: 0, Y: 0, Z: 0}, blockPos)
+				neighborhood.FetchBlock(world, spatial.BlockPosition{X: 1, Y: 0, Z: 0}, blockPos)
+				neighborhood.FetchBlock(world, spatial.BlockPosition{X: 0, Y: 1, Z: 0}, blockPos)
+				neighborhood.FetchBlock(world, spatial.BlockPosition{X: 0, Y: 0, Z: 1}, blockPos)
 
 				offset := image.Point{
 					X: render.BaseResolution * (z - x) / 2 * spatial.BlockSize,

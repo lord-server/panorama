@@ -3,12 +3,12 @@ package spatial
 const BlockSize = 16
 const BlockVolume = BlockSize * BlockSize * BlockSize
 
-// NodePos is a node position in world space
-type NodePos struct {
+// NodePosition is a node position in world space
+type NodePosition struct {
 	X, Y, Z int
 }
 
-func (lhs NodePos) Region() Region {
+func (lhs NodePosition) Region() Region {
 	return Region{
 		XBounds: Bounds{Min: lhs.X, Max: lhs.X},
 		YBounds: Bounds{Min: lhs.Y, Max: lhs.Y},
@@ -16,29 +16,29 @@ func (lhs NodePos) Region() Region {
 	}
 }
 
-func (lhs NodePos) Add(rhs NodePos) NodePos {
-	return NodePos{
+func (lhs NodePosition) Add(rhs NodePosition) NodePosition {
+	return NodePosition{
 		X: lhs.X + rhs.X,
 		Y: lhs.Y + rhs.Y,
 		Z: lhs.Z + rhs.Z,
 	}
 }
 
-// BlockPos is a block position in world space
-type BlockPos struct {
+// BlockPosition is a block position in world space
+type BlockPosition struct {
 	X, Y, Z int
 }
 
-func (lhs BlockPos) AddNode(pos NodePos) NodePos {
-	return NodePos{
+func (lhs BlockPosition) AddNode(pos NodePosition) NodePosition {
+	return NodePosition{
 		X: lhs.X*BlockSize + pos.X,
 		Y: lhs.Y*BlockSize + pos.Y,
 		Z: lhs.Z*BlockSize + pos.Z,
 	}
 }
 
-func (lhs BlockPos) Add(rhs BlockPos) BlockPos {
-	return BlockPos{
+func (lhs BlockPosition) Add(rhs BlockPosition) BlockPosition {
+	return BlockPosition{
 		X: lhs.X + rhs.X,
 		Y: lhs.Y + rhs.Y,
 		Z: lhs.Z + rhs.Z,
