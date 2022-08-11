@@ -1,7 +1,8 @@
 <script lang="ts">
-	import { createEventDispatcher, onMount } from 'svelte';
+	import { createEventDispatcher, onMount, onDestroy } from 'svelte';
 	import 'leaflet/dist/leaflet.css';
 	import { worldPositionUnderCursor } from '$lib/stores';
+	import * as L from 'leaflet';
 
 	const dispatch = createEventDispatcher();
 
@@ -16,10 +17,8 @@
 	}
 
 	let map: L.Map;
-	onMount(async () => {
-		const L = await import('leaflet');
-		// const metadata = await fetch('/metadata.json').then((response) => response.json());
 
+	function createMap(node: Node) {
 		const isometric = L.extend(L.CRS.Simple, {
 			projection: {
 				project: (latlng: L.LatLng) => {
@@ -42,22 +41,30 @@
 			attributionControl: false,
 			zoomControl: false,
 			crs: isometric
-		});
+		}).setView([735, -818], 0);
 
 		map.on('mouseover', updateCoordinates);
 		map.on('mousemove', updateCoordinates);
 		map.on('click', updateCoordinates);
 
-		L.tileLayer('/tiles/{z}/{x}/{y}.png', {
+		L.tileLayer('http://map.lord-server.ru/tiles/{z}/{x}/{y}.png', {
 			maxZoom: 0,
 			minZoom: -8,
 			tileSize: 256,
 			noWrap: true
 		}).addTo(map);
-	});
+
+		return {
+			destroy() {
+				if (map) {
+					map.remove();
+				}
+			}
+		};
+	}
 </script>
 
-<div id="map" />
+<div id="map" use:createMap />
 
 <style>
 	#map {

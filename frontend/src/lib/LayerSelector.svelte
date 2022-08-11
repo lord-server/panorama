@@ -13,12 +13,14 @@
 			class="px-2 py-1 font-semibold"
 			class:rounded-l-lg={id === 0}
 			class:rounded-r-lg={id === modes.length - 1}
-			class:bg-blue-500={selected === mode.id}
+			class:bg-red-600={selected === mode.id}
 			class:text-white={selected === mode.id}
 			on:click={() => {
 				selected = mode.id;
 			}}
-			type="button">{mode.name}</button
+			type="button"
 		>
+			{mode.name}
+		</button>
 	{/each}
 </div>
