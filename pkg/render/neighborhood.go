@@ -43,7 +43,7 @@ func (b *BlockNeighborhood) GetNode(pos spatial.NodePosition) (string, uint8, ui
 	block := b.getBlockByNodePos(pos)
 
 	if block == nil {
-		return "air", 0, 0
+		return "ignore", 0, 0
 	}
 
 	node := block.GetNode(spatial.NodePosition{
