@@ -15,9 +15,10 @@ const Gamma = 2.2
 const BaseResolution = 16
 
 type RenderableNode struct {
-	Name   string
-	Light  float64
-	Param2 uint8
+	Name        string
+	Light       float64
+	Param2      uint8
+	HiddenFaces mesh.CubeFaces
 }
 
 type NodeRasterizer struct {
@@ -172,6 +173,15 @@ func transformToFaceDir(v lm.Vector3, facedir uint8) lm.Vector3 {
 	return v
 }
 
+func (r *NodeRasterizer) createMesh(node RenderableNode, nodeDef *game.NodeDefinition) *mesh.Model {
+	switch {
+	case nodeDef.DrawType.IsLiquid():
+		return mesh.Cube(node.HiddenFaces)
+	default:
+		return nodeDef.Model
+	}
+}
+
 func (r *NodeRasterizer) Render(node RenderableNode, nodeDef *game.NodeDefinition) *raster.RenderBuffer {
 	if nodeDef.DrawType == game.DrawTypeAirlike || nodeDef.Model == nil || len(nodeDef.Textures) == 0 {
 		return nil
@@ -184,7 +194,9 @@ func (r *NodeRasterizer) Render(node RenderableNode, nodeDef *game.NodeDefinitio
 	rect := image.Rect(0, 0, BaseResolution, BaseResolution+BaseResolution/8)
 	target := raster.NewRenderBuffer(rect)
 
-	for j, mesh := range nodeDef.Model.Meshes {
+	model := r.createMesh(node, nodeDef)
+
+	for j, mesh := range model.Meshes {
 		triangleCount := len(mesh.Vertices) / 3
 
 		for i := 0; i < triangleCount; i++ {

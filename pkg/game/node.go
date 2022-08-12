@@ -47,6 +47,10 @@ var DrawTypeNames = map[string]DrawType{
 	"plantlike_rooted":          DrawTypePlantlikeRooted,
 }
 
+func (t DrawType) IsLiquid() bool {
+	return t == DrawTypeLiquid || t == DrawTypeFlowingLiquid
+}
+
 func (t *DrawType) UnmarshalJSON(data []byte) error {
 	var name string
 	err := json.Unmarshal(data, &name)

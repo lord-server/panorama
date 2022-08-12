@@ -11,6 +11,10 @@ type BlockNeighborhood struct {
 
 var neighborhoodCenter = spatial.BlockPosition{X: 1, Y: 1, Z: 1}
 
+func blockIndex(pos spatial.BlockPosition) int {
+	return pos.Z*9 + pos.Y*3 + pos.X
+}
+
 func (b *BlockNeighborhood) FetchBlock(w *world.World, posOffset, worldPos spatial.BlockPosition) {
 	block, err := w.GetBlock(worldPos.Add(posOffset))
 
@@ -22,15 +26,17 @@ func (b *BlockNeighborhood) FetchBlock(w *world.World, posOffset, worldPos spati
 }
 
 func (b *BlockNeighborhood) SetBlock(pos spatial.BlockPosition, block *world.MapBlock) {
-	b.blocks[pos.X*9+pos.Y*3+pos.Z] = block
+	b.blocks[blockIndex(pos)] = block
 }
 
 func (b *BlockNeighborhood) getBlockByNodePos(pos spatial.NodePosition) *world.MapBlock {
-	bx := pos.X/spatial.BlockSize + neighborhoodCenter.X
-	by := pos.Y/spatial.BlockSize + neighborhoodCenter.Y
-	bz := pos.Z/spatial.BlockSize + neighborhoodCenter.Z
+	blockPos := spatial.BlockPosition{
+		X: pos.X/spatial.BlockSize + neighborhoodCenter.X,
+		Y: pos.Y/spatial.BlockSize + neighborhoodCenter.Y,
+		Z: pos.Z/spatial.BlockSize + neighborhoodCenter.Z,
+	}
 
-	return b.blocks[bz*9+by*3+bx]
+	return b.blocks[blockIndex(blockPos)]
 }
 
 func (b *BlockNeighborhood) GetNode(pos spatial.NodePosition) (string, uint8, uint8) {
