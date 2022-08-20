@@ -6,6 +6,7 @@ import (
 
 	"github.com/weqqr/panorama/pkg/game"
 	"github.com/weqqr/panorama/pkg/lm"
+	"github.com/weqqr/panorama/pkg/mesh"
 	"github.com/weqqr/panorama/pkg/raster"
 	"github.com/weqqr/panorama/pkg/render"
 	"github.com/weqqr/panorama/pkg/spatial"
@@ -49,6 +50,11 @@ func (r *Renderer) renderNode(
 
 	nodeDef := r.game.NodeDef(name)
 
+	needsAlphaBlending := true
+	if nodeDef.DrawType == game.DrawTypeNormal {
+		needsAlphaBlending = false
+	}
+
 	// Estimate lighting by sampling neighboring nodes and using the brightest one
 	neighborOffsets := []spatial.NodePosition{
 		{X: 1, Y: 0, Z: 0},
@@ -56,11 +62,29 @@ func (r *Renderer) renderNode(
 		{X: 0, Y: 0, Z: 1},
 	}
 
+	neighborFaces := []mesh.CubeFaces{
+		mesh.CubeFaceEast,
+		mesh.CubeFaceTop,
+		mesh.CubeFaceNorth,
+	}
+
 	maxParam1 := param1
-	for _, offset := range neighborOffsets {
+	hiddenFaces := mesh.CubeFaces(0)
+	for i, offset := range neighborOffsets {
 		neighborPos := pos.Add(offset)
-		if param1 := neighborhood.GetParam1(neighborPos); param1 > maxParam1 {
+		neighborName, param1, _ := neighborhood.GetNode(neighborPos)
+		if param1 > maxParam1 {
 			maxParam1 = param1
+		}
+
+		// Compute visibility for stacked liquids
+		if nodeDef.DrawType.IsLiquid() {
+			hiddenFaces |= mesh.CubeFaceWest | mesh.CubeFaceDown | mesh.CubeFaceSouth
+
+			neighborNodeDef := r.game.NodeDef(neighborName)
+			if neighborNodeDef.DrawType.IsLiquid() {
+				hiddenFaces |= neighborFaces[i]
+			}
 		}
 	}
 
@@ -71,14 +95,19 @@ func (r *Renderer) renderNode(
 	}
 
 	renderableNode := render.RenderableNode{
-		Name:   name,
-		Light:  render.DecodeLight(maxParam1),
-		Param2: param2,
+		Name:        name,
+		Light:       render.DecodeLight(maxParam1),
+		Param2:      param2,
+		HiddenFaces: hiddenFaces,
 	}
 	renderedNode := r.nr.Render(renderableNode, &nodeDef)
 
 	depthOffset = -float64(pos.Z+pos.X)/math.Sqrt2 - 0.5*(float64(pos.Y)) + depthOffset
-	target.OverlayDepthAware(renderedNode, offset, depthOffset)
+	if needsAlphaBlending {
+		target.OverlayDepthAwareWithAlpha(renderedNode, offset, depthOffset)
+	} else {
+		target.OverlayDepthAware(renderedNode, offset, depthOffset)
+	}
 }
 
 func (r *Renderer) renderBlock(

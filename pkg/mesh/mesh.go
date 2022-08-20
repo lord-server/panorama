@@ -30,7 +30,19 @@ func NewModel() Model {
 	}
 }
 
-func Cuboid(x1, y1, z1, x2, y2, z2 float64) []Mesh {
+type CubeFaces uint8
+
+const (
+	CubeFaceNone CubeFaces = 0
+	CubeFaceEast           = 1 << iota
+	CubeFaceWest
+	CubeFaceTop
+	CubeFaceDown
+	CubeFaceNorth
+	CubeFaceSouth
+)
+
+func Cuboid(x1, y1, z1, x2, y2, z2 float64, hiddenFaces CubeFaces) []Mesh {
 	yp := NewMesh()
 	yp.Vertices = []Vertex{
 		{Position: lm.Vec3(x1, y2, z1), Texcoord: lm.Vec2(0.0, 0.0), Normal: lm.Vec3(0.0, 1.0, 0.0)},
@@ -91,13 +103,23 @@ func Cuboid(x1, y1, z1, x2, y2, z2 float64) []Mesh {
 		{Position: lm.Vec3(x2, y2, z1), Texcoord: lm.Vec2(1.0, 1.0), Normal: lm.Vec3(0.0, 0.0, -1.0)},
 	}
 
-	return []Mesh{yp, ym, xp, xm, zp, zm}
+	meshes := []Mesh{yp, ym, xp, xm, zp, zm}
+	meshFaces := []CubeFaces{CubeFaceTop, CubeFaceDown, CubeFaceEast, CubeFaceWest, CubeFaceNorth, CubeFaceSouth}
+
+	culledMesh := []Mesh{}
+	for i, mesh := range meshes {
+		if hiddenFaces&meshFaces[i] == 0 {
+			culledMesh = append(culledMesh, mesh)
+		}
+	}
+
+	return culledMesh
 }
 
-func Cube() *Model {
+func Cube(hiddenFaces CubeFaces) *Model {
 	model := NewModel()
 
-	model.Meshes = append(model.Meshes, Cuboid(-0.5, -0.5, -0.5, 0.5, 0.5, 0.5)...)
+	model.Meshes = append(model.Meshes, Cuboid(-0.5, -0.5, -0.5, 0.5, 0.5, 0.5, hiddenFaces)...)
 
 	return &model
 }

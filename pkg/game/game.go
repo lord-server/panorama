@@ -29,7 +29,7 @@ type Game struct {
 
 func makeNormalNode(drawtype DrawType, tiles []*image.NRGBA) NodeDefinition {
 	textures := make([]*image.NRGBA, 6)
-	model := mesh.Cube()
+	model := mesh.Cube(mesh.CubeFaceNone)
 
 	if len(tiles) == 0 {
 		return NodeDefinition{
@@ -67,7 +67,7 @@ func makeNodeBox(nodeBox *NodeBox, tiles []*image.NRGBA) NodeDefinition {
 	}
 
 	for _, box := range nodeBox.Fixed {
-		model.Meshes = append(model.Meshes, mesh.Cuboid(box[0], box[1], box[2], box[3], box[4], box[5])...)
+		model.Meshes = append(model.Meshes, mesh.Cuboid(box[0], box[1], box[2], box[3], box[4], box[5], mesh.CubeFaceNone)...)
 	}
 
 	for i := 0; i < len(nodeBox.Fixed); i++ {
