@@ -41,9 +41,7 @@ zoom_levels = 8
 # renders and shows
 [region]
 # Cuboid region containing the map, defined by its minimum and maximum
-# coordinates, measured in nodes. If the region has no volume (e.g. x_bounds is
-# set to [0, 0]), the entire map will be rendered.
-# Default: [0, 0]
-x_bounds = [0, 0]
-y_bounds = [0, 0]
-z_bounds = [0, 0]
+# coordinates, measured in nodes.
+x_bounds = { min = -100, max = 100 }
+y_bounds = { min = -32, max = 160 }
+z_bounds = { min = -100, max = 100 }
