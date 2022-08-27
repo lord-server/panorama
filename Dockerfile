@@ -1,4 +1,4 @@
-FROM golang:1.18-alpine AS builder
+FROM golang:1.18-alpine AS backend_builder
 WORKDIR /app
 RUN apk add git
 COPY go.mod go.sum ./
@@ -7,10 +7,17 @@ COPY cmd ./cmd
 COPY pkg ./pkg
 RUN go build -v ./cmd/panorama
 
+FROM node:18-alpine AS frontend_builder
+WORKDIR /app/frontend
+COPY frontend/package*.json ./
+RUN npm install
+COPY frontend .
+RUN npm run build
+
 FROM alpine:latest
 WORKDIR /app
-COPY --from=builder /app/panorama ./
+COPY --from=backend_builder /app/panorama ./
+COPY --from=frontend_builder /app/frontend/build static
 COPY config.example.toml /etc/panorama/config.toml
-COPY static static
 
 ENTRYPOINT ["./panorama", "--config", "/etc/panorama/config.toml"]
