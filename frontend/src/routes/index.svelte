@@ -5,6 +5,7 @@
 	import LayerSelector from '$lib/LayerSelector.svelte';
 	import LinkView from '$lib/LinkView.svelte';
 	import { onMount } from 'svelte';
+	import { worldPositionUnderCursor } from '$lib/stores';
 
 	let Map: any;
 	onMount(async () => {
@@ -24,9 +25,11 @@
 
 	<div class="absolute top-4 left-4 z-[1000]">
 		<div class="flex space-x-4">
-			<LayerSelector />
-			<LinkView />
-			<Coordinates x={1234} z={567} />
+			<!--
+				<LayerSelector />
+				<LinkView />
+			-->
+			<Coordinates position={$worldPositionUnderCursor} />
 		</div>
 	</div>
 </div>
