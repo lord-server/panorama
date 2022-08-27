@@ -68,7 +68,7 @@
 
 <style>
 	#map {
-		background-color: lightgray;
+		background-color: black;
 		height: 100vh;
 	}
 </style>
