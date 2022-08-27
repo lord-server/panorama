@@ -4,6 +4,8 @@
 	import { worldPositionUnderCursor } from '$lib/stores';
 	import * as L from 'leaflet';
 
+	export let zoom: number;
+
 	const dispatch = createEventDispatcher();
 
 	function updateCoordinates(e: L.LeafletMouseEvent) {
@@ -17,6 +19,10 @@
 	}
 
 	let map: L.Map;
+
+	$: if (map) {
+		map.setZoom(zoom);
+	}
 
 	function createMap(node: Node) {
 		const isometric = L.extend(L.CRS.Simple, {

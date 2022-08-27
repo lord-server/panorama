@@ -7,6 +7,7 @@
 	import { onMount } from 'svelte';
 	import { worldPositionUnderCursor } from '$lib/stores';
 
+	$: zoom = 0;
 	let Map: any;
 	onMount(async () => {
 		Map = (await import('$lib/leaflet/Map.svelte')).default;
@@ -18,9 +19,10 @@
 </svelte:head>
 
 <div class="relative">
-	<svelte:component this={Map} />
+	<svelte:component this={Map} zoom={zoom} />
+
 	<div class="absolute top-4 right-4 z-[1000]">
-		<ZoomControl />
+		<ZoomControl on:zoomOut={() => {zoom--;}} on:zoomIn={() => {zoom++;}} />
 	</div>
 
 	<div class="absolute top-4 left-4 z-[1000]">
