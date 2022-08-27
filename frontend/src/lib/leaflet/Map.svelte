@@ -53,7 +53,7 @@
 		map.on('mousemove', updateCoordinates);
 		map.on('click', updateCoordinates);
 
-		L.tileLayer('http://map.lord-server.ru/tiles/{z}/{x}/{y}.png', {
+		L.tileLayer('/tiles/{z}/{x}/{y}.png', {
 			maxZoom: 0,
 			minZoom: -8,
 			tileSize: 256,
