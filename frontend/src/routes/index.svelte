@@ -5,7 +5,6 @@
 	import LayerSelector from '$lib/LayerSelector.svelte';
 	import LinkView from '$lib/LinkView.svelte';
 	import { onMount } from 'svelte';
-	import type Map from '$lib/leaflet/Map.svelte';
 
 	let Map: any;
 	onMount(async () => {
