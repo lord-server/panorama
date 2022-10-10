@@ -132,9 +132,11 @@ func ResolveNode(descriptor NodeDescriptor, mediaCache *MediaCache) NodeDefiniti
 			break
 		}
 
-		model := mediaCache.Mesh(*descriptor.Mesh)
-		nd = makeMeshNode(model, tiles)
-	}
+        model := mediaCache.Mesh(*descriptor.Mesh)
+        if model != nil {
+	        nd = makeMeshNode(model, tiles)
+        }
+    }
 
 	nd.DrawType = descriptor.DrawType
 	nd.ParamType = descriptor.ParamType
