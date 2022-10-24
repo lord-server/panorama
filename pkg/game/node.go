@@ -110,6 +110,7 @@ const (
 	ParamType2GlassLikeLiquidLevel
 	ParamType2ColorDegRotate
 	ParamType2None
+	ParamType2Waving
 )
 
 var ParamType2Names = map[string]ParamType2{
@@ -124,6 +125,7 @@ var ParamType2Names = map[string]ParamType2{
 	"colorwallmounted":     ParamType2ColorWallMounted,
 	"glasslikeliquidlevel": ParamType2GlassLikeLiquidLevel,
 	"colordegrotate":       ParamType2ColorDegRotate,
+	"waving":               ParamType2Waving,
 	"none":                 ParamType2None,
 }
 
