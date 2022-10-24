@@ -37,6 +37,7 @@ func NewRenderer(region spatial.Region, game *game.Game) *Renderer {
 func (r *Renderer) renderNode(
 	target *raster.RenderBuffer,
 	pos spatial.NodePosition,
+	worldPos spatial.NodePosition,
 	neighborhood *render.BlockNeighborhood,
 	offset image.Point,
 	depthOffset float64,
@@ -90,7 +91,7 @@ func (r *Renderer) renderNode(
 
 	// Make underground edges visible (otherwise the edge becomes oddly thin and
 	// that doesn't look good)
-	if maxParam1 == render.ZeroIntensity {
+	if r.region.IsAtEdge(worldPos) && maxParam1 == render.ZeroIntensity {
 		maxParam1 = render.MapEdgeIntensity
 	}
 
@@ -137,7 +138,7 @@ func (r *Renderer) renderBlock(
 					Y: originY + render.BaseResolution*(z+x)/4 + offset.Y - YOffsetCoef*y,
 				}
 
-				r.renderNode(target, nodePos, neighborhood, offset, depthOffset)
+				r.renderNode(target, nodePos, nodeWorldPos, neighborhood, offset, depthOffset)
 			}
 		}
 	}
