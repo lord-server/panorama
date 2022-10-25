@@ -1,10 +1,13 @@
 # Panorama
 
-Isometric world mapper for Minetest
+Interactive isometric maps for Minetest
 
-![screenshot](https://user-images.githubusercontent.com/4698994/163820087-6473cbc4-b790-4e6d-9130-aedb5bf1eddf.png)
+<a href="http://map.lord-server.ru">
+    <small><i>Click here to see a live instance</i></small>
+    <img src="https://user-images.githubusercontent.com/4698994/163820087-6473cbc4-b790-4e6d-9130-aedb5bf1eddf.png"></img>
+</a>
 
-## Installation guide
+## Installation
 
 *Note: Panorama started as our in-house mapper, and installation is
 non-trivial as a result. If you're not comfortable with complicated
@@ -15,62 +18,40 @@ setups, check out [mapserver] instead!*
 - PostgreSQL backend for your world
 - Several gigabytes of disk space for tiles
 - A decent CPU and about a gigabyte of RAM, depending on workload
-- Recent [Go compiler][go]
+- [`nodes_dump`][nodes_dump] mod installed
 
-### Step 1: Install Panorama server
+### Using Docker (recommended)
 
-Currently, there are no pre-built binaries, so you'll have to build
-it yourself:
+This is an easier option, especially if you already use a Docker-based setup for
+your server. There are pre-built [Docker images][docker-image] that you can use,
+or you can build it yourself using provided Dockerfile.
 
-```sh
-git clone https://github.com/lord-server/panorama
-cd panorama
-go build
+Here's an example `docker-compose.yml` to get you started:
+
+```yml
+version: "3"
+services:
+  panorama:
+    image: ghcr.io/lord-server/panorama:latest
+    ports:
+      - "33333:33333"
+    volumes:
+      - "/path/to/minetest/worlds/my-world:/var/lib/panorama/world"
+      - "/path/to/minetest/games/minetest_game:/var/lib/panorama/game"
+      - "/path/to/config/dir:/etc/panorama"
+      - "/path/to/tiles:/var/lib/panorama/tiles"
+    command: ["--serve", "--fullrender"]
 ```
 
-### Step 2: Extract game data
+### Building manually
 
-Install [`panorama_api` mod][panorama_api] and enable it.
-This mod dumps all info (besides game assets) required to render the
-map to your world directory.
-
-### Step 3: Configure Panorama
-
-Copy `config.example.toml` to `config.toml`:
-```sh
-cp config.example.toml config.toml
-```
-
-Edit `config.toml` and configure paths to your world and game:
-
-```toml
-game_path = "/path/to/games/your_game"
-world_path = "/path/to/worlds/your_world"
-world_dsn = 'host=localhost port=5432 user=postgres password=pass dbname=world'
-```
-
-### Step 4: Do a full render
-
-This command will perform an initial render. It'll take a lot of
-time to finish, especially if your map is big.
-
-```sh
-./panorama --fullrender
-```
-
-### Step 5: Run Panorama in server mode
-
-Now you can run this command to serve tiles from address specified in config
-(`localhost:33333` by default) 
-
-```sh
-./panorama --serve
-```
+Coming soon! Follow commands in [Dockerfile](https://github.com/lord-server/panorama/blob/master/Dockerfile) in the meantime.
 
 ## License
 
 MIT
 
+[instance]: http://map.lord-server.ru/
 [mapserver]: https://github.com/minetest-mapserver/mapserver
-[go]: https://go.dev/
-[panorama_api]: https://github.com/lord-server/panorama_api
+[docker-image]: https://github.com/lord-server/panorama/pkgs/container/panorama
+[nodes_dump]: https://github.com/lord-server/nodes_dump
