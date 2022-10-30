@@ -29,10 +29,10 @@ func (lhs Region) IsAtEdge(pos NodePosition) bool {
 	return isAtXEdge || isAtYEdge || isAtZEdge
 }
 
-// TileRegion defines an axis-aligned rectangle region in tile space (units are
+// ProjectedRegion defines an axis-aligned rectangle region in tile space (units are
 // tiles at zoom level 0). It's used to represent a projection of a Region onto
 // the screen.
-type TileRegion struct {
+type ProjectedRegion struct {
 	XBounds Bounds
 	YBounds Bounds
 }

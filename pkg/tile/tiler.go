@@ -58,7 +58,7 @@ func (t *Tiler) worker(wg *sync.WaitGroup, game *game.Game, world *world.World, 
 
 type CreateRendererFunc func() render.Renderer
 
-func (t *Tiler) FullRender(game *game.Game, world *world.World, workers int, region spatial.TileRegion, createRenderer CreateRendererFunc) {
+func (t *Tiler) FullRender(game *game.Game, world *world.World, workers int, region spatial.ProjectedRegion, createRenderer CreateRendererFunc) {
 	var wg sync.WaitGroup
 	positions := make(chan render.TilePosition)
 

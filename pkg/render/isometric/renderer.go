@@ -191,7 +191,7 @@ func (r *Renderer) RenderTile(
 	return target
 }
 
-func ProjectRegion(region spatial.Region) spatial.TileRegion {
+func ProjectRegion(region spatial.Region) spatial.ProjectedRegion {
 	xMin := int(math.Floor(float64((region.ZBounds.Min - region.XBounds.Max)) / 2 / spatial.BlockSize))
 	xMax := int(math.Ceil(float64((region.ZBounds.Max - region.XBounds.Min)) / 2 / spatial.BlockSize))
 
@@ -200,7 +200,7 @@ func ProjectRegion(region spatial.Region) spatial.TileRegion {
 	yMax := int(math.Ceil((float64(region.ZBounds.Max+region.XBounds.Max+2*region.YBounds.Min)/4 -
 		float64(region.YBounds.Min*YOffsetCoef)/render.BaseResolution) / spatial.BlockSize))
 
-	return spatial.TileRegion{
+	return spatial.ProjectedRegion{
 		XBounds: spatial.Bounds{
 			Min: xMin,
 			Max: xMax,
