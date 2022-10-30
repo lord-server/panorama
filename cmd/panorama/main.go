@@ -38,6 +38,16 @@ func main() {
 		log.Fatalf("Unable to load config: %v\n", err)
 	}
 
+	quit := make(chan bool)
+
+	if args.Serve {
+		log.Printf("Serving tiles @ %v", config.Web.ListenAddress)
+		go func() {
+			web.Serve(&config)
+			quit <- true
+		}()
+	}
+
 	log.Printf("Game path: `%v`\n", config.System.GamePath)
 
 	descPath := path.Join(config.System.WorldPath, "nodes_dump.json")
@@ -71,8 +81,5 @@ func main() {
 		tiler.DownscaleTiles()
 	}
 
-	if args.Serve {
-		log.Printf("Serving tiles @ %v", config.Web.ListenAddress)
-		web.Serve(&config)
-	}
+	<-quit
 }
