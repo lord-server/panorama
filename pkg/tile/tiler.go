@@ -58,23 +58,26 @@ func (t *Tiler) worker(wg *sync.WaitGroup, game *game.Game, world *world.World, 
 
 type CreateRendererFunc func() render.Renderer
 
-func (t *Tiler) FullRender(game *game.Game, world *world.World, workers int, region spatial.ProjectedRegion, createRenderer CreateRendererFunc) {
+func (t *Tiler) FullRender(game *game.Game, world *world.World, workers int, region spatial.Region, createRenderer CreateRendererFunc) {
 	var wg sync.WaitGroup
 	positions := make(chan render.TilePosition)
+
+	projectedRegion := spatial.ProjectedRegion{}
 
 	for i := 0; i < workers; i++ {
 		wg.Add(1)
 		renderer := createRenderer()
+		projectedRegion = renderer.ProjectRegion(region)
 		go t.worker(&wg, game, world, renderer, positions)
 	}
 
-	for x := region.XBounds.Min; x < region.XBounds.Max; x++ {
+	for x := projectedRegion.XBounds.Min; x < projectedRegion.XBounds.Max; x++ {
 		err := os.MkdirAll(fmt.Sprintf("%v/%v", path.Join(t.tilesPath, "0"), x), os.ModePerm)
 		if err != nil {
 			panic(err)
 		}
 
-		for y := region.YBounds.Min; y < region.YBounds.Max; y++ {
+		for y := projectedRegion.YBounds.Min; y < projectedRegion.YBounds.Max; y++ {
 			positions <- render.TilePosition{X: x, Y: y}
 		}
 	}

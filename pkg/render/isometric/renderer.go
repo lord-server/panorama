@@ -19,22 +19,22 @@ var (
 	TileBlockHeight = render.BaseResolution/2*spatial.BlockSize - 1 + YOffsetCoef*spatial.BlockSize
 )
 
-type Renderer struct {
+type IsometricRenderer struct {
 	nr render.NodeRasterizer
 
 	region spatial.Region
 	game   *game.Game
 }
 
-func NewRenderer(region spatial.Region, game *game.Game) *Renderer {
-	return &Renderer{
+func NewRenderer(region spatial.Region, game *game.Game) *IsometricRenderer {
+	return &IsometricRenderer{
 		nr:     render.NewNodeRasterizer(lm.DimetricProjection()),
 		region: region,
 		game:   game,
 	}
 }
 
-func (r *Renderer) renderNode(
+func (r *IsometricRenderer) renderNode(
 	target *raster.RenderBuffer,
 	pos spatial.NodePosition,
 	worldPos spatial.NodePosition,
@@ -111,7 +111,7 @@ func (r *Renderer) renderNode(
 	}
 }
 
-func (r *Renderer) renderBlock(
+func (r *IsometricRenderer) renderBlock(
 	target *raster.RenderBuffer,
 	blockPos spatial.BlockPosition,
 	neighborhood *render.BlockNeighborhood,
@@ -144,7 +144,7 @@ func (r *Renderer) renderBlock(
 	}
 }
 
-func (r *Renderer) RenderTile(
+func (r *IsometricRenderer) RenderTile(
 	tilePos render.TilePosition,
 	world *world.World,
 	game *game.Game,
@@ -191,7 +191,7 @@ func (r *Renderer) RenderTile(
 	return target
 }
 
-func ProjectRegion(region spatial.Region) spatial.ProjectedRegion {
+func (r *IsometricRenderer) ProjectRegion(region spatial.Region) spatial.ProjectedRegion {
 	xMin := int(math.Floor(float64((region.ZBounds.Min - region.XBounds.Max)) / 2 / spatial.BlockSize))
 	xMax := int(math.Ceil(float64((region.ZBounds.Max - region.XBounds.Min)) / 2 / spatial.BlockSize))
 

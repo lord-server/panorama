@@ -59,12 +59,10 @@ func main() {
 
 	if args.FullRender {
 		log.Printf("Performing a full render using %v workers", config.Renderer.Workers)
-		tileRegion := isometric.ProjectRegion(config.Region)
 
 		log.Printf("Region: %v", config.Region)
-		log.Printf("TileRegion: %v", tileRegion)
 
-		tiler.FullRender(&game, &world, config.Renderer.Workers, tileRegion, func() render.Renderer {
+		tiler.FullRender(&game, &world, config.Renderer.Workers, config.Region, func() render.Renderer {
 			return isometric.NewRenderer(config.Region, &game)
 		})
 	}
