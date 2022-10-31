@@ -8,7 +8,7 @@ import (
 	"github.com/weqqr/panorama/pkg/config"
 	"github.com/weqqr/panorama/pkg/game"
 	"github.com/weqqr/panorama/pkg/render"
-	"github.com/weqqr/panorama/pkg/render/isometric"
+	"github.com/weqqr/panorama/pkg/render/flat"
 	"github.com/weqqr/panorama/pkg/tile"
 	"github.com/weqqr/panorama/pkg/web"
 	"github.com/weqqr/panorama/pkg/world"
@@ -73,7 +73,8 @@ func main() {
 		log.Printf("Region: %v", config.Region)
 
 		tiler.FullRender(&game, &world, config.Renderer.Workers, config.Region, func() render.Renderer {
-			return isometric.NewRenderer(config.Region, &game)
+			//return isometric.NewRenderer(config.Region, &game)
+			return flat.NewRenderer(config.Region, &game)
 		})
 	}
 
