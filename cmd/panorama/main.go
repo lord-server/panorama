@@ -78,9 +78,5 @@ func main() {
 		})
 	}
 
-	if args.Downscale || args.FullRender {
-		tiler.DownscaleTiles()
-	}
-
 	<-quit
 }

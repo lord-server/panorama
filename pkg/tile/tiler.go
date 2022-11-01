@@ -33,8 +33,8 @@ func NewTiler(region spatial.Region, zoomLevels int, tilesPath string) Tiler {
 	}
 }
 
-func (t *Tiler) tilePath(x, y, zoom int) string {
-	return fmt.Sprintf("%v/%v/%v/%v.png", t.tilesPath, -zoom, x, y)
+func (t *Tiler) tilePath(renderer string, x, y, zoom int) string {
+	return fmt.Sprintf("%v/%v/%v/%v/%v.png", t.tilesPath, renderer, -zoom, x, y)
 }
 
 func (t *Tiler) worker(wg *sync.WaitGroup, game *game.Game, world *world.World, renderer render.Renderer, positions <-chan render.TilePosition) {
@@ -45,7 +45,7 @@ func (t *Tiler) worker(wg *sync.WaitGroup, game *game.Game, world *world.World, 
 			continue
 		}
 
-		tilePath := t.tilePath(position.X, position.Y, 0)
+		tilePath := t.tilePath(renderer.Name(), position.X, position.Y, 0)
 		err := raster.SavePNG(output.Color, tilePath)
 		if err != nil {
 			return
@@ -63,16 +63,18 @@ func (t *Tiler) FullRender(game *game.Game, world *world.World, workers int, reg
 	positions := make(chan render.TilePosition)
 
 	projectedRegion := spatial.ProjectedRegion{}
+	rendererName := ""
 
 	for i := 0; i < workers; i++ {
 		wg.Add(1)
 		renderer := createRenderer()
 		projectedRegion = renderer.ProjectRegion(region)
+		rendererName = renderer.Name()
 		go t.worker(&wg, game, world, renderer, positions)
 	}
 
 	for x := projectedRegion.XBounds.Min; x < projectedRegion.XBounds.Max; x++ {
-		err := os.MkdirAll(fmt.Sprintf("%v/%v", path.Join(t.tilesPath, "0"), x), os.ModePerm)
+		err := os.MkdirAll(fmt.Sprintf("%v/%v", path.Join(t.tilesPath, rendererName, "0"), x), os.ModePerm)
 		if err != nil {
 			panic(err)
 		}
@@ -84,10 +86,12 @@ func (t *Tiler) FullRender(game *game.Game, world *world.World, workers int, reg
 	close(positions)
 
 	wg.Wait()
+
+	t.downscaleTiles(rendererName)
 }
 
 // DownscaleTiles rescales high-resolution tiles into lower resolution ones until it reaches adequate zoom level
-func (t *Tiler) DownscaleTiles() {
+func (t *Tiler) downscaleTiles(renderer string) {
 	log.Printf("Downscaling zoomLevels=%v", t.zoomLevels)
 
 	tileDir, err := filepath.Abs(path.Join(t.tilesPath, "0"))
@@ -130,6 +134,6 @@ func (t *Tiler) DownscaleTiles() {
 
 	for zoom := 1; zoom <= t.zoomLevels; zoom++ {
 		log.Printf("Rescaling tiles for zoom level %v", zoom)
-		positions = t.downscalePositions(zoom, positions)
+		positions = t.downscalePositions(renderer, zoom, positions)
 	}
 }

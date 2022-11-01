@@ -211,3 +211,7 @@ func (r *IsometricRenderer) ProjectRegion(region spatial.Region) spatial.Project
 		},
 	}
 }
+
+func (r *IsometricRenderer) Name() string {
+	return "isometric"
+}

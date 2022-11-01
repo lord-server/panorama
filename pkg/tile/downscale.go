@@ -52,7 +52,7 @@ func uniquePositions(input []render.TilePosition) []render.TilePosition {
 }
 
 // downscalePositions produces downscaled images for given zoom level and returns a list of produced tile positions
-func (t *Tiler) downscalePositions(zoom int, positions []render.TilePosition) []render.TilePosition {
+func (t *Tiler) downscalePositions(renderer string, zoom int, positions []render.TilePosition) []render.TilePosition {
 	const quadrantSize = 128
 
 	var nextPositions []render.TilePosition
@@ -62,7 +62,7 @@ func (t *Tiler) downscalePositions(zoom int, positions []render.TilePosition) []
 
 		for quadrantY := 0; quadrantY < 2; quadrantY++ {
 			for quadrantX := 0; quadrantX < 2; quadrantX++ {
-				source, err := raster.LoadPNG(t.tilePath(pos.X*2+quadrantX, pos.Y*2+quadrantY, zoom-1))
+				source, err := raster.LoadPNG(t.tilePath(renderer, pos.X*2+quadrantX, pos.Y*2+quadrantY, zoom-1))
 				if err != nil {
 					continue
 				}
@@ -75,7 +75,7 @@ func (t *Tiler) downscalePositions(zoom int, positions []render.TilePosition) []
 			}
 		}
 
-		err := raster.SavePNG(target, t.tilePath(pos.X, pos.Y, zoom))
+		err := raster.SavePNG(target, t.tilePath(renderer, pos.X, pos.Y, zoom))
 		if err != nil {
 			panic(err)
 		}

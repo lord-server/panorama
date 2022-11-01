@@ -166,3 +166,7 @@ func (r *FlatRenderer) ProjectRegion(region spatial.Region) spatial.ProjectedReg
 		},
 	}
 }
+
+func (r *FlatRenderer) Name() string {
+	return "flat"
+}
