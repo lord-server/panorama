@@ -21,6 +21,13 @@ type NodeDefinition struct {
 	Model      *mesh.Model
 }
 
+func (d *NodeDefinition) NeedsAlpha() bool {
+	// FIXME: Minetest games do specify alpha behavior through NodeDef. This is
+	// not how alpha works, just a heuristic.
+
+	return d.DrawType != DrawTypeNormal
+}
+
 type Game struct {
 	Aliases map[string]string
 	Nodes   map[string]NodeDefinition
@@ -132,11 +139,11 @@ func ResolveNode(descriptor NodeDescriptor, mediaCache *MediaCache) NodeDefiniti
 			break
 		}
 
-        model := mediaCache.Mesh(*descriptor.Mesh)
-        if model != nil {
-	        nd = makeMeshNode(model, tiles)
-        }
-    }
+		model := mediaCache.Mesh(*descriptor.Mesh)
+		if model != nil {
+			nd = makeMeshNode(model, tiles)
+		}
+	}
 
 	nd.DrawType = descriptor.DrawType
 	nd.ParamType = descriptor.ParamType

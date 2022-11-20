@@ -14,8 +14,7 @@ import (
 )
 
 var (
-	YOffsetCoef = int(math.Round(render.BaseResolution * (1 + math.Sqrt2) / 4))
-	TileSize    = spatial.BlockSize * render.BaseResolution
+	TileSize = spatial.BlockSize * render.BaseResolution
 )
 
 type FlatRenderer struct {
@@ -49,11 +48,6 @@ func (r *FlatRenderer) renderNode(
 	}
 
 	nodeDef := r.game.NodeDef(name)
-
-	needsAlphaBlending := true
-	if nodeDef.DrawType == game.DrawTypeNormal {
-		needsAlphaBlending = false
-	}
 
 	// Estimate lighting by sampling neighboring nodes and using the brightest one
 	neighborOffsets := []spatial.NodePosition{
@@ -93,7 +87,7 @@ func (r *FlatRenderer) renderNode(
 	renderedNode := r.nr.Render(renderableNode, &nodeDef)
 
 	depthOffset = -float64(pos.Y) + depthOffset
-	if needsAlphaBlending {
+	if nodeDef.NeedsAlpha() {
 		target.OverlayDepthAwareWithAlpha(renderedNode, offset, depthOffset)
 	} else {
 		target.OverlayDepthAware(renderedNode, offset, depthOffset)

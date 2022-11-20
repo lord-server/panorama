@@ -51,11 +51,6 @@ func (r *IsometricRenderer) renderNode(
 
 	nodeDef := r.game.NodeDef(name)
 
-	needsAlphaBlending := true
-	if nodeDef.DrawType == game.DrawTypeNormal {
-		needsAlphaBlending = false
-	}
-
 	// Estimate lighting by sampling neighboring nodes and using the brightest one
 	neighborOffsets := []spatial.NodePosition{
 		{X: 1, Y: 0, Z: 0},
@@ -104,7 +99,7 @@ func (r *IsometricRenderer) renderNode(
 	renderedNode := r.nr.Render(renderableNode, &nodeDef)
 
 	depthOffset = -float64(pos.Z+pos.X)/math.Sqrt2 - 0.5*(float64(pos.Y)) + depthOffset
-	if needsAlphaBlending {
+	if nodeDef.NeedsAlpha() {
 		target.OverlayDepthAwareWithAlpha(renderedNode, offset, depthOffset)
 	} else {
 		target.OverlayDepthAware(renderedNode, offset, depthOffset)

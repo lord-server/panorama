@@ -34,7 +34,7 @@ func NewTiler(region spatial.Region, zoomLevels int, tilesPath string) Tiler {
 }
 
 func (t *Tiler) tilePath(renderer string, x, y, zoom int) string {
-	return fmt.Sprintf("%v/%v/%v/%v/%v.png", t.tilesPath, renderer, -zoom, x, y)
+	return path.Join(t.tilesPath, renderer, fmt.Sprint(-zoom), fmt.Sprint(x), fmt.Sprintf("%v.png", y))
 }
 
 func (t *Tiler) worker(wg *sync.WaitGroup, game *game.Game, world *world.World, renderer render.Renderer, positions <-chan render.TilePosition) {
