@@ -3,7 +3,7 @@
 
 	let modes = [
 		{ id: 'isometric', name: '3D' },
-		{ id: 'topdown', name: '2D' }
+		{ id: 'flat', name: '2D' }
 	];
 </script>
 

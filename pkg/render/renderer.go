@@ -15,6 +15,4 @@ type Renderer interface {
 	RenderTile(pos TilePosition, w *world.World, game *game.Game) *raster.RenderBuffer
 	ProjectRegion(region spatial.Region) spatial.ProjectedRegion
 	Name() string
-	// ListTilesWithBlock(x, y, z int) []TilePosition
-	// ListTilesInsideRegion(region config.Region) []TilePosition
 }

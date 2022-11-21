@@ -94,7 +94,8 @@ func (t *Tiler) FullRender(game *game.Game, world *world.World, workers int, reg
 func (t *Tiler) downscaleTiles(renderer string) {
 	log.Printf("Downscaling zoomLevels=%v", t.zoomLevels)
 
-	tileDir, err := filepath.Abs(path.Join(t.tilesPath, "0"))
+	baseTilesPath := path.Join(t.tilesPath, renderer, "0")
+	tileDir, err := filepath.Abs(baseTilesPath)
 	if err != nil {
 		panic(err)
 	}
