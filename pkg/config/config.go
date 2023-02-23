@@ -5,7 +5,7 @@ import (
 	"os"
 
 	"github.com/BurntSushi/toml"
-	"github.com/weqqr/panorama/pkg/spatial"
+	"github.com/lord-server/panorama/pkg/spatial"
 )
 
 type Web struct {

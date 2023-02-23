@@ -1,8 +1,8 @@
 package render
 
 import (
-	"github.com/weqqr/panorama/pkg/spatial"
-	"github.com/weqqr/panorama/pkg/world"
+	"github.com/lord-server/panorama/pkg/spatial"
+	"github.com/lord-server/panorama/pkg/world"
 )
 
 type BlockNeighborhood struct {

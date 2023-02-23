@@ -1,4 +1,4 @@
-module github.com/weqqr/panorama
+module github.com/lord-server/panorama
 
 go 1.20
 

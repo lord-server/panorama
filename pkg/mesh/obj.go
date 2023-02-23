@@ -7,7 +7,7 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/weqqr/panorama/pkg/lm"
+	"github.com/lord-server/panorama/pkg/lm"
 )
 
 func parseVector3(fields []string) (lm.Vector3, error) {

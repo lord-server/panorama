@@ -1,7 +1,7 @@
 package mesh
 
 import (
-	"github.com/weqqr/panorama/pkg/lm"
+	"github.com/lord-server/panorama/pkg/lm"
 )
 
 type Vertex struct {

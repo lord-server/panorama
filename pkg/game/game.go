@@ -5,7 +5,7 @@ import (
 	"image"
 	"os"
 
-	"github.com/weqqr/panorama/pkg/mesh"
+	"github.com/lord-server/panorama/pkg/mesh"
 )
 
 type gameDescriptor struct {
@@ -132,11 +132,11 @@ func ResolveNode(descriptor NodeDescriptor, mediaCache *MediaCache) NodeDefiniti
 			break
 		}
 
-        model := mediaCache.Mesh(*descriptor.Mesh)
-        if model != nil {
-	        nd = makeMeshNode(model, tiles)
-        }
-    }
+		model := mediaCache.Mesh(*descriptor.Mesh)
+		if model != nil {
+			nd = makeMeshNode(model, tiles)
+		}
+	}
 
 	nd.DrawType = descriptor.DrawType
 	nd.ParamType = descriptor.ParamType

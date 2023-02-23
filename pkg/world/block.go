@@ -7,7 +7,7 @@ import (
 	"io"
 
 	"github.com/klauspost/compress/zstd"
-	"github.com/weqqr/panorama/pkg/spatial"
+	"github.com/lord-server/panorama/pkg/spatial"
 )
 
 const NodeSizeInBytes = 4

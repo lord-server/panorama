@@ -7,7 +7,7 @@ import (
 	lru "github.com/hashicorp/golang-lru/v2"
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
-	"github.com/weqqr/panorama/pkg/spatial"
+	"github.com/lord-server/panorama/pkg/spatial"
 )
 
 type Backend interface {

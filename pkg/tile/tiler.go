@@ -11,12 +11,12 @@ import (
 	"strings"
 	"sync"
 
-	"github.com/weqqr/panorama/pkg/game"
-	"github.com/weqqr/panorama/pkg/lm"
-	"github.com/weqqr/panorama/pkg/raster"
-	"github.com/weqqr/panorama/pkg/render"
-	"github.com/weqqr/panorama/pkg/spatial"
-	"github.com/weqqr/panorama/pkg/world"
+	"github.com/lord-server/panorama/pkg/game"
+	"github.com/lord-server/panorama/pkg/lm"
+	"github.com/lord-server/panorama/pkg/raster"
+	"github.com/lord-server/panorama/pkg/render"
+	"github.com/lord-server/panorama/pkg/spatial"
+	"github.com/lord-server/panorama/pkg/world"
 )
 
 type Tiler struct {

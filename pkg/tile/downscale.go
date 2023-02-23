@@ -7,9 +7,9 @@ import (
 
 	"github.com/nfnt/resize"
 
-	"github.com/weqqr/panorama/pkg/lm"
-	"github.com/weqqr/panorama/pkg/raster"
-	"github.com/weqqr/panorama/pkg/render"
+	"github.com/lord-server/panorama/pkg/lm"
+	"github.com/lord-server/panorama/pkg/raster"
+	"github.com/lord-server/panorama/pkg/render"
 )
 
 func uniquePositions(input []render.TilePosition) []render.TilePosition {
