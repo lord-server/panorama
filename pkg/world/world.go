@@ -4,9 +4,9 @@ import (
 	"context"
 	"errors"
 
-	lru "github.com/hashicorp/golang-lru"
-	"github.com/jackc/pgx/v4"
-	"github.com/jackc/pgx/v4/pgxpool"
+	lru "github.com/hashicorp/golang-lru/v2"
+	"github.com/jackc/pgx/v5"
+	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/weqqr/panorama/pkg/spatial"
 )
 
@@ -20,7 +20,7 @@ type PostgresBackend struct {
 }
 
 func NewPostgresBackend(dsn string) (*PostgresBackend, error) {
-	conn, err := pgxpool.Connect(context.Background(), dsn)
+	conn, err := pgxpool.New(context.Background(), dsn)
 	if err != nil {
 		return nil, err
 	}
@@ -50,11 +50,11 @@ func (p *PostgresBackend) GetBlockData(pos spatial.BlockPosition) ([]byte, error
 
 type World struct {
 	backend    Backend
-	blockCache *lru.Cache
+	blockCache *lru.Cache[spatial.BlockPosition, *MapBlock]
 }
 
 func NewWorldWithBackend(backend Backend) World {
-	blockCache, err := lru.New(1024 * 16)
+	blockCache, err := lru.New[spatial.BlockPosition, *MapBlock](1024 * 16)
 	if err != nil {
 		panic(err)
 	}
@@ -71,7 +71,7 @@ func (w *World) GetBlock(pos spatial.BlockPosition) (*MapBlock, error) {
 		if cachedBlock == nil {
 			return nil, nil
 		}
-		return cachedBlock.(*MapBlock), nil
+		return cachedBlock, nil
 	}
 
 	data, err := w.backend.GetBlockData(pos)
