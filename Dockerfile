@@ -7,17 +7,17 @@ COPY cmd ./cmd
 COPY pkg ./pkg
 RUN go build -v ./cmd/panorama
 
-FROM docker.io/node:18-alpine AS frontend_builder
-WORKDIR /app/frontend
-COPY frontend/package*.json ./
+FROM docker.io/node:18-alpine AS ui_builder
+WORKDIR /app/ui
+COPY ui/package*.json ./
 RUN npm install
-COPY frontend .
+COPY ui .
 RUN npm run build
 
 FROM docker.io/alpine:latest
 WORKDIR /app
 COPY --from=backend_builder /app/panorama ./
-COPY --from=frontend_builder /app/frontend/build static
+COPY --from=ui_builder /app/ui/build static
 COPY config.example.toml /etc/panorama/config.toml
 
 ENTRYPOINT ["./panorama", "--config", "/etc/panorama/config.toml"]
