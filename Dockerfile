@@ -14,7 +14,7 @@ RUN npm install
 COPY ui .
 RUN npm run build
 
-FROM docker.io/alpine:latest
+FROM scratch
 WORKDIR /app
 COPY --from=backend_builder /app/panorama ./
 COPY --from=ui_builder /app/ui/build static
