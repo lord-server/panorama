@@ -5,8 +5,8 @@ import (
 
 	"github.com/gofiber/fiber/v2"
 
-	"github.com/lord-server/panorama/pkg/config"
-	"github.com/lord-server/panorama/pkg/web/handlers"
+	"github.com/lord-server/panorama/internal/config"
+	"github.com/lord-server/panorama/internal/web/handlers"
 )
 
 func Serve(config *config.Config) {

@@ -5,7 +5,7 @@ import (
 	"image"
 	"os"
 
-	"github.com/lord-server/panorama/pkg/mesh"
+	"github.com/lord-server/panorama/internal/mesh"
 )
 
 type gameDescriptor struct {

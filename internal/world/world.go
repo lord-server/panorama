@@ -7,7 +7,7 @@ import (
 	lru "github.com/hashicorp/golang-lru/v2"
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
-	"github.com/lord-server/panorama/pkg/spatial"
+	"github.com/lord-server/panorama/internal/spatial"
 )
 
 type Backend interface {
@@ -49,23 +49,23 @@ func (p *PostgresBackend) GetBlockData(pos spatial.BlockPosition) ([]byte, error
 }
 
 type World struct {
-	backend    Backend
-	blockCache *lru.Cache[spatial.BlockPosition, *MapBlock]
+	backend           Backend
+	decodedBlockCache *lru.Cache[spatial.BlockPosition, *MapBlock]
 }
 
 func NewWorldWithBackend(backend Backend) World {
-	blockCache, err := lru.New[spatial.BlockPosition, *MapBlock](1024 * 16)
+	decodedBlockCache, err := lru.New[spatial.BlockPosition, *MapBlock](1024 * 16)
 	if err != nil {
 		panic(err)
 	}
 	return World{
-		backend:    backend,
-		blockCache: blockCache,
+		backend:           backend,
+		decodedBlockCache: decodedBlockCache,
 	}
 }
 
 func (w *World) GetBlock(pos spatial.BlockPosition) (*MapBlock, error) {
-	cachedBlock, ok := w.blockCache.Get(pos)
+	cachedBlock, ok := w.decodedBlockCache.Get(pos)
 
 	if ok {
 		if cachedBlock == nil {
@@ -80,7 +80,7 @@ func (w *World) GetBlock(pos spatial.BlockPosition) (*MapBlock, error) {
 	}
 
 	if data == nil {
-		w.blockCache.Add(pos, nil)
+		w.decodedBlockCache.Add(pos, nil)
 		return nil, nil
 	}
 
@@ -89,7 +89,7 @@ func (w *World) GetBlock(pos spatial.BlockPosition) (*MapBlock, error) {
 		return nil, err
 	}
 
-	w.blockCache.Add(pos, block)
+	w.decodedBlockCache.Add(pos, block)
 
 	return block, nil
 }

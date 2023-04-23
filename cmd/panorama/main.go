@@ -5,13 +5,13 @@ import (
 	"log"
 	"path"
 
-	"github.com/lord-server/panorama/pkg/config"
-	"github.com/lord-server/panorama/pkg/game"
-	"github.com/lord-server/panorama/pkg/render"
-	"github.com/lord-server/panorama/pkg/render/isometric"
-	"github.com/lord-server/panorama/pkg/tile"
-	"github.com/lord-server/panorama/pkg/web"
-	"github.com/lord-server/panorama/pkg/world"
+	"github.com/lord-server/panorama/internal/config"
+	"github.com/lord-server/panorama/internal/game"
+	"github.com/lord-server/panorama/internal/render"
+	"github.com/lord-server/panorama/internal/render/isometric"
+	"github.com/lord-server/panorama/internal/tile"
+	"github.com/lord-server/panorama/internal/web"
+	"github.com/lord-server/panorama/internal/world"
 )
 
 type Args struct {

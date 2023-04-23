@@ -3,7 +3,7 @@ package handlers
 import (
 	"github.com/gofiber/fiber/v2"
 
-	"github.com/lord-server/panorama/pkg/config"
+	"github.com/lord-server/panorama/internal/config"
 )
 
 func Metadata(config *config.Config) func(c *fiber.Ctx) error {
