@@ -80,13 +80,13 @@ func inflate(reader *bytes.Reader) ([]byte, error) {
 	counter := NewReaderCounter(reader)
 	z, err := zlib.NewReader(counter)
 	if err != nil {
-		panic(err)
+		return nil, err
 	}
 	defer z.Close()
 
 	data, err := io.ReadAll(z)
 	if err != nil {
-		panic(err)
+		return nil, err
 	}
 
 	_, err = reader.Seek(position+counter.count, io.SeekStart)
@@ -142,12 +142,12 @@ func decodeLegacyBlock(reader *bytes.Reader, version uint8) (*MapBlock, error) {
 
 	nodeData, err := inflate(reader)
 	if err != nil {
-		panic(err)
+		return nil, err
 	}
 
 	_, err = inflate(reader)
 	if err != nil {
-		panic(err)
+		return nil, err
 	}
 
 	// - uint8 staticObjectVersion
@@ -158,7 +158,7 @@ func decodeLegacyBlock(reader *bytes.Reader, version uint8) (*MapBlock, error) {
 
 	staticObjectCount, err := readU16(reader)
 	if err != nil {
-		panic(err)
+		return nil, err
 	}
 
 	for i := 0; i < int(staticObjectCount); i++ {
@@ -170,7 +170,7 @@ func decodeLegacyBlock(reader *bytes.Reader, version uint8) (*MapBlock, error) {
 		}
 		dataSize, err := readU16(reader)
 		if err != nil {
-			panic(err)
+			return nil, err
 		}
 		_, err = reader.Seek(int64(dataSize), io.SeekCurrent)
 		if err != nil {
@@ -254,7 +254,7 @@ func DecodeMapBlock(data []byte) (*MapBlock, error) {
 	if version < 29 {
 		mapblock, err := decodeLegacyBlock(reader, version)
 		if err != nil {
-			panic(err)
+			return nil, err
 		}
 		return mapblock, nil
 	}
