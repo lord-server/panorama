@@ -2,7 +2,8 @@ package main
 
 import (
 	"flag"
-	"log"
+	"log/slog"
+	"os"
 	"path"
 
 	"github.com/lord-server/panorama/internal/config"
@@ -15,71 +16,84 @@ import (
 )
 
 type Args struct {
-	FullRender bool
-	Downscale  bool
-	Serve      bool
 	ConfigPath string
 }
 
 var args Args
 
-func init() {
-	flag.BoolVar(&args.FullRender, "fullrender", false, "Render entire map")
-	flag.BoolVar(&args.Downscale, "downscale", false, "Downscale existing tiles (--fullrender does this automatically)")
-	flag.BoolVar(&args.Serve, "serve", false, "Serve tiles over the web")
-	flag.StringVar(&args.ConfigPath, "config", "config.toml", "Path to config file")
-	flag.Parse()
-}
-
-func main() {
-	log.Printf("Config path: `%v`", args.ConfigPath)
-	config, err := config.LoadConfig(args.ConfigPath)
-	if err != nil {
-		log.Fatalf("Unable to load config: %v\n", err)
-	}
-
-	quit := make(chan bool)
-
-	if args.Serve {
-		log.Printf("Serving tiles @ %v", config.Web.ListenAddress)
-		go func() {
-			web.Serve(&config)
-			quit <- true
-		}()
-	}
-
-	log.Printf("Game path: `%v`\n", config.System.GamePath)
-
+func fullrender(config config.Config) error {
 	descPath := path.Join(config.System.WorldPath, "nodes_dump.json")
-	log.Printf("Game description: `%v`\n", descPath)
+
+	slog.Info("loading game description", "game", config.System.GamePath, "desc", descPath)
 
 	game, err := game.LoadGame(descPath, config.System.GamePath)
 	if err != nil {
-		log.Fatalf("Unable to load game description: %v\n", err)
+		slog.Error("unable to load game description", "error", err)
+		return err
 	}
 
 	backend, err := world.NewPostgresBackend(config.System.WorldDSN)
 	if err != nil {
-		log.Fatalf("Unable to connect to world DB: %v\n", err)
+		slog.Error("unable to connect to world DB", "error", err)
+		return err
 	}
 
 	world := world.NewWorldWithBackend(backend)
 
 	tiler := tile.NewTiler(config.Region, config.Renderer.ZoomLevels, config.System.TilesPath)
 
-	if args.FullRender {
-		log.Printf("Performing a full render using %v workers", config.Renderer.Workers)
+	slog.Info("performing a full render", "workers", config.Renderer.Workers, "region", config.Region)
 
-		log.Printf("Region: %v", config.Region)
+	tiler.FullRender(&game, &world, config.Renderer.Workers, config.Region, func() render.Renderer {
+		return isometric.NewRenderer(config.Region, &game)
+	})
 
-		tiler.FullRender(&game, &world, config.Renderer.Workers, config.Region, func() render.Renderer {
-			return isometric.NewRenderer(config.Region, &game)
-		})
-	}
+	tiler.DownscaleTiles()
 
-	if args.Downscale || args.FullRender {
-		tiler.DownscaleTiles()
-	}
+	return nil
+}
+
+func run(config config.Config) error {
+	quit := make(chan bool)
+
+	slog.Info("starting web server", "address", config.Web.ListenAddress)
+	go func() {
+		web.Serve(&config)
+		quit <- true
+	}()
 
 	<-quit
+
+	return nil
+}
+
+func main() {
+	if len(os.Args) < 2 {
+		slog.Error("expected a subcommand: (available subcommands: run, fullrender)")
+		os.Exit(1)
+	}
+
+	subcommand := os.Args[1]
+
+	commonFlags := flag.NewFlagSet("common flags", flag.ExitOnError)
+	commonFlags.StringVar(&args.ConfigPath, "config", "config.toml", "Path to config file")
+	commonFlags.Parse(os.Args[2:])
+
+	slog.Info("loading config", "config_path", args.ConfigPath)
+	config, err := config.LoadConfig(args.ConfigPath)
+	if err != nil {
+		slog.Error("unable to load config", "error", err)
+	}
+
+	switch subcommand {
+	case "run":
+		err = run(config)
+
+	case "fullrender":
+		err = fullrender(config)
+	}
+
+	if err != nil {
+		os.Exit(1)
+	}
 }
