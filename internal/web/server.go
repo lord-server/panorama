@@ -1,7 +1,7 @@
 package web
 
 import (
-	"log"
+	"log/slog"
 
 	"github.com/gofiber/fiber/v2"
 
@@ -17,7 +17,12 @@ func Serve(config *config.Config) {
 		MaxAge: 5,
 	})
 
-	app.Get("/metadata.json", handlers.Metadata(config))
+	app.Route("/api/v1", func(router fiber.Router) {
+		app.Get("/metadata", handlers.Metadata(config))
+	})
 
-	log.Fatal(app.Listen(config.Web.ListenAddress))
+	err := app.Listen(config.Web.ListenAddress)
+	if err != nil {
+		slog.Error("failed to start web server", "err", err)
+	}
 }

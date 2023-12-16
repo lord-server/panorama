@@ -4,7 +4,7 @@ import (
 	"image"
 	"image/color"
 	"io/fs"
-	"log"
+	"log/slog"
 	"path/filepath"
 	"strings"
 
@@ -44,7 +44,6 @@ func (m *MediaCache) fetchMedia(path string) error {
 			img, _ := raster.LoadPNG(path)
 			m.images[basePath] = img
 		case ".obj":
-			log.Println(path)
 			model, err := mesh.LoadOBJ(path)
 			if err != nil {
 				return err
@@ -63,7 +62,7 @@ func (m *MediaCache) Image(name string) *image.NRGBA {
 	if img, ok := m.images[baseName]; ok {
 		return img
 	} else {
-		log.Printf("unknown image: %v\n", name)
+		slog.Warn("unknown image", "name", name)
 		return m.dummyImage
 	}
 }
@@ -72,7 +71,7 @@ func (m *MediaCache) Mesh(name string) *mesh.Model {
 	if model, ok := m.models[name]; ok {
 		return model
 	} else {
-		log.Printf("unknown model: %v\n", name)
+		slog.Warn("unknown image", "name", name)
 		return nil
 	}
 }

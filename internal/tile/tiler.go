@@ -3,7 +3,7 @@ package tile
 import (
 	"fmt"
 	"io/fs"
-	"log"
+	"log/slog"
 	"os"
 	"path"
 	"path/filepath"
@@ -50,7 +50,7 @@ func (t *Tiler) worker(wg *sync.WaitGroup, game *game.Game, world *world.World, 
 		if err != nil {
 			return
 		}
-		log.Printf("saved %v", tilePath)
+		slog.Info("saved", "path", tilePath)
 	}
 
 	wg.Done()
@@ -88,7 +88,7 @@ func (t *Tiler) FullRender(game *game.Game, world *world.World, workers int, reg
 
 // DownscaleTiles rescales high-resolution tiles into lower resolution ones until it reaches adequate zoom level
 func (t *Tiler) DownscaleTiles() {
-	log.Printf("Downscaling zoomLevels=%v", t.zoomLevels)
+	slog.Info("downscaling", "zoomLevels", t.zoomLevels)
 
 	tileDir, err := filepath.Abs(path.Join(t.tilesPath, "0"))
 	if err != nil {
@@ -129,7 +129,7 @@ func (t *Tiler) DownscaleTiles() {
 	positions = uniquePositions(positions)
 
 	for zoom := 1; zoom <= t.zoomLevels; zoom++ {
-		log.Printf("Rescaling tiles for zoom level %v", zoom)
+		slog.Info("rescaling tiles", "zoom", zoom)
 		positions = t.downscalePositions(zoom, positions)
 	}
 }

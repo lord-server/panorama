@@ -3,7 +3,7 @@ package tile
 import (
 	"image"
 	"image/draw"
-	"log"
+	"log/slog"
 	"sort"
 
 	"github.com/nfnt/resize"
@@ -76,9 +76,10 @@ func (t *Tiler) downscalePositions(zoom int, positions []render.TilePosition) []
 			}
 		}
 
-		err := raster.SavePNG(target, t.tilePath(pos.X, pos.Y, zoom))
+		imagePath := t.tilePath(pos.X, pos.Y, zoom)
+		err := raster.SavePNG(target, imagePath)
 		if err != nil {
-			log.Printf("unable to save image: %v", err)
+			slog.Error("unable to save image", "err", err, "path", imagePath)
 		}
 
 		nextPositions = append(nextPositions, render.TilePosition{
