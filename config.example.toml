@@ -9,6 +9,10 @@ game_path = "/var/lib/panorama/game"
 # Default: "/var/lib/panorama/world"
 world_path = "/var/lib/panorama/world"
 
+# Path to the directory containing the mods
+mod_path = "/var/lib/panorama/mods"
+
+
 # DSN string used for connecting to PostgreSQL
 # Default: ""
 world_dsn = ""

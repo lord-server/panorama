@@ -45,7 +45,32 @@ services:
 
 ### Building manually
 
-Coming soon! Follow commands in [Dockerfile](https://github.com/lord-server/panorama/blob/master/Dockerfile) in the meantime.
+Building panorama manually requires go 1.21 or newer, due to its use
+of `log/slog`. Afterwards, build the module with the following
+commands:
+
+```
+go mod download && go mod verify
+go build -v ./cmd/panorama
+```
+
+This builds the panorama binary in `./panorama`. 
+
+### Configuration
+
+An example config is provided in `config.example.toml`. To work
+correctly, panorama needs to know how to connect to the server and how
+to render the world. To connect, you need to specify the postgres
+connection using the `world_dsn` variable, panorama is not yet capable
+of doing this automatically. If you leave `world_dsn` empty, you might
+only receive empty tiles! The node descriptions are obtained from the
+world directory using the output from the `nodes_dump` mod.
+
+The textures and meshes (only .obj currently supported) are fetched
+from the game and mod directories. These are specified using the
+`game_path` and `mod_path`directories. 
+
+
 
 ## License
 

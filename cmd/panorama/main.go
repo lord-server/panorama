@@ -24,14 +24,13 @@ var args Args
 func fullrender(config config.Config) error {
 	descPath := path.Join(config.System.WorldPath, "nodes_dump.json")
 
-	slog.Info("loading game description", "game", config.System.GamePath, "desc", descPath)
+	slog.Info("loading game description", "game", config.System.GamePath, "mods", config.System.ModPath, "desc", descPath)
 
-	game, err := game.LoadGame(descPath, config.System.GamePath)
+	game, err := game.LoadGame(descPath, config.System.GamePath, config.System.ModPath)
 	if err != nil {
 		slog.Error("unable to load game description", "error", err)
 		return err
 	}
-
 	backend, err := world.NewPostgresBackend(config.System.WorldDSN)
 	if err != nil {
 		slog.Error("unable to connect to world DB", "error", err)

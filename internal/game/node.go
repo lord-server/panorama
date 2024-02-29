@@ -27,6 +27,7 @@ const (
 )
 
 var DrawTypeNames = map[string]DrawType{
+	"node":                      DrawTypeNormal,
 	"normal":                    DrawTypeNormal,
 	"airlike":                   DrawTypeAirlike,
 	"liquid":                    DrawTypeLiquid,
@@ -38,13 +39,14 @@ var DrawTypeNames = map[string]DrawType{
 	"allfaces_optional":         DrawTypeAllFaces,
 	"torchlike":                 DrawTypeTorchlike,
 	"signlike":                  DrawTypeSignlike,
-	"plantlike":                 DrawTypePlantlike,
-	"firelike":                  DrawTypeFirelike,
-	"fencelike":                 DrawTypeFencelike,
-	"raillike":                  DrawTypeRaillike,
-	"nodebox":                   DrawTypeNodeBox,
-	"mesh":                      DrawTypeMesh,
-	"plantlike_rooted":          DrawTypePlantlikeRooted,
+	//	"plantlike":                 DrawTypePlantlike,
+	"plantlike":        DrawTypeAllFaces,
+	"firelike":         DrawTypeFirelike,
+	"fencelike":        DrawTypeFencelike,
+	"raillike":         DrawTypeRaillike,
+	"nodebox":          DrawTypeNodeBox,
+	"mesh":             DrawTypeMesh,
+	"plantlike_rooted": DrawTypePlantlikeRooted,
 }
 
 func (t DrawType) IsLiquid() bool {
