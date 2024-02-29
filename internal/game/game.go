@@ -145,7 +145,7 @@ func ResolveNode(descriptor NodeDescriptor, mediaCache *MediaCache) NodeDefiniti
 	return nd
 }
 
-func LoadGame(desc string, path string) (Game, error) {
+func LoadGame(desc string, path string, modpath string) (Game, error) {
 	descJSON, err := os.ReadFile(desc)
 	if err != nil {
 		return Game{}, err
@@ -160,6 +160,10 @@ func LoadGame(desc string, path string) (Game, error) {
 	mediaCache := NewMediaCache()
 
 	err = mediaCache.fetchMedia(path)
+	if err != nil {
+		return Game{}, err
+	}
+	err = mediaCache.fetchMedia(modpath)
 	if err != nil {
 		return Game{}, err
 	}

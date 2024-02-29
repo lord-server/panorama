@@ -20,6 +20,7 @@ type Renderer struct {
 
 type System struct {
 	GamePath  string `toml:"game_path"`
+	ModPath   string `toml:"mod_path"`
 	TilesPath string `toml:"tiles_path"`
 	WorldPath string `toml:"world_path"`
 	WorldDSN  string `toml:"world_dsn"`
