@@ -1,0 +1,13 @@
+linters:
+  enable:
+    - bodyclose
+    - funlen
+    - gocognit
+    - goconst
+    - gosec
+    - nilerr
+    - nilnil
+    - nolintlint
+    - varnamelen
+    - wastedassign
+    - wsl
