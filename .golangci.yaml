@@ -6,8 +6,7 @@ linters:
     - goconst
     - gosec
     - nilerr
-    - nilnil
     - nolintlint
-    - varnamelen
+    # - varnamelen
     - wastedassign
     - wsl

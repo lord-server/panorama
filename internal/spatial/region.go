@@ -26,6 +26,7 @@ func (lhs Region) IsAtEdge(pos NodePosition) bool {
 	isAtXEdge := pos.X == lhs.XBounds.Max || pos.X == lhs.XBounds.Min
 	isAtYEdge := pos.Y == lhs.YBounds.Max || pos.Y == lhs.YBounds.Min
 	isAtZEdge := pos.Z == lhs.ZBounds.Max || pos.Z == lhs.ZBounds.Min
+
 	return isAtXEdge || isAtYEdge || isAtZEdge
 }
 

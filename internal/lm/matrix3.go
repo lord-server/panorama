@@ -28,5 +28,6 @@ func (lhs *Matrix3) MulVec(rhs Vector3) Vector3 {
 	x := lhs.m[0]*rhs.X + lhs.m[1]*rhs.Y + lhs.m[2]*rhs.Z
 	y := lhs.m[3]*rhs.X + lhs.m[4]*rhs.Y + lhs.m[5]*rhs.Z
 	z := lhs.m[6]*rhs.X + lhs.m[7]*rhs.Y + lhs.m[8]*rhs.Z
+
 	return Vec3(x, y, z)
 }

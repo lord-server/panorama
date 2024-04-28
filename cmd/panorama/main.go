@@ -31,6 +31,7 @@ func fullrender(config config.Config) error {
 		slog.Error("unable to load game description", "error", err)
 		return err
 	}
+
 	backend, err := world.NewPostgresBackend(config.System.WorldDSN)
 	if err != nil {
 		slog.Error("unable to connect to world DB", "error", err)
@@ -56,6 +57,7 @@ func run(config config.Config) error {
 	quit := make(chan bool)
 
 	slog.Info("starting web server", "address", config.Web.ListenAddress)
+
 	go func() {
 		web.Serve(&config)
 		quit <- true
@@ -76,6 +78,7 @@ func main() {
 
 	commonFlags := flag.NewFlagSet("common flags", flag.ExitOnError)
 	commonFlags.StringVar(&args.ConfigPath, "config", "config.toml", "Path to config file")
+
 	err := commonFlags.Parse(os.Args[2:])
 	if err != nil {
 		slog.Error("unable to parse flags")
@@ -83,6 +86,7 @@ func main() {
 	}
 
 	slog.Info("loading config", "config_path", args.ConfigPath)
+
 	config, err := config.LoadConfig(args.ConfigPath)
 	if err != nil {
 		slog.Error("unable to load config", "error", err)

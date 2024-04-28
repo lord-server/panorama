@@ -100,6 +100,7 @@ func makeMeshNode(model *mesh.Model, tiles []*image.NRGBA) NodeDefinition {
 		if i >= len(tiles) {
 			break
 		}
+
 		textures[i] = tiles[i]
 	}
 
@@ -152,6 +153,7 @@ func LoadGame(desc string, path string, modpath string) (Game, error) {
 	}
 
 	var descriptor gameDescriptor
+
 	err = json.Unmarshal(descJSON, &descriptor)
 	if err != nil {
 		return Game{}, err
@@ -163,12 +165,14 @@ func LoadGame(desc string, path string, modpath string) (Game, error) {
 	if err != nil {
 		return Game{}, err
 	}
+
 	err = mediaCache.fetchMedia(modpath)
 	if err != nil {
 		return Game{}, err
 	}
 
 	nodes := make(map[string]NodeDefinition)
+
 	for name, gameNode := range descriptor.Nodes {
 		node := ResolveNode(gameNode, mediaCache)
 
@@ -190,5 +194,6 @@ func (g *Game) NodeDef(node string) NodeDefinition {
 	if def, ok := g.Nodes[node]; ok {
 		return def
 	}
+
 	return g.unknown
 }

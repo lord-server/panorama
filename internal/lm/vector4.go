@@ -18,6 +18,7 @@ func (lhs Vector4) MulScalar(rhs float64) Vector4 {
 	y := lhs.Y * rhs
 	z := lhs.Z * rhs
 	w := lhs.W * rhs
+
 	return Vec4(x, y, z, w)
 }
 
@@ -26,6 +27,7 @@ func (lhs Vector4) ClampScalar(min, max float64) Vector4 {
 	y := Clamp(lhs.Y, min, max)
 	z := Clamp(lhs.Z, min, max)
 	w := Clamp(lhs.W, min, max)
+
 	return Vec4(x, y, z, w)
 }
 

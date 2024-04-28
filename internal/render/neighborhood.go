@@ -51,7 +51,9 @@ func (b *BlockNeighborhood) GetNode(pos spatial.NodePosition) (string, uint8, ui
 		Y: pos.Y % spatial.BlockSize,
 		Z: pos.Z % spatial.BlockSize,
 	})
+
 	name := block.ResolveName(node.ID)
+
 	return name, node.Param1, node.Param2
 }
 

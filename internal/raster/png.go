@@ -11,6 +11,7 @@ import (
 func toNRGBA(img image.Image) *image.NRGBA {
 	dst := image.NewNRGBA(img.Bounds())
 	draw.Draw(dst, img.Bounds(), img, img.Bounds().Min, draw.Src)
+
 	return dst
 }
 
@@ -19,6 +20,7 @@ func LoadPNG(path string) (*image.NRGBA, error) {
 	if err != nil {
 		return nil, err
 	}
+
 	defer file.Close()
 
 	img, err := png.Decode(file)

@@ -36,6 +36,7 @@ func (p *PostgresBackend) Close() {
 
 func (p *PostgresBackend) GetBlockData(pos spatial.BlockPosition) ([]byte, error) {
 	var data []byte
+
 	err := p.conn.QueryRow(context.Background(), "SELECT data FROM blocks WHERE posx=$1 and posy=$2 and posz=$3", pos.X, pos.Y, pos.Z).Scan(&data)
 	if errors.Is(err, pgx.ErrNoRows) {
 		return nil, nil
@@ -58,6 +59,7 @@ func NewWorldWithBackend(backend Backend) World {
 	if err != nil {
 		panic(err)
 	}
+
 	return World{
 		backend:           backend,
 		decodedBlockCache: decodedBlockCache,
@@ -71,6 +73,7 @@ func (w *World) GetBlock(pos spatial.BlockPosition) (*MapBlock, error) {
 		if cachedBlock == nil {
 			return nil, nil
 		}
+
 		return cachedBlock, nil
 	}
 

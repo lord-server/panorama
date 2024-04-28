@@ -56,38 +56,7 @@ func (r *IsometricRenderer) renderNode(
 		needsAlphaBlending = false
 	}
 
-	// Estimate lighting by sampling neighboring nodes and using the brightest one
-	neighborOffsets := []spatial.NodePosition{
-		{X: 1, Y: 0, Z: 0},
-		{X: 0, Y: 1, Z: 0},
-		{X: 0, Y: 0, Z: 1},
-	}
-
-	neighborFaces := []mesh.CubeFaces{
-		mesh.CubeFaceEast,
-		mesh.CubeFaceTop,
-		mesh.CubeFaceNorth,
-	}
-
-	maxParam1 := param1
-	hiddenFaces := mesh.CubeFaces(0)
-	for i, offset := range neighborOffsets {
-		neighborPos := pos.Add(offset)
-		neighborName, param1, _ := neighborhood.GetNode(neighborPos)
-		if param1 > maxParam1 {
-			maxParam1 = param1
-		}
-
-		// Compute visibility for stacked liquids
-		if nodeDef.DrawType.IsLiquid() {
-			hiddenFaces |= mesh.CubeFaceWest | mesh.CubeFaceDown | mesh.CubeFaceSouth
-
-			neighborNodeDef := r.game.NodeDef(neighborName)
-			if neighborNodeDef.DrawType.IsLiquid() {
-				hiddenFaces |= neighborFaces[i]
-			}
-		}
-	}
+	maxParam1, hiddenFaces := r.estimateVisibility(nodeDef, neighborhood, param1, pos)
 
 	// Make underground edges visible (otherwise the edge becomes oddly thin and
 	// that doesn't look good)
@@ -109,6 +78,50 @@ func (r *IsometricRenderer) renderNode(
 	} else {
 		target.OverlayDepthAware(renderedNode, offset, depthOffset)
 	}
+}
+
+func (r *IsometricRenderer) estimateVisibility(
+	nodeDef game.NodeDefinition,
+	neighborhood *render.BlockNeighborhood,
+	param1 uint8,
+	pos spatial.NodePosition,
+) (uint8, mesh.CubeFaces) {
+	// Estimate lighting by sampling neighboring nodes and using the brightest one
+	neighborOffsets := []spatial.NodePosition{
+		{X: 1, Y: 0, Z: 0},
+		{X: 0, Y: 1, Z: 0},
+		{X: 0, Y: 0, Z: 1},
+	}
+
+	neighborFaces := []mesh.CubeFaces{
+		mesh.CubeFaceEast,
+		mesh.CubeFaceTop,
+		mesh.CubeFaceNorth,
+	}
+
+	maxParam1 := param1
+	hiddenFaces := mesh.CubeFaces(0)
+
+	for i, offset := range neighborOffsets {
+		neighborPos := pos.Add(offset)
+		neighborName, param1, _ := neighborhood.GetNode(neighborPos)
+
+		if param1 > maxParam1 {
+			maxParam1 = param1
+		}
+
+		// Compute visibility for stacked liquids
+		if nodeDef.DrawType.IsLiquid() {
+			hiddenFaces |= mesh.CubeFaceWest | mesh.CubeFaceDown | mesh.CubeFaceSouth
+
+			neighborNodeDef := r.game.NodeDef(neighborName)
+			if neighborNodeDef.DrawType.IsLiquid() {
+				hiddenFaces |= neighborFaces[i]
+			}
+		}
+	}
+
+	return maxParam1, hiddenFaces
 }
 
 func (r *IsometricRenderer) renderBlock(

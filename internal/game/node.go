@@ -55,6 +55,7 @@ func (t DrawType) IsLiquid() bool {
 
 func (t *DrawType) UnmarshalJSON(data []byte) error {
 	var name string
+
 	err := json.Unmarshal(data, &name)
 	if err != nil {
 		return err
@@ -83,6 +84,7 @@ var ParamTypeNames = map[string]ParamType{
 
 func (t *ParamType) UnmarshalJSON(data []byte) error {
 	name := "light"
+
 	err := json.Unmarshal(data, &name)
 	if err != nil {
 		return err
@@ -133,6 +135,7 @@ var ParamType2Names = map[string]ParamType2{
 
 func (t *ParamType2) UnmarshalJSON(data []byte) error {
 	name := "none"
+
 	err := json.Unmarshal(data, &name)
 	if err != nil {
 		return err
@@ -157,6 +160,7 @@ func (n *NodeBox) UnmarshalJSON(data []byte) error {
 		Type  string        `json:"type"`
 		Fixed []interface{} `json:"fixed"`
 	}
+
 	inner := &nodeBox{}
 	if err := json.Unmarshal(data, inner); err != nil {
 		return err
@@ -164,6 +168,7 @@ func (n *NodeBox) UnmarshalJSON(data []byte) error {
 
 	n.Type = inner.Type
 	n.Fixed = make([][]float64, 0)
+
 	if inner.Type != "fixed" {
 		return nil
 	}
@@ -174,10 +179,12 @@ func (n *NodeBox) UnmarshalJSON(data []byte) error {
 
 	if _, ok := inner.Fixed[0].(float64); ok {
 		box := make([]float64, 0)
+
 		for i := 0; i < 6; i++ {
 			v, _ := inner.Fixed[i].(float64)
 			box = append(box, v)
 		}
+
 		n.Fixed = append(n.Fixed, box)
 	}
 
@@ -185,10 +192,12 @@ func (n *NodeBox) UnmarshalJSON(data []byte) error {
 		for _, boxInterface := range inner.Fixed {
 			boxFloat64 := boxInterface.([]interface{})
 			box := make([]float64, 0)
+
 			for i := 0; i < 6; i++ {
 				v, _ := boxFloat64[i].(float64)
 				box = append(box, v)
 			}
+
 			n.Fixed = append(n.Fixed, box)
 		}
 	}
@@ -207,6 +216,7 @@ type NodeDescriptor struct {
 
 func (n *NodeDescriptor) UnmarshalJSON(data []byte) error {
 	type nodeDescriptor NodeDescriptor
+
 	inner := &nodeDescriptor{
 		DrawType:   DrawTypeNormal,
 		Tiles:      []string{},
