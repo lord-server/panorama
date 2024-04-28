@@ -76,12 +76,17 @@ func main() {
 
 	commonFlags := flag.NewFlagSet("common flags", flag.ExitOnError)
 	commonFlags.StringVar(&args.ConfigPath, "config", "config.toml", "Path to config file")
-	commonFlags.Parse(os.Args[2:])
+	err := commonFlags.Parse(os.Args[2:])
+	if err != nil {
+		slog.Error("unable to parse flags")
+		os.Exit(1)
+	}
 
 	slog.Info("loading config", "config_path", args.ConfigPath)
 	config, err := config.LoadConfig(args.ConfigPath)
 	if err != nil {
 		slog.Error("unable to load config", "error", err)
+		os.Exit(1)
 	}
 
 	switch subcommand {
