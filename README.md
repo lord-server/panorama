@@ -2,7 +2,7 @@
 
 Interactive isometric maps for Minetest
 
-<a href="http://map.lord-server.ru">
+<a href="https://map.lord-server.ru">
     <small><i>Click here to see a live instance</i></small>
     <img src="https://user-images.githubusercontent.com/4698994/163820087-6473cbc4-b790-4e6d-9130-aedb5bf1eddf.png"></img>
 </a>
@@ -38,9 +38,9 @@ services:
     volumes:
       - "/path/to/minetest/worlds/my-world:/var/lib/panorama/world"
       - "/path/to/minetest/games/minetest_game:/var/lib/panorama/game"
-      - "/path/to/config/dir:/etc/panorama"
+      - "/path/to/panorama/config.toml:/etc/panorama/config.toml"
       - "/path/to/tiles:/var/lib/panorama/tiles"
-    command: ["--serve", "--fullrender"]
+    command: ["serve"]
 ```
 
 ### Building manually
