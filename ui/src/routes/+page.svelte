@@ -10,7 +10,7 @@
 	$: zoom = 0;
 	let Map: any;
 	onMount(async () => {
-		Map = (await import('$lib/leaflet/Map.svelte')).default;
+		Map = (await import('$lib/Map.svelte')).default;
 	});
 </script>
 
