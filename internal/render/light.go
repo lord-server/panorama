@@ -25,5 +25,6 @@ func DecodeLight(param1 uint8) float64 {
 		0.918,
 		1.000,
 	}
+
 	return LUT[param1&0xF]
 }

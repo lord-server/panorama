@@ -46,10 +46,12 @@ func (t *Tiler) worker(wg *sync.WaitGroup, game *game.Game, world *world.World, 
 		}
 
 		tilePath := t.tilePath(position.X, position.Y, 0)
+
 		err := raster.SavePNG(output.Color, tilePath)
 		if err != nil {
 			return
 		}
+
 		slog.Info("saved", "path", tilePath)
 	}
 
@@ -60,14 +62,16 @@ type CreateRendererFunc func() render.Renderer
 
 func (t *Tiler) FullRender(game *game.Game, world *world.World, workers int, region spatial.Region, createRenderer CreateRendererFunc) {
 	var wg sync.WaitGroup
-	positions := make(chan render.TilePosition)
 
+	positions := make(chan render.TilePosition)
 	projectedRegion := spatial.ProjectedRegion{}
 
 	for i := 0; i < workers; i++ {
 		wg.Add(1)
+
 		renderer := createRenderer()
 		projectedRegion = renderer.ProjectRegion(region)
+
 		go t.worker(&wg, game, world, renderer, positions)
 	}
 
@@ -97,6 +101,7 @@ func (t *Tiler) DownscaleTiles() {
 
 	// Collect tile positions
 	var positions []render.TilePosition
+
 	err = filepath.WalkDir(tileDir, func(path string, d fs.DirEntry, _ error) error {
 		if d == nil || d.IsDir() {
 			return nil
@@ -106,11 +111,15 @@ func (t *Tiler) DownscaleTiles() {
 
 		y, err := strconv.Atoi(strings.TrimSuffix(file, filepath.Ext(file)))
 		if err != nil {
+			slog.Warn("skipped file due to error", "path", path, "err", err)
+
 			return nil
 		}
 
 		x, err := strconv.Atoi(filepath.Base(dir))
 		if err != nil {
+			slog.Warn("skipped file due to error", "path", path, "err", err)
+
 			return nil
 		}
 

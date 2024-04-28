@@ -24,20 +24,25 @@ func uniquePositions(input []render.TilePosition) []render.TilePosition {
 		if input[i].X < input[j].X {
 			return true
 		}
+
 		if input[i].X > input[j].X {
 			return false
 		}
+
 		if input[i].Y < input[j].Y {
 			return true
 		}
+
 		if input[i].Y > input[j].Y {
 			return false
 		}
+
 		return false
 	})
 
 	// Loop over the slice and skip repeating elements
 	j := 1
+
 	for i := 1; i < len(input); i++ {
 		// Skip element if it repeats
 		if input[i] == input[i-1] {
@@ -77,6 +82,7 @@ func (t *Tiler) downscalePositions(zoom int, positions []render.TilePosition) []
 		}
 
 		imagePath := t.tilePath(pos.X, pos.Y, zoom)
+
 		err := raster.SavePNG(target, imagePath)
 		if err != nil {
 			slog.Error("unable to save image", "err", err, "path", imagePath)
@@ -89,5 +95,6 @@ func (t *Tiler) downscalePositions(zoom int, positions []render.TilePosition) []
 	}
 
 	nextPositions = uniquePositions(nextPositions)
+
 	return nextPositions
 }

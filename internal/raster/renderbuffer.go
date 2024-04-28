@@ -21,6 +21,7 @@ func NewRenderBuffer(rect image.Rectangle) *RenderBuffer {
 
 func (target *RenderBuffer) OverlayDepthAwareWithAlpha(source *RenderBuffer, origin image.Point, depthOffset float64) {
 	target.Dirty = true
+
 	if source == nil {
 		return
 	}
@@ -81,6 +82,7 @@ func (target *RenderBuffer) OverlayDepthAware(source *RenderBuffer, origin image
 	for y := bbox.Min.Y; y < bbox.Max.Y; y++ {
 		sourcePixelBaseOffset := (y-origin.Y)*source.Depth.Rect.Max.X - origin.X
 		targetPixelBaseOffset := y * target.Depth.Rect.Max.X
+
 		for x := bbox.Min.X; x < bbox.Max.X; x++ {
 			sourcePixelOffset := sourcePixelBaseOffset + x
 			targetPixelOffset := targetPixelBaseOffset + x

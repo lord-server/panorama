@@ -19,10 +19,12 @@ func parseVector3(fields []string) (lm.Vector3, error) {
 	if err != nil {
 		return lm.Vector3{}, err
 	}
+
 	y, err := strconv.ParseFloat(fields[1], 32)
 	if err != nil {
 		return lm.Vector3{}, err
 	}
+
 	z, err := strconv.ParseFloat(fields[2], 32)
 	if err != nil {
 		return lm.Vector3{}, err
@@ -40,6 +42,7 @@ func parseVector2(fields []string) (lm.Vector2, error) {
 	if err != nil {
 		return lm.Vector2{}, err
 	}
+
 	y, err := strconv.ParseFloat(fields[1], 32)
 	if err != nil {
 		return lm.Vector2{}, err
@@ -60,10 +63,12 @@ func parseFace(fields []string) ([]Triplet, error) {
 	}
 
 	triplets := []Triplet{}
+
 	for _, field := range fields {
 		parts := strings.SplitN(field, "/", 3)
 
 		var err error
+
 		triplet := Triplet{}
 
 		triplet.positionIndex, err = strconv.Atoi(parts[0])
@@ -76,6 +81,7 @@ func parseFace(fields []string) ([]Triplet, error) {
 			if err != nil {
 				return []Triplet{}, err
 			}
+
 			triplet.texcoordIndex = &texcoordIndex
 		}
 
@@ -84,8 +90,10 @@ func parseFace(fields []string) ([]Triplet, error) {
 			if err != nil {
 				return []Triplet{}, err
 			}
+
 			triplet.normalIndex = &normalIndex
 		}
+
 		triplets = append(triplets, triplet)
 	}
 
@@ -175,9 +183,6 @@ func (o *objParser) processLine(line string) error {
 		vertices := o.triangulatePolygon(triplets)
 
 		o.mesh.Vertices = append(o.mesh.Vertices, vertices...)
-
-	default:
-		// log.Printf("unknown attribute %v; ignoring\n", fields[0])
 	}
 
 	return nil
@@ -200,8 +205,10 @@ func LoadOBJ(path string) (Model, error) {
 	}
 
 	lineNumber := 1
+
 	for scanner.Scan() {
 		lineNumber += 1
+
 		err := parser.processLine(scanner.Text())
 		if err != nil {
 			return Model{}, err

@@ -21,12 +21,14 @@ type Node struct {
 func readU8(r io.Reader) (uint8, error) {
 	var value uint8
 	err := binary.Read(r, binary.BigEndian, &value)
+
 	return value, err
 }
 
 func readU16(r io.Reader) (uint16, error) {
 	var value uint16
 	err := binary.Read(r, binary.BigEndian, &value)
+
 	return value, err
 }
 
@@ -37,6 +39,7 @@ func readString(r io.Reader) (string, error) {
 	}
 
 	buf := make([]byte, length)
+
 	_, err = io.ReadFull(r, buf)
 	if err != nil {
 		return "", err
@@ -65,12 +68,14 @@ func NewReaderCounter(r *bytes.Reader) *ReaderCounter {
 func (r *ReaderCounter) Read(p []byte) (n int, err error) {
 	n, err = r.inner.Read(p)
 	r.count += int64(n)
+
 	return
 }
 
 func (r *ReaderCounter) ReadByte() (byte, error) {
 	b, err := r.inner.ReadByte()
 	r.count += 1
+
 	return b, err
 }
 
@@ -78,13 +83,15 @@ func inflate(reader *bytes.Reader) ([]byte, error) {
 	position, _ := reader.Seek(0, io.SeekCurrent)
 
 	counter := NewReaderCounter(reader)
-	z, err := zlib.NewReader(counter)
+
+	zstdReader, err := zlib.NewReader(counter)
 	if err != nil {
 		return nil, err
 	}
-	defer z.Close()
 
-	data, err := io.ReadAll(z)
+	defer zstdReader.Close()
+
+	data, err := io.ReadAll(zstdReader)
 	if err != nil {
 		return nil, err
 	}
@@ -104,11 +111,13 @@ func readMappings(reader *bytes.Reader) (map[uint16]string, error) {
 	}
 
 	mappings := make(map[uint16]string)
+
 	for i := 0; i < int(mappingCount); i++ {
 		id, err := readU16(reader)
 		if err != nil {
 			return nil, err
 		}
+
 		name, err := readString(reader)
 		if err != nil {
 			return nil, err
@@ -120,6 +129,7 @@ func readMappings(reader *bytes.Reader) (map[uint16]string, error) {
 	return mappings, nil
 }
 
+//nolint:funlen // linear decoding with almost no logic
 func decodeLegacyBlock(reader *bytes.Reader, version uint8) (*MapBlock, error) {
 	if version >= 27 {
 		// - uint8 flags
@@ -168,10 +178,12 @@ func decodeLegacyBlock(reader *bytes.Reader, version uint8) (*MapBlock, error) {
 		if err != nil {
 			return nil, err
 		}
+
 		dataSize, err := readU16(reader)
 		if err != nil {
 			return nil, err
 		}
+
 		_, err = reader.Seek(int64(dataSize), io.SeekCurrent)
 		if err != nil {
 			return nil, err
@@ -232,6 +244,7 @@ func decodeBlock(reader *bytes.Reader) (*MapBlock, error) {
 	}
 
 	nodeData := make([]byte, spatial.BlockVolume*NodeSizeInBytes)
+
 	_, err = io.ReadFull(reader, nodeData)
 	if err != nil {
 		return nil, err
@@ -256,6 +269,7 @@ func DecodeMapBlock(data []byte) (*MapBlock, error) {
 		if err != nil {
 			return nil, err
 		}
+
 		return mapblock, nil
 	}
 
@@ -268,10 +282,13 @@ func (b *MapBlock) ResolveName(id uint16) string {
 
 func (b *MapBlock) GetNode(pos spatial.NodePosition) Node {
 	index := pos.Z*spatial.BlockSize*spatial.BlockSize + pos.Y*spatial.BlockSize + pos.X
+
 	idHi := uint16(b.nodeData[2*index])
 	idLo := uint16(b.nodeData[2*index+1])
+
 	param1 := b.nodeData[2*spatial.BlockVolume+index]
 	param2 := b.nodeData[3*spatial.BlockVolume+index]
+
 	return Node{
 		ID:     (idHi << 8) | idLo,
 		Param1: param1,

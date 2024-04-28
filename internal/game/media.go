@@ -20,6 +20,7 @@ type MediaCache struct {
 
 func NewMediaCache() *MediaCache {
 	dummyImage := image.NewNRGBA(image.Rect(0, 0, 2, 2))
+
 	dummyImage.SetNRGBA(0, 0, color.NRGBA{255, 0, 255, 255})
 	dummyImage.SetNRGBA(0, 1, color.NRGBA{0, 0, 0, 255})
 	dummyImage.SetNRGBA(1, 0, color.NRGBA{0, 0, 0, 255})
@@ -39,15 +40,18 @@ func (m *MediaCache) fetchMedia(path string) error {
 		}
 
 		basePath := filepath.Base(path)
+
 		switch filepath.Ext(path) {
 		case ".png":
 			img, _ := raster.LoadPNG(path)
 			m.images[basePath] = img
+
 		case ".obj":
 			model, err := mesh.LoadOBJ(path)
 			if err != nil {
 				return err
 			}
+
 			m.models[basePath] = &model
 		}
 
@@ -72,6 +76,7 @@ func (m *MediaCache) Mesh(name string) *mesh.Model {
 		return model
 	} else {
 		slog.Warn("unknown image", "name", name)
+
 		return nil
 	}
 }

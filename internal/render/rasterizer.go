@@ -61,6 +61,7 @@ func sampleTexture(tex *image.NRGBA, texcoord lm.Vector2) lm.Vector4 {
 	x := int(texcoord.X * float64(tex.Rect.Dx()))
 	y := int(texcoord.Y * float64(tex.Rect.Dy()))
 	c := tex.NRGBAAt(x, y)
+
 	return lm.Vector4{
 		X: float64(c.R) / 255,
 		Y: float64(c.G) / 255,
@@ -72,6 +73,29 @@ func sampleTexture(tex *image.NRGBA, texcoord lm.Vector2) lm.Vector4 {
 var SunLightDir = lm.Vec3(-0.5, 1, -0.8).Normalize()
 var SunLightIntensity = 0.95 / SunLightDir.MaxComponent()
 
+func shadePixel(lighting float64, texture *image.NRGBA, normal lm.Vector3, texcoord lm.Vector2) color.NRGBA {
+	light := SunLightIntensity * lighting * lm.Clamp(math.Abs(normal.Dot(SunLightDir))*0.8+0.2, 0.0, 1.0)
+
+	if texture != nil {
+		rgba := sampleTexture(texture, texcoord)
+		col := rgba.XYZ().PowScalar(Gamma).MulScalar(lighting).PowScalar(1.0/Gamma).ClampScalar(0.0, 1.0)
+
+		return color.NRGBA{
+			R: uint8(255 * col.X),
+			G: uint8(255 * col.Y),
+			B: uint8(255 * col.Z),
+			A: uint8(255 * rgba.W),
+		}
+	} else {
+		return color.NRGBA{
+			R: uint8(255 * light),
+			G: uint8(255 * light),
+			B: uint8(255 * light),
+			A: 255,
+		}
+	}
+}
+
 func (r *NodeRasterizer) drawTriangle(target *raster.RenderBuffer, tex *image.NRGBA, lighting float64, a, b, c mesh.Vertex) {
 	origin := lm.Vector2{
 		X: float64(target.Color.Bounds().Dx()) / 2,
@@ -82,16 +106,16 @@ func (r *NodeRasterizer) drawTriangle(target *raster.RenderBuffer, tex *image.NR
 	b.Position = r.projection.MulVec(b.Position)
 	c.Position = r.projection.MulVec(c.Position)
 
-	pa := a.Position.XY().Mul(lm.Vec2(1, -1)).MulScalar(BaseResolution * math.Sqrt2 / 2).Add(origin)
-	pb := b.Position.XY().Mul(lm.Vec2(1, -1)).MulScalar(BaseResolution * math.Sqrt2 / 2).Add(origin)
-	pc := c.Position.XY().Mul(lm.Vec2(1, -1)).MulScalar(BaseResolution * math.Sqrt2 / 2).Add(origin)
+	screenSpaceA := a.Position.XY().Mul(lm.Vec2(1, -1)).MulScalar(BaseResolution * math.Sqrt2 / 2).Add(origin)
+	screenSpaceB := b.Position.XY().Mul(lm.Vec2(1, -1)).MulScalar(BaseResolution * math.Sqrt2 / 2).Add(origin)
+	screenSpaceC := c.Position.XY().Mul(lm.Vec2(1, -1)).MulScalar(BaseResolution * math.Sqrt2 / 2).Add(origin)
 
-	bboxMin := pa.Min(pb).Min(pc)
-	bboxMax := pa.Max(pb).Max(pc)
+	bboxMin := screenSpaceA.Min(screenSpaceB).Min(screenSpaceC)
+	bboxMax := screenSpaceA.Max(screenSpaceB).Max(screenSpaceC)
 
 	for y := int(bboxMin.Y); y < int(bboxMax.Y)+1; y++ {
 		for x := int(bboxMin.X); x < int(bboxMax.X)+1; x++ {
-			pointIsInsideTriangle, barycentric := sampleTriangle(x, y, pa, pb, pc)
+			pointIsInsideTriangle, barycentric := sampleTriangle(x, y, screenSpaceA, screenSpaceB, screenSpaceC)
 
 			if !pointIsInsideTriangle {
 				continue
@@ -103,30 +127,11 @@ func (r *NodeRasterizer) drawTriangle(target *raster.RenderBuffer, tex *image.NR
 				Add(b.Normal.MulScalar(barycentric.Y)).
 				Add(c.Normal.MulScalar(barycentric.Z))
 
-			lighting := SunLightIntensity * lighting * lm.Clamp(math.Abs(normal.Dot(SunLightDir))*0.8+0.2, 0.0, 1.0)
+			texcoord := a.Texcoord.MulScalar(barycentric.X).
+				Add(b.Texcoord.MulScalar(barycentric.Y)).
+				Add(c.Texcoord.MulScalar(barycentric.Z))
 
-			var finalColor color.NRGBA
-			if tex != nil {
-				texcoord := a.Texcoord.MulScalar(barycentric.X).
-					Add(b.Texcoord.MulScalar(barycentric.Y)).
-					Add(c.Texcoord.MulScalar(barycentric.Z))
-				rgba := sampleTexture(tex, texcoord)
-				col := rgba.XYZ().PowScalar(Gamma).MulScalar(lighting).PowScalar(1.0/Gamma).ClampScalar(0.0, 1.0)
-
-				finalColor = color.NRGBA{
-					R: uint8(255 * col.X),
-					G: uint8(255 * col.Y),
-					B: uint8(255 * col.Z),
-					A: uint8(255 * rgba.W),
-				}
-			} else {
-				finalColor = color.NRGBA{
-					R: uint8(255 * lighting),
-					G: uint8(255 * lighting),
-					B: uint8(255 * lighting),
-					A: 255,
-				}
-			}
+			finalColor := shadePixel(lighting, tex, normal, texcoord)
 
 			if finalColor.A > 10 {
 				if pixelDepth > target.Depth.At(x, y) {
@@ -200,28 +205,28 @@ func (r *NodeRasterizer) Render(node RenderableNode, nodeDef *game.NodeDefinitio
 		triangleCount := len(mesh.Vertices) / 3
 
 		for i := 0; i < triangleCount; i++ {
-			a := mesh.Vertices[i*3]
-			b := mesh.Vertices[i*3+1]
-			c := mesh.Vertices[i*3+2]
+			vertexA := mesh.Vertices[i*3]
+			vertexB := mesh.Vertices[i*3+1]
+			vertexC := mesh.Vertices[i*3+2]
 
 			if nodeDef.ParamType2 == game.ParamType2FaceDir {
-				a.Position = transformToFaceDir(a.Position, node.Param2)
-				b.Position = transformToFaceDir(b.Position, node.Param2)
-				c.Position = transformToFaceDir(c.Position, node.Param2)
-				a.Normal = transformToFaceDir(a.Normal, node.Param2)
-				b.Normal = transformToFaceDir(b.Normal, node.Param2)
-				c.Normal = transformToFaceDir(c.Normal, node.Param2)
+				vertexA.Position = transformToFaceDir(vertexA.Position, node.Param2)
+				vertexB.Position = transformToFaceDir(vertexB.Position, node.Param2)
+				vertexC.Position = transformToFaceDir(vertexC.Position, node.Param2)
+				vertexA.Normal = transformToFaceDir(vertexA.Normal, node.Param2)
+				vertexB.Normal = transformToFaceDir(vertexB.Normal, node.Param2)
+				vertexC.Normal = transformToFaceDir(vertexC.Normal, node.Param2)
 			}
 
-			a.Position.Z = -a.Position.Z
-			b.Position.Z = -b.Position.Z
-			c.Position.Z = -c.Position.Z
+			vertexA.Position.Z = -vertexA.Position.Z
+			vertexB.Position.Z = -vertexB.Position.Z
+			vertexC.Position.Z = -vertexC.Position.Z
 
-			a.Position.X = -a.Position.X
-			b.Position.X = -b.Position.X
-			c.Position.X = -c.Position.X
+			vertexA.Position.X = -vertexA.Position.X
+			vertexB.Position.X = -vertexB.Position.X
+			vertexC.Position.X = -vertexC.Position.X
 
-			r.drawTriangle(target, nodeDef.Textures[j], node.Light, a, b, c)
+			r.drawTriangle(target, nodeDef.Textures[j], node.Light, vertexA, vertexB, vertexC)
 		}
 	}
 
