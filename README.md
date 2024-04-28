@@ -40,7 +40,7 @@ services:
       - "/path/to/minetest/games/minetest_game:/var/lib/panorama/game"
       - "/path/to/panorama/config.toml:/etc/panorama/config.toml"
       - "/path/to/tiles:/var/lib/panorama/tiles"
-    command: ["serve"]
+    command: ["run"]
 ```
 
 ### Building manually
@@ -51,7 +51,7 @@ commands:
 
 ```
 go mod download && go mod verify
-go build -v ./cmd/panorama
+go build
 ```
 
 This builds the panorama binary in `./panorama`. 

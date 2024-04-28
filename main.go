@@ -1,6 +1,7 @@
 package main
 
 import (
+	"embed"
 	"flag"
 	"log/slog"
 	"os"
@@ -14,6 +15,9 @@ import (
 	"github.com/lord-server/panorama/internal/web"
 	"github.com/lord-server/panorama/internal/world"
 )
+
+//go:embed ui/build/*
+var static embed.FS
 
 type Args struct {
 	ConfigPath string
@@ -59,7 +63,7 @@ func run(config config.Config) error {
 	slog.Info("starting web server", "address", config.Web.ListenAddress)
 
 	go func() {
-		web.Serve(&config)
+		web.Serve(static, &config)
 		quit <- true
 	}()
 
