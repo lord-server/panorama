@@ -97,6 +97,10 @@ func main() {
 		os.Exit(1)
 	}
 
+	for name, view := range config.Views {
+		slog.Info("view", name, view)
+	}
+
 	switch subcommand {
 	case "run":
 		err = run(config)

@@ -8,6 +8,14 @@ import (
 	"github.com/lord-server/panorama/internal/spatial"
 )
 
+type Config struct {
+	System   System             `toml:"system"`
+	Web      Web                `toml:"web"`
+	Renderer Renderer           `toml:"renderer"`
+	Region   spatial.Region     `toml:"region"`
+	Views    map[string]MapView `toml:"views"`
+}
+
 type Web struct {
 	ListenAddress string `toml:"listen_address"`
 	Title         string `toml:"title"`
@@ -26,11 +34,9 @@ type System struct {
 	WorldDSN  string `toml:"world_dsn"`
 }
 
-type Config struct {
-	System   System         `toml:"system"`
-	Web      Web            `toml:"web"`
-	Renderer Renderer       `toml:"renderer"`
-	Region   spatial.Region `toml:"region"`
+type MapView struct {
+	Type     string `toml:"type"`
+	Rotation string `toml:"rotation"`
 }
 
 func LoadConfig(path string) (Config, error) {

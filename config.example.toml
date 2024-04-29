@@ -49,3 +49,11 @@ zoom_levels = 8
 x_bounds = { min = -100, max = 100 }
 y_bounds = { min = -32, max = 160 }
 z_bounds = { min = -100, max = 100 }
+
+[views.isometric]
+type = "isometric"
+rotation = "northwest"
+
+[views.flat]
+type = "flat"
+rotation = "north"

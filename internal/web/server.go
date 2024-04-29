@@ -20,12 +20,6 @@ func sendJSON(w http.ResponseWriter, value any) {
 	_ = json.NewEncoder(w).Encode(value)
 }
 
-func (s *server) GetMetadata(w http.ResponseWriter, r *http.Request) {
-	sendJSON(w, map[string]any{
-		"center": []int{700, 200},
-	})
-}
-
 func Serve(static fs.FS, config *config.Config) {
 	server := &server{
 		config: config,
@@ -39,8 +33,11 @@ func Serve(static fs.FS, config *config.Config) {
 	}
 
 	router.Handle("/*", http.FileServer(http.FS(staticRootDir)))
-	router.Handle("/tiles/*", http.StripPrefix("/tiles", http.FileServer(http.Dir(config.System.TilesPath))))
-	router.Get("/api/v1/metadata", server.GetMetadata)
+	router.Route("/api/v1", func(router chi.Router) {
+		router.Handle("/tile/*", http.StripPrefix("/api/v1/tile", http.FileServer(http.Dir(config.System.TilesPath))))
+		router.Get("/metadata", server.GetMetadata)
+		router.Get("/views", server.GetViews)
+	})
 
 	httpServer := &http.Server{
 		ReadTimeout:       5 * time.Second,
