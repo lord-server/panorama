@@ -75,7 +75,7 @@ func (m *MediaCache) Mesh(name string) *mesh.Model {
 	if model, ok := m.models[name]; ok {
 		return model
 	} else {
-		slog.Warn("unknown image", "name", name)
+		slog.Warn("unknown mesh", "name", name)
 
 		return nil
 	}
