@@ -85,6 +85,7 @@ func (t *Tiler) FullRender(game *game.Game, world *world.World, workers int, reg
 			positions <- render.TilePosition{X: x, Y: y}
 		}
 	}
+
 	close(positions)
 
 	wg.Wait()
