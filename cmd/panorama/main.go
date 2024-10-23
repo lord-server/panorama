@@ -1,12 +1,12 @@
 package main
 
 import (
-	"flag"
 	"io/fs"
 	"log/slog"
 	"os"
 	"path"
 
+	"github.com/alexflint/go-arg"
 	"github.com/lord-server/panorama/internal/config"
 	"github.com/lord-server/panorama/internal/game"
 	"github.com/lord-server/panorama/internal/render"
@@ -18,11 +18,41 @@ import (
 
 var static fs.FS
 
-type Args struct {
-	ConfigPath string
+type FullRenderArgs struct{}
+
+type RunArgs struct{}
+
+var args struct {
+	ConfigPath string          `arg:"-c,--config" default:"config.toml"`
+	FullRender *FullRenderArgs `arg:"subcommand:fullrender"`
+	Run        *RunArgs        `arg:"subcommand:run"`
 }
 
-var args Args
+func main() {
+	arg.MustParse(&args)
+
+	config, err := config.LoadConfig(args.ConfigPath)
+	if err != nil {
+		slog.Error("unable to load config", "error", err)
+		os.Exit(1)
+	}
+
+	switch {
+	case args.Run != nil:
+		err = run(config)
+
+	case args.FullRender != nil:
+		err = fullrender(config)
+
+	default:
+		slog.Warn("command not specified, proceeding with run")
+		err = run(config)
+	}
+
+	if err != nil {
+		os.Exit(1)
+	}
+}
 
 func fullrender(config config.Config) error {
 	descPath := path.Join(config.System.WorldPath, "nodes_dump.json")
@@ -69,42 +99,4 @@ func run(config config.Config) error {
 	<-quit
 
 	return nil
-}
-
-func main() {
-	if len(os.Args) < 2 {
-		slog.Error("expected a subcommand: (available subcommands: run, fullrender)")
-		os.Exit(1)
-	}
-
-	subcommand := os.Args[1]
-
-	commonFlags := flag.NewFlagSet("common flags", flag.ExitOnError)
-	commonFlags.StringVar(&args.ConfigPath, "config", "config.toml", "Path to config file")
-
-	err := commonFlags.Parse(os.Args[2:])
-	if err != nil {
-		slog.Error("unable to parse flags")
-		os.Exit(1)
-	}
-
-	slog.Info("loading config", "config_path", args.ConfigPath)
-
-	config, err := config.LoadConfig(args.ConfigPath)
-	if err != nil {
-		slog.Error("unable to load config", "error", err)
-		os.Exit(1)
-	}
-
-	switch subcommand {
-	case "run":
-		err = run(config)
-
-	case "fullrender":
-		err = fullrender(config)
-	}
-
-	if err != nil {
-		os.Exit(1)
-	}
 }
