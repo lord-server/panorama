@@ -6,7 +6,8 @@ all: ${PANORAMA_BIN}
 
 bin/panorama: \
 		cmd/panorama/* \
-		internal/**/*
+		internal/**/* \
+		static/**/*
 	go build -o ${PANORAMA_BIN} ./cmd/panorama
 
 .PHONY: lint

@@ -1,7 +1,6 @@
 package main
 
 import (
-	"io/fs"
 	"log/slog"
 	"os"
 	"path"
@@ -14,9 +13,8 @@ import (
 	"github.com/lord-server/panorama/internal/tile"
 	"github.com/lord-server/panorama/internal/web"
 	"github.com/lord-server/panorama/internal/world"
+	"github.com/lord-server/panorama/static"
 )
-
-var static fs.FS
 
 type FullRenderArgs struct{}
 
@@ -92,7 +90,7 @@ func run(config config.Config) error {
 	slog.Info("starting web server", "address", config.Web.ListenAddress)
 
 	go func() {
-		web.Serve(static, &config)
+		web.Serve(static.UI, &config)
 		quit <- true
 	}()
 
