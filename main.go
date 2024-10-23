@@ -1,8 +1,8 @@
 package main
 
 import (
-	"embed"
 	"flag"
+	"io/fs"
 	"log/slog"
 	"os"
 	"path"
@@ -16,8 +16,7 @@ import (
 	"github.com/lord-server/panorama/internal/world"
 )
 
-//go:embed ui/build/*
-var static embed.FS
+var static fs.FS
 
 type Args struct {
 	ConfigPath string
