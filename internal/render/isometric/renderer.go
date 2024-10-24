@@ -9,6 +9,7 @@ import (
 	"github.com/lord-server/panorama/internal/mesh"
 	"github.com/lord-server/panorama/internal/raster"
 	"github.com/lord-server/panorama/internal/render"
+	"github.com/lord-server/panorama/internal/render/light"
 	"github.com/lord-server/panorama/internal/spatial"
 	"github.com/lord-server/panorama/internal/world"
 )
@@ -60,13 +61,13 @@ func (r *IsometricRenderer) renderNode(
 
 	// Make underground edges visible (otherwise the edge becomes oddly thin and
 	// that doesn't look good)
-	if r.region.IsAtEdge(worldPos) && maxParam1 == render.ZeroIntensity {
-		maxParam1 = render.MapEdgeIntensity
+	if r.region.IsAtEdge(worldPos) && maxParam1 == light.ZeroIntensity {
+		maxParam1 = light.MapEdgeIntensity
 	}
 
 	renderableNode := render.RenderableNode{
 		Name:        name,
-		Light:       render.DecodeLight(maxParam1),
+		Light:       light.Decode(maxParam1),
 		Param2:      param2,
 		HiddenFaces: hiddenFaces,
 	}
