@@ -12,10 +12,10 @@ import (
 	"sync"
 
 	"github.com/lord-server/panorama/internal/game"
-	"github.com/lord-server/panorama/internal/raster"
 	"github.com/lord-server/panorama/internal/render"
 	"github.com/lord-server/panorama/internal/spatial"
 	"github.com/lord-server/panorama/internal/world"
+	"github.com/lord-server/panorama/pkg/imageutil"
 	"github.com/lord-server/panorama/pkg/lm"
 )
 
@@ -47,7 +47,7 @@ func (t *Tiler) worker(wg *sync.WaitGroup, game *game.Game, world *world.World, 
 
 		tilePath := t.tilePath(position.X, position.Y, 0)
 
-		err := raster.SavePNG(output.Color, tilePath)
+		err := imageutil.SavePNG(output.Color, tilePath)
 		if err != nil {
 			return
 		}

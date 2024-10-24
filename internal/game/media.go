@@ -8,7 +8,7 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/lord-server/panorama/internal/raster"
+	"github.com/lord-server/panorama/pkg/imageutil"
 	"github.com/lord-server/panorama/pkg/mesh"
 )
 
@@ -43,7 +43,7 @@ func (m *MediaCache) fetchMedia(path string) error {
 
 		switch filepath.Ext(path) {
 		case ".png":
-			img, _ := raster.LoadPNG(path)
+			img, _ := imageutil.LoadPNG(path)
 			m.images[basePath] = img
 
 		case ".obj":

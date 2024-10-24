@@ -1,4 +1,4 @@
-package raster
+package imageutil
 
 import (
 	"image"

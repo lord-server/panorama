@@ -8,8 +8,8 @@ import (
 
 	"github.com/nfnt/resize"
 
-	"github.com/lord-server/panorama/internal/raster"
 	"github.com/lord-server/panorama/internal/render"
+	"github.com/lord-server/panorama/pkg/imageutil"
 	"github.com/lord-server/panorama/pkg/lm"
 )
 
@@ -68,7 +68,7 @@ func (t *Tiler) downscalePositions(zoom int, positions []render.TilePosition) []
 
 		for quadrantY := 0; quadrantY < 2; quadrantY++ {
 			for quadrantX := 0; quadrantX < 2; quadrantX++ {
-				source, err := raster.LoadPNG(t.tilePath(pos.X*2+quadrantX, pos.Y*2+quadrantY, zoom-1))
+				source, err := imageutil.LoadPNG(t.tilePath(pos.X*2+quadrantX, pos.Y*2+quadrantY, zoom-1))
 				if err != nil {
 					continue
 				}
@@ -83,7 +83,7 @@ func (t *Tiler) downscalePositions(zoom int, positions []render.TilePosition) []
 
 		imagePath := t.tilePath(pos.X, pos.Y, zoom)
 
-		err := raster.SavePNG(target, imagePath)
+		err := imageutil.SavePNG(target, imagePath)
 		if err != nil {
 			slog.Error("unable to save image", "err", err, "path", imagePath)
 		}
