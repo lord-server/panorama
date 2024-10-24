@@ -8,8 +8,8 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/lord-server/panorama/internal/mesh"
 	"github.com/lord-server/panorama/internal/raster"
+	"github.com/lord-server/panorama/pkg/mesh"
 )
 
 type MediaCache struct {

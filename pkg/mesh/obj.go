@@ -160,6 +160,7 @@ func (o *objParser) processLine(line string) error {
 		}
 
 		o.positions = append(o.positions, position)
+
 	case "vt":
 		texcoord, err := parseVector2(fields[1:])
 		if err != nil {
@@ -167,6 +168,7 @@ func (o *objParser) processLine(line string) error {
 		}
 
 		o.texcoords = append(o.texcoords, texcoord)
+
 	case "vn":
 		normal, err := parseVector3(fields[1:])
 		if err != nil {
@@ -174,6 +176,7 @@ func (o *objParser) processLine(line string) error {
 		}
 
 		o.normals = append(o.normals, normal)
+
 	case "f":
 		triplets, err := parseFace(fields[1:])
 		if err != nil {
