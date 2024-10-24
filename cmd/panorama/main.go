@@ -10,8 +10,8 @@ import (
 	"github.com/lord-server/panorama/internal/game"
 	"github.com/lord-server/panorama/internal/render"
 	"github.com/lord-server/panorama/internal/render/isometric"
+	"github.com/lord-server/panorama/internal/server"
 	"github.com/lord-server/panorama/internal/tile"
-	"github.com/lord-server/panorama/internal/web"
 	"github.com/lord-server/panorama/internal/world"
 	"github.com/lord-server/panorama/static"
 )
@@ -90,7 +90,7 @@ func run(config config.Config) error {
 	slog.Info("starting web server", "address", config.Web.ListenAddress)
 
 	go func() {
-		web.Serve(static.UI, &config)
+		server.Serve(static.UI, &config)
 		quit <- true
 	}()
 
