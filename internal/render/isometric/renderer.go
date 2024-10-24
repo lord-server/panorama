@@ -5,13 +5,13 @@ import (
 	"math"
 
 	"github.com/lord-server/panorama/internal/game"
-	"github.com/lord-server/panorama/internal/lm"
 	"github.com/lord-server/panorama/internal/mesh"
 	"github.com/lord-server/panorama/internal/raster"
 	"github.com/lord-server/panorama/internal/render"
 	"github.com/lord-server/panorama/internal/render/light"
 	"github.com/lord-server/panorama/internal/spatial"
 	"github.com/lord-server/panorama/internal/world"
+	"github.com/lord-server/panorama/pkg/lm"
 )
 
 var (

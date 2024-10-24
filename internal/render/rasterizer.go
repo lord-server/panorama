@@ -6,9 +6,9 @@ import (
 	"math"
 
 	"github.com/lord-server/panorama/internal/game"
-	"github.com/lord-server/panorama/internal/lm"
 	"github.com/lord-server/panorama/internal/mesh"
 	"github.com/lord-server/panorama/internal/raster"
+	"github.com/lord-server/panorama/pkg/lm"
 )
 
 const Gamma = 2.2

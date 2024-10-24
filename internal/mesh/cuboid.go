@@ -1,6 +1,6 @@
 package mesh
 
-import "github.com/lord-server/panorama/internal/lm"
+import "github.com/lord-server/panorama/pkg/lm"
 
 type CubeFaces uint8
 
