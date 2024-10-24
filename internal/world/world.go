@@ -7,11 +7,11 @@ import (
 	lru "github.com/hashicorp/golang-lru/v2"
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
-	"github.com/lord-server/panorama/internal/spatial"
+	"github.com/lord-server/panorama/pkg/geom"
 )
 
 type Backend interface {
-	GetBlockData(pos spatial.BlockPosition) ([]byte, error)
+	GetBlockData(pos geom.BlockPosition) ([]byte, error)
 	Close()
 }
 
@@ -34,7 +34,7 @@ func (p *PostgresBackend) Close() {
 	p.conn.Close()
 }
 
-func (p *PostgresBackend) GetBlockData(pos spatial.BlockPosition) ([]byte, error) {
+func (p *PostgresBackend) GetBlockData(pos geom.BlockPosition) ([]byte, error) {
 	var data []byte
 
 	err := p.conn.QueryRow(context.Background(), "SELECT data FROM blocks WHERE posx=$1 and posy=$2 and posz=$3", pos.X, pos.Y, pos.Z).Scan(&data)
@@ -51,11 +51,11 @@ func (p *PostgresBackend) GetBlockData(pos spatial.BlockPosition) ([]byte, error
 
 type World struct {
 	backend           Backend
-	decodedBlockCache *lru.Cache[spatial.BlockPosition, *MapBlock]
+	decodedBlockCache *lru.Cache[geom.BlockPosition, *MapBlock]
 }
 
 func NewWorldWithBackend(backend Backend) World {
-	decodedBlockCache, err := lru.New[spatial.BlockPosition, *MapBlock](1024 * 16)
+	decodedBlockCache, err := lru.New[geom.BlockPosition, *MapBlock](1024 * 16)
 	if err != nil {
 		panic(err)
 	}
@@ -66,7 +66,7 @@ func NewWorldWithBackend(backend Backend) World {
 	}
 }
 
-func (w *World) GetBlock(pos spatial.BlockPosition) (*MapBlock, error) {
+func (w *World) GetBlock(pos geom.BlockPosition) (*MapBlock, error) {
 	cachedBlock, ok := w.decodedBlockCache.Get(pos)
 
 	if ok {

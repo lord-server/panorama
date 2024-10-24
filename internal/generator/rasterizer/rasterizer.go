@@ -1,4 +1,4 @@
-package render
+package rasterizer
 
 import (
 	"image"
@@ -6,7 +6,6 @@ import (
 	"math"
 
 	"github.com/lord-server/panorama/internal/game"
-	"github.com/lord-server/panorama/internal/raster"
 	"github.com/lord-server/panorama/pkg/lm"
 	"github.com/lord-server/panorama/pkg/mesh"
 )
@@ -22,14 +21,14 @@ type RenderableNode struct {
 }
 
 type NodeRasterizer struct {
-	cache map[RenderableNode]*raster.RenderBuffer
+	cache map[RenderableNode]*RenderBuffer
 
 	projection lm.Matrix3
 }
 
-func NewNodeRasterizer(projection lm.Matrix3) NodeRasterizer {
+func New(projection lm.Matrix3) NodeRasterizer {
 	return NodeRasterizer{
-		cache: make(map[RenderableNode]*raster.RenderBuffer),
+		cache: make(map[RenderableNode]*RenderBuffer),
 
 		projection: projection,
 	}
@@ -96,7 +95,7 @@ func shadePixel(lighting float64, texture *image.NRGBA, normal lm.Vector3, texco
 	}
 }
 
-func (r *NodeRasterizer) drawTriangle(target *raster.RenderBuffer, tex *image.NRGBA, lighting float64, a, b, c mesh.Vertex) {
+func (r *NodeRasterizer) drawTriangle(target *RenderBuffer, tex *image.NRGBA, lighting float64, a, b, c mesh.Vertex) {
 	origin := lm.Vector2{
 		X: float64(target.Color.Bounds().Dx()) / 2,
 		Y: float64(target.Color.Bounds().Dy()) / 2,
@@ -133,7 +132,7 @@ func (r *NodeRasterizer) drawTriangle(target *raster.RenderBuffer, tex *image.NR
 
 			finalColor := shadePixel(lighting, tex, normal, texcoord)
 
-			if finalColor.A > 10 {
+			if finalColor.A > 10 { // FIXME
 				if pixelDepth > target.Depth.At(x, y) {
 					continue
 				}
@@ -187,7 +186,7 @@ func (r *NodeRasterizer) createMesh(node RenderableNode, nodeDef *game.NodeDefin
 	}
 }
 
-func (r *NodeRasterizer) Render(node RenderableNode, nodeDef *game.NodeDefinition) *raster.RenderBuffer {
+func (r *NodeRasterizer) Render(node RenderableNode, nodeDef *game.NodeDefinition) *RenderBuffer {
 	if nodeDef.DrawType == game.DrawTypeAirlike || nodeDef.Model == nil || len(nodeDef.Textures) == 0 {
 		return nil
 	}
@@ -197,7 +196,7 @@ func (r *NodeRasterizer) Render(node RenderableNode, nodeDef *game.NodeDefinitio
 	}
 
 	rect := image.Rect(0, 0, BaseResolution, BaseResolution+BaseResolution/8)
-	target := raster.NewRenderBuffer(rect)
+	target := NewRenderBuffer(rect)
 
 	model := r.createMesh(node, nodeDef)
 

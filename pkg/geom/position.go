@@ -1,4 +1,4 @@
-package spatial
+package geom
 
 const BlockSize = 16
 const BlockVolume = BlockSize * BlockSize * BlockSize

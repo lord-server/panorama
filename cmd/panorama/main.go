@@ -8,10 +8,10 @@ import (
 	"github.com/alexflint/go-arg"
 	"github.com/lord-server/panorama/internal/config"
 	"github.com/lord-server/panorama/internal/game"
-	"github.com/lord-server/panorama/internal/render"
-	"github.com/lord-server/panorama/internal/render/isometric"
+	"github.com/lord-server/panorama/internal/generator"
+	"github.com/lord-server/panorama/internal/generator/isometric"
+	"github.com/lord-server/panorama/internal/generator/tile"
 	"github.com/lord-server/panorama/internal/server"
-	"github.com/lord-server/panorama/internal/tile"
 	"github.com/lord-server/panorama/internal/world"
 	"github.com/lord-server/panorama/static"
 )
@@ -44,6 +44,7 @@ func main() {
 
 	default:
 		slog.Warn("command not specified, proceeding with run")
+
 		err = run(config)
 	}
 
@@ -75,7 +76,7 @@ func fullrender(config config.Config) error {
 
 	slog.Info("performing a full render", "workers", config.Renderer.Workers, "region", config.Region)
 
-	tiler.FullRender(&game, &world, config.Renderer.Workers, config.Region, func() render.Renderer {
+	tiler.FullRender(&game, &world, config.Renderer.Workers, config.Region, func() generator.Renderer {
 		return isometric.NewRenderer(config.Region, &game)
 	})
 

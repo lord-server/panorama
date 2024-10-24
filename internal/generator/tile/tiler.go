@@ -12,20 +12,20 @@ import (
 	"sync"
 
 	"github.com/lord-server/panorama/internal/game"
-	"github.com/lord-server/panorama/internal/render"
-	"github.com/lord-server/panorama/internal/spatial"
+	"github.com/lord-server/panorama/internal/generator"
 	"github.com/lord-server/panorama/internal/world"
+	"github.com/lord-server/panorama/pkg/geom"
 	"github.com/lord-server/panorama/pkg/imageutil"
 	"github.com/lord-server/panorama/pkg/lm"
 )
 
 type Tiler struct {
-	region     spatial.Region
+	region     geom.Region
 	zoomLevels int
 	tilesPath  string
 }
 
-func NewTiler(region spatial.Region, zoomLevels int, tilesPath string) Tiler {
+func NewTiler(region geom.Region, zoomLevels int, tilesPath string) Tiler {
 	return Tiler{
 		region:     region,
 		zoomLevels: zoomLevels,
@@ -37,7 +37,7 @@ func (t *Tiler) tilePath(x, y, zoom int) string {
 	return fmt.Sprintf("%v/%v/%v/%v.png", t.tilesPath, -zoom, x, y)
 }
 
-func (t *Tiler) worker(wg *sync.WaitGroup, game *game.Game, world *world.World, renderer render.Renderer, positions <-chan render.TilePosition) {
+func (t *Tiler) worker(wg *sync.WaitGroup, game *game.Game, world *world.World, renderer generator.Renderer, positions <-chan generator.TilePosition) {
 	for position := range positions {
 		output := renderer.RenderTile(position, world, game)
 		// Don't save empty tiles
@@ -58,13 +58,13 @@ func (t *Tiler) worker(wg *sync.WaitGroup, game *game.Game, world *world.World, 
 	wg.Done()
 }
 
-type CreateRendererFunc func() render.Renderer
+type CreateRendererFunc func() generator.Renderer
 
-func (t *Tiler) FullRender(game *game.Game, world *world.World, workers int, region spatial.Region, createRenderer CreateRendererFunc) {
+func (t *Tiler) FullRender(game *game.Game, world *world.World, workers int, region geom.Region, createRenderer CreateRendererFunc) {
 	var wg sync.WaitGroup
 
-	positions := make(chan render.TilePosition)
-	projectedRegion := spatial.ProjectedRegion{}
+	positions := make(chan generator.TilePosition)
+	projectedRegion := geom.ProjectedRegion{}
 
 	for i := 0; i < workers; i++ {
 		wg.Add(1)
@@ -82,7 +82,7 @@ func (t *Tiler) FullRender(game *game.Game, world *world.World, workers int, reg
 		}
 
 		for y := projectedRegion.YBounds.Min; y < projectedRegion.YBounds.Max; y++ {
-			positions <- render.TilePosition{X: x, Y: y}
+			positions <- generator.TilePosition{X: x, Y: y}
 		}
 	}
 
@@ -101,7 +101,7 @@ func (t *Tiler) DownscaleTiles() {
 	}
 
 	// Collect tile positions
-	var positions []render.TilePosition
+	var positions []generator.TilePosition
 
 	err = filepath.WalkDir(tileDir, func(path string, d fs.DirEntry, _ error) error {
 		if d == nil || d.IsDir() {
@@ -124,7 +124,7 @@ func (t *Tiler) DownscaleTiles() {
 			return nil
 		}
 
-		positions = append(positions, render.TilePosition{
+		positions = append(positions, generator.TilePosition{
 			X: lm.FloorDiv(x, 2),
 			Y: lm.FloorDiv(y, 2),
 		})

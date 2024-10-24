@@ -7,7 +7,7 @@ import (
 	"io"
 
 	"github.com/klauspost/compress/zstd"
-	"github.com/lord-server/panorama/internal/spatial"
+	"github.com/lord-server/panorama/pkg/geom"
 )
 
 const NodeSizeInBytes = 4
@@ -243,7 +243,7 @@ func decodeBlock(reader *bytes.Reader) (*MapBlock, error) {
 		return nil, err
 	}
 
-	nodeData := make([]byte, spatial.BlockVolume*NodeSizeInBytes)
+	nodeData := make([]byte, geom.BlockVolume*NodeSizeInBytes)
 
 	_, err = io.ReadFull(reader, nodeData)
 	if err != nil {
@@ -280,14 +280,14 @@ func (b *MapBlock) ResolveName(id uint16) string {
 	return b.mappings[id]
 }
 
-func (b *MapBlock) GetNode(pos spatial.NodePosition) Node {
-	index := pos.Z*spatial.BlockSize*spatial.BlockSize + pos.Y*spatial.BlockSize + pos.X
+func (b *MapBlock) GetNode(pos geom.NodePosition) Node {
+	index := pos.Z*geom.BlockSize*geom.BlockSize + pos.Y*geom.BlockSize + pos.X
 
 	idHi := uint16(b.nodeData[2*index])
 	idLo := uint16(b.nodeData[2*index+1])
 
-	param1 := b.nodeData[2*spatial.BlockVolume+index]
-	param2 := b.nodeData[3*spatial.BlockVolume+index]
+	param1 := b.nodeData[2*geom.BlockVolume+index]
+	param2 := b.nodeData[3*geom.BlockVolume+index]
 
 	return Node{
 		ID:     (idHi << 8) | idLo,

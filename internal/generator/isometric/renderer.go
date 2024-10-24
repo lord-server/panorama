@@ -5,41 +5,42 @@ import (
 	"math"
 
 	"github.com/lord-server/panorama/internal/game"
-	"github.com/lord-server/panorama/internal/raster"
-	"github.com/lord-server/panorama/internal/render"
-	"github.com/lord-server/panorama/internal/render/light"
-	"github.com/lord-server/panorama/internal/spatial"
+	"github.com/lord-server/panorama/internal/generator"
+	"github.com/lord-server/panorama/internal/generator/light"
+	"github.com/lord-server/panorama/internal/generator/nn"
+	"github.com/lord-server/panorama/internal/generator/rasterizer"
 	"github.com/lord-server/panorama/internal/world"
+	"github.com/lord-server/panorama/pkg/geom"
 	"github.com/lord-server/panorama/pkg/lm"
 	"github.com/lord-server/panorama/pkg/mesh"
 )
 
 var (
-	YOffsetCoef     = int(math.Round(render.BaseResolution * (1 + math.Sqrt2) / 4))
-	TileBlockWidth  = spatial.BlockSize * render.BaseResolution
-	TileBlockHeight = render.BaseResolution/2*spatial.BlockSize - 1 + YOffsetCoef*spatial.BlockSize
+	YOffsetCoef     = int(math.Round(rasterizer.BaseResolution * (1 + math.Sqrt2) / 4))
+	TileBlockWidth  = geom.BlockSize * rasterizer.BaseResolution
+	TileBlockHeight = rasterizer.BaseResolution/2*geom.BlockSize - 1 + YOffsetCoef*geom.BlockSize
 )
 
 type IsometricRenderer struct {
-	nr render.NodeRasterizer
+	nr rasterizer.NodeRasterizer
 
-	region spatial.Region
+	region geom.Region
 	game   *game.Game
 }
 
-func NewRenderer(region spatial.Region, game *game.Game) *IsometricRenderer {
+func NewRenderer(region geom.Region, game *game.Game) *IsometricRenderer {
 	return &IsometricRenderer{
-		nr:     render.NewNodeRasterizer(lm.DimetricProjection()),
+		nr:     rasterizer.New(lm.DimetricProjection()),
 		region: region,
 		game:   game,
 	}
 }
 
 func (r *IsometricRenderer) renderNode(
-	target *raster.RenderBuffer,
-	pos spatial.NodePosition,
-	worldPos spatial.NodePosition,
-	neighborhood *render.BlockNeighborhood,
+	target *rasterizer.RenderBuffer,
+	pos geom.NodePosition,
+	worldPos geom.NodePosition,
+	neighborhood *nn.BlockNeighborhood,
 	offset image.Point,
 	depthOffset float64,
 ) {
@@ -65,7 +66,7 @@ func (r *IsometricRenderer) renderNode(
 		maxParam1 = light.MapEdgeIntensity
 	}
 
-	renderableNode := render.RenderableNode{
+	renderableNode := rasterizer.RenderableNode{
 		Name:        name,
 		Light:       light.Decode(maxParam1),
 		Param2:      param2,
@@ -83,12 +84,12 @@ func (r *IsometricRenderer) renderNode(
 
 func (r *IsometricRenderer) estimateVisibility(
 	nodeDef game.NodeDefinition,
-	neighborhood *render.BlockNeighborhood,
+	neighborhood *nn.BlockNeighborhood,
 	param1 uint8,
-	pos spatial.NodePosition,
+	pos geom.NodePosition,
 ) (uint8, mesh.CubeFaces) {
 	// Estimate lighting by sampling neighboring nodes and using the brightest one
-	neighborOffsets := []spatial.NodePosition{
+	neighborOffsets := []geom.NodePosition{
 		{X: 1, Y: 0, Z: 0},
 		{X: 0, Y: 1, Z: 0},
 		{X: 0, Y: 0, Z: 1},
@@ -126,21 +127,21 @@ func (r *IsometricRenderer) estimateVisibility(
 }
 
 func (r *IsometricRenderer) renderBlock(
-	target *raster.RenderBuffer,
-	blockPos spatial.BlockPosition,
-	neighborhood *render.BlockNeighborhood,
+	target *rasterizer.RenderBuffer,
+	blockPos geom.BlockPosition,
+	neighborhood *nn.BlockNeighborhood,
 	offset image.Point,
 	depthOffset float64,
 ) {
 	rect := image.Rect(0, 0, TileBlockWidth, TileBlockHeight)
 
 	// FIXME: nodes must define their origin points
-	originX, originY := rect.Dx()/2-render.BaseResolution/2, rect.Dy()/2+render.BaseResolution/4+2
+	originX, originY := rect.Dx()/2-rasterizer.BaseResolution/2, rect.Dy()/2+rasterizer.BaseResolution/4+2
 
-	for z := spatial.BlockSize - 1; z >= 0; z-- {
-		for y := spatial.BlockSize - 1; y >= 0; y-- {
-			for x := spatial.BlockSize - 1; x >= 0; x-- {
-				nodePos := spatial.NodePosition{X: x, Y: y, Z: z}
+	for z := geom.BlockSize - 1; z >= 0; z-- {
+		for y := geom.BlockSize - 1; y >= 0; y-- {
+			for x := geom.BlockSize - 1; x >= 0; x-- {
+				nodePos := geom.NodePosition{X: x, Y: y, Z: z}
 				nodeWorldPos := blockPos.AddNode(nodePos)
 
 				if !r.region.Intersects(nodeWorldPos.Region()) {
@@ -148,8 +149,8 @@ func (r *IsometricRenderer) renderBlock(
 				}
 
 				offset := image.Point{
-					X: originX + render.BaseResolution*(z-x)/2 + offset.X,
-					Y: originY + render.BaseResolution*(z+x)/4 + offset.Y - YOffsetCoef*y,
+					X: originX + rasterizer.BaseResolution*(z-x)/2 + offset.X,
+					Y: originY + rasterizer.BaseResolution*(z+x)/4 + offset.Y - YOffsetCoef*y,
 				}
 
 				r.renderNode(target, nodePos, nodeWorldPos, neighborhood, offset, depthOffset)
@@ -159,44 +160,44 @@ func (r *IsometricRenderer) renderBlock(
 }
 
 func (r *IsometricRenderer) RenderTile(
-	tilePos render.TilePosition,
+	tilePos generator.TilePosition,
 	world *world.World,
 	game *game.Game,
-) *raster.RenderBuffer {
+) *rasterizer.RenderBuffer {
 	tilePos.Y *= 2
 
 	rect := image.Rect(0, 0, TileBlockWidth, TileBlockWidth)
-	target := raster.NewRenderBuffer(rect)
+	target := rasterizer.NewRenderBuffer(rect)
 
 	centerX := tilePos.Y - tilePos.X
 	centerY := 0
 	centerZ := tilePos.Y + tilePos.X
 
-	yMin := int(math.Floor(float64(r.region.YBounds.Min) / float64(spatial.BlockSize)))
-	yMax := int(math.Ceil(float64(r.region.YBounds.Max) / float64(spatial.BlockSize)))
+	yMin := int(math.Floor(float64(r.region.YBounds.Min) / float64(geom.BlockSize)))
+	yMax := int(math.Ceil(float64(r.region.YBounds.Max) / float64(geom.BlockSize)))
 
 	for i := yMin; i < yMax; i++ {
 		for z := -3; z <= 3; z++ {
 			for x := -3; x <= 3; x++ {
-				blockPos := spatial.BlockPosition{
+				blockPos := geom.BlockPosition{
 					X: centerX + x + i,
 					Y: centerY + i,
 					Z: centerZ + z + i,
 				}
 
-				neighborhood := render.BlockNeighborhood{}
+				neighborhood := nn.BlockNeighborhood{}
 
-				neighborhood.FetchBlock(world, spatial.BlockPosition{X: 0, Y: 0, Z: 0}, blockPos)
-				neighborhood.FetchBlock(world, spatial.BlockPosition{X: 1, Y: 0, Z: 0}, blockPos)
-				neighborhood.FetchBlock(world, spatial.BlockPosition{X: 0, Y: 1, Z: 0}, blockPos)
-				neighborhood.FetchBlock(world, spatial.BlockPosition{X: 0, Y: 0, Z: 1}, blockPos)
+				neighborhood.FetchBlock(world, geom.BlockPosition{X: 0, Y: 0, Z: 0}, blockPos)
+				neighborhood.FetchBlock(world, geom.BlockPosition{X: 1, Y: 0, Z: 0}, blockPos)
+				neighborhood.FetchBlock(world, geom.BlockPosition{X: 0, Y: 1, Z: 0}, blockPos)
+				neighborhood.FetchBlock(world, geom.BlockPosition{X: 0, Y: 0, Z: 1}, blockPos)
 
 				offset := image.Point{
-					X: render.BaseResolution * (z - x) / 2 * spatial.BlockSize,
-					Y: (render.BaseResolution*(z+x+2*i)/4 - i*YOffsetCoef) * spatial.BlockSize,
+					X: rasterizer.BaseResolution * (z - x) / 2 * geom.BlockSize,
+					Y: (rasterizer.BaseResolution*(z+x+2*i)/4 - i*YOffsetCoef) * geom.BlockSize,
 				}
 
-				depthOffset := (-float64(z+x+2*i)/math.Sqrt2 - 0.5*float64(i)) * spatial.BlockSize
+				depthOffset := (-float64(z+x+2*i)/math.Sqrt2 - 0.5*float64(i)) * geom.BlockSize
 				r.renderBlock(target, blockPos, &neighborhood, offset, depthOffset)
 			}
 		}
@@ -205,21 +206,21 @@ func (r *IsometricRenderer) RenderTile(
 	return target
 }
 
-func (r *IsometricRenderer) ProjectRegion(region spatial.Region) spatial.ProjectedRegion {
-	xMin := int(math.Floor(float64((region.ZBounds.Min - region.XBounds.Max)) / 2 / spatial.BlockSize))
-	xMax := int(math.Ceil(float64((region.ZBounds.Max - region.XBounds.Min)) / 2 / spatial.BlockSize))
+func (r *IsometricRenderer) ProjectRegion(region geom.Region) geom.ProjectedRegion {
+	xMin := int(math.Floor(float64((region.ZBounds.Min - region.XBounds.Max)) / 2 / geom.BlockSize))
+	xMax := int(math.Ceil(float64((region.ZBounds.Max - region.XBounds.Min)) / 2 / geom.BlockSize))
 
 	yMin := int(math.Floor((float64(region.ZBounds.Min+region.XBounds.Min+2*region.YBounds.Max)/4 -
-		float64(region.YBounds.Max*YOffsetCoef)/render.BaseResolution) / spatial.BlockSize))
+		float64(region.YBounds.Max*YOffsetCoef)/rasterizer.BaseResolution) / geom.BlockSize))
 	yMax := int(math.Ceil((float64(region.ZBounds.Max+region.XBounds.Max+2*region.YBounds.Min)/4 -
-		float64(region.YBounds.Min*YOffsetCoef)/render.BaseResolution) / spatial.BlockSize))
+		float64(region.YBounds.Min*YOffsetCoef)/rasterizer.BaseResolution) / geom.BlockSize))
 
-	return spatial.ProjectedRegion{
-		XBounds: spatial.Bounds{
+	return geom.ProjectedRegion{
+		XBounds: geom.Bounds{
 			Min: xMin,
 			Max: xMax,
 		},
-		YBounds: spatial.Bounds{
+		YBounds: geom.Bounds{
 			Min: yMin,
 			Max: yMax,
 		},

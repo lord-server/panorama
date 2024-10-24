@@ -1,4 +1,4 @@
-package spatial
+package geom
 
 // Bounds defines the extent of a region on a single axis. It is assumed
 // that Max is always greater or equal to Min.

@@ -5,7 +5,7 @@ import (
 	"os"
 
 	"github.com/BurntSushi/toml"
-	"github.com/lord-server/panorama/internal/spatial"
+	"github.com/lord-server/panorama/pkg/geom"
 )
 
 type Web struct {
@@ -27,10 +27,10 @@ type System struct {
 }
 
 type Config struct {
-	System   System         `toml:"system"`
-	Web      Web            `toml:"web"`
-	Renderer Renderer       `toml:"renderer"`
-	Region   spatial.Region `toml:"region"`
+	System   System      `toml:"system"`
+	Web      Web         `toml:"web"`
+	Renderer Renderer    `toml:"renderer"`
+	Region   geom.Region `toml:"region"`
 }
 
 func LoadConfig(path string) (Config, error) {
