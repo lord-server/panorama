@@ -9,7 +9,7 @@ import (
 	"github.com/lord-server/panorama/internal/config"
 	"github.com/lord-server/panorama/internal/game"
 	"github.com/lord-server/panorama/internal/generator"
-	"github.com/lord-server/panorama/internal/generator/isometric"
+	"github.com/lord-server/panorama/internal/generator/flat"
 	"github.com/lord-server/panorama/internal/generator/tile"
 	"github.com/lord-server/panorama/internal/server"
 	"github.com/lord-server/panorama/internal/world"
@@ -64,20 +64,27 @@ func fullrender(config config.Config) error {
 		return err
 	}
 
-	backend, err := world.NewPostgresBackend(config.System.WorldDSN)
+	wd, err := world.NewWorld(config.System.WorldPath)
 	if err != nil {
-		slog.Error("unable to connect to world DB", "error", err)
-		return err
-	}
+		slog.Error("unable to open world, falling back to DSN",
+			"err", err,
+			"world_path", config.System.WorldPath)
 
-	world := world.NewWorldWithBackend(backend)
+		backend, err := world.NewPostgresBackend(config.System.WorldDSN)
+		if err != nil {
+			slog.Error("unable to connect to world DB", "error", err)
+			return err
+		}
+
+		wd = world.NewWorldWithBackend(backend)
+	}
 
 	tiler := tile.NewTiler(config.Region, config.Renderer.ZoomLevels, config.System.TilesPath)
 
 	slog.Info("performing a full render", "workers", config.Renderer.Workers, "region", config.Region)
 
-	tiler.FullRender(&game, &world, config.Renderer.Workers, config.Region, func() generator.Renderer {
-		return isometric.NewRenderer(config.Region, &game)
+	tiler.FullRender(&game, &wd, config.Renderer.Workers, config.Region, func() generator.Renderer {
+		return flat.NewRenderer(config.Region, &game)
 	})
 
 	tiler.DownscaleTiles()

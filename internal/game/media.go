@@ -35,6 +35,12 @@ func NewMediaCache() *MediaCache {
 
 func (m *MediaCache) fetchMedia(path string) error {
 	return filepath.WalkDir(path, func(path string, d fs.DirEntry, err error) error {
+		if err != nil {
+			slog.Warn("encountered error while fetching media", "error", err, "dir_entry", d)
+
+			return nil
+		}
+
 		if !d.Type().IsRegular() {
 			return nil
 		}

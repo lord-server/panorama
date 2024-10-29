@@ -3,6 +3,8 @@ package world
 import (
 	"context"
 	"errors"
+	"fmt"
+	"path/filepath"
 
 	lru "github.com/hashicorp/golang-lru/v2"
 	"github.com/jackc/pgx/v5"
@@ -12,6 +14,7 @@ import (
 
 type Backend interface {
 	GetBlockData(pos geom.BlockPosition) ([]byte, error)
+	GetBlocksAlongY(x, z int, callback func(geom.BlockPosition, []byte) error) error
 	Close()
 }
 
@@ -49,9 +52,78 @@ func (p *PostgresBackend) GetBlockData(pos geom.BlockPosition) ([]byte, error) {
 	return data, nil
 }
 
+func (p *PostgresBackend) GetBlocksAlongY(x, z int, callback func(geom.BlockPosition, []byte) error) error {
+	rows, err := p.conn.Query(context.Background(), "SELECT posx, posy, posz, data FROM blocks WHERE posx=$1 and posz=$2 ORDER BY posy", x, z)
+	if errors.Is(err, pgx.ErrNoRows) {
+		return nil
+	}
+
+	if err != nil {
+		return err
+	}
+
+	defer rows.Close()
+
+	for rows.Next() {
+		var (
+			pos  geom.BlockPosition
+			data []byte
+		)
+
+		err = rows.Scan(&pos.X, &pos.Y, &pos.Z, &data)
+		if err != nil {
+			return err
+		}
+
+		err = callback(pos, data)
+		if err != nil {
+			return err
+		}
+	}
+
+	rows.Close()
+
+	if err := rows.Err(); err != nil {
+		return err
+	}
+
+	return nil
+}
+
 type World struct {
 	backend           Backend
 	decodedBlockCache *lru.Cache[geom.BlockPosition, *MapBlock]
+}
+
+func NewWorld(path string) (World, error) {
+	var world World
+
+	meta, err := ParseMeta(filepath.Join(path, "world.mt"))
+	if err != nil {
+		return world, err
+	}
+
+	backendName, ok := meta["backend"]
+	if !ok {
+		return world, errors.New("backend not specified")
+	}
+
+	var backend Backend
+
+	switch backendName {
+	case "postgresql":
+		dsn, ok := meta["pgsql_connection"]
+		if !ok {
+			return world, errors.New("postgresql connection not specified")
+		}
+
+		backend, err = NewPostgresBackend(dsn)
+		if err != nil {
+			return world, fmt.Errorf("unable to create PostgreSQL backend: %w", err)
+		}
+	}
+
+	return NewWorldWithBackend(backend), nil
 }
 
 func NewWorldWithBackend(backend Backend) World {
@@ -95,4 +167,27 @@ func (w *World) GetBlock(pos geom.BlockPosition) (*MapBlock, error) {
 	w.decodedBlockCache.Add(pos, block)
 
 	return block, nil
+}
+
+func (w *World) GetBlocksAlongY(x, z int, callback func(geom.BlockPosition, *MapBlock) error) error {
+	return w.backend.GetBlocksAlongY(x, z, func(pos geom.BlockPosition, data []byte) error {
+		cachedBlock, ok := w.decodedBlockCache.Get(pos)
+
+		if ok {
+			if cachedBlock == nil {
+				return nil
+			}
+
+			return callback(pos, cachedBlock)
+		}
+
+		block, err := DecodeMapBlock(data)
+		if err != nil {
+			return err
+		}
+
+		w.decodedBlockCache.Add(pos, block)
+
+		return callback(pos, block)
+	})
 }
