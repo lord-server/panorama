@@ -8,12 +8,11 @@ import (
 
 	"github.com/nfnt/resize"
 
-	"github.com/lord-server/panorama/internal/generator"
 	"github.com/lord-server/panorama/pkg/imageutil"
 	"github.com/lord-server/panorama/pkg/lm"
 )
 
-func uniquePositions(input []generator.TilePosition) []generator.TilePosition {
+func uniquePositions(input []TilePosition) []TilePosition {
 	// Slices with zero or one element always contain unique elements
 	if len(input) < 2 {
 		return input
@@ -58,10 +57,10 @@ func uniquePositions(input []generator.TilePosition) []generator.TilePosition {
 }
 
 // downscalePositions produces downscaled images for given zoom level and returns a list of produced tile positions
-func (t *Tiler) downscalePositions(zoom int, positions []generator.TilePosition) []generator.TilePosition {
+func (t *Tiler) downscalePositions(zoom int, positions []TilePosition) []TilePosition {
 	const quadrantSize = 128
 
-	var nextPositions []generator.TilePosition
+	var nextPositions []TilePosition
 
 	for _, pos := range positions {
 		target := image.NewNRGBA(image.Rect(0, 0, 256, 256))
@@ -88,7 +87,7 @@ func (t *Tiler) downscalePositions(zoom int, positions []generator.TilePosition)
 			slog.Error("unable to save image", "err", err, "path", imagePath)
 		}
 
-		nextPositions = append(nextPositions, generator.TilePosition{
+		nextPositions = append(nextPositions, TilePosition{
 			X: lm.FloorDiv(pos.X, 2),
 			Y: lm.FloorDiv(pos.Y, 2),
 		})

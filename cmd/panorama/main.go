@@ -8,7 +8,6 @@ import (
 	"github.com/alexflint/go-arg"
 	"github.com/lord-server/panorama/internal/config"
 	"github.com/lord-server/panorama/internal/game"
-	"github.com/lord-server/panorama/internal/generator"
 	"github.com/lord-server/panorama/internal/generator/flat"
 	"github.com/lord-server/panorama/internal/generator/tile"
 	"github.com/lord-server/panorama/internal/server"
@@ -83,7 +82,7 @@ func fullrender(config config.Config) error {
 
 	slog.Info("performing a full render", "workers", config.Renderer.Workers, "region", config.Region)
 
-	tiler.FullRender(&game, &wd, config.Renderer.Workers, config.Region, func() generator.Renderer {
+	tiler.FullRender(&game, &wd, config.Renderer.Workers, config.Region, func() tile.Renderer {
 		return flat.NewRenderer(config.Region, &game)
 	})
 

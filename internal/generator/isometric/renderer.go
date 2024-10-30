@@ -5,10 +5,10 @@ import (
 	"math"
 
 	"github.com/lord-server/panorama/internal/game"
-	"github.com/lord-server/panorama/internal/generator"
 	"github.com/lord-server/panorama/internal/generator/light"
 	"github.com/lord-server/panorama/internal/generator/nn"
 	"github.com/lord-server/panorama/internal/generator/rasterizer"
+	"github.com/lord-server/panorama/internal/generator/tile"
 	"github.com/lord-server/panorama/internal/world"
 	"github.com/lord-server/panorama/pkg/geom"
 	"github.com/lord-server/panorama/pkg/lm"
@@ -160,7 +160,7 @@ func (r *IsometricRenderer) renderBlock(
 }
 
 func (r *IsometricRenderer) RenderTile(
-	tilePos generator.TilePosition,
+	tilePos tile.TilePosition,
 	world *world.World,
 	game *game.Game,
 ) *rasterizer.RenderBuffer {
