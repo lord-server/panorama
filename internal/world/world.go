@@ -14,7 +14,7 @@ import (
 
 type Backend interface {
 	GetBlockData(pos geom.BlockPosition) ([]byte, error)
-	GetBlocksAlongY(x, z int, callback func(geom.BlockPosition, []byte) error) error
+	GetBlocks(selector BlockSelector, callback func(geom.BlockPosition, []byte) error) error
 	Close()
 }
 
@@ -52,8 +52,10 @@ func (p *PostgresBackend) GetBlockData(pos geom.BlockPosition) ([]byte, error) {
 	return data, nil
 }
 
-func (p *PostgresBackend) GetBlocksAlongY(x, z int, callback func(geom.BlockPosition, []byte) error) error {
-	rows, err := p.conn.Query(context.Background(), "SELECT posx, posy, posz, data FROM blocks WHERE posx=$1 and posz=$2 ORDER BY posy", x, z)
+func (p *PostgresBackend) GetBlocks(selector BlockSelector, callback func(geom.BlockPosition, []byte) error) error {
+	sql, args := selector.Query()
+
+	rows, err := p.conn.Query(context.Background(), sql, args...)
 	if errors.Is(err, pgx.ErrNoRows) {
 		return nil
 	}
@@ -169,8 +171,8 @@ func (w *World) GetBlock(pos geom.BlockPosition) (*MapBlock, error) {
 	return block, nil
 }
 
-func (w *World) GetBlocksAlongY(x, z int, callback func(geom.BlockPosition, *MapBlock) error) error {
-	return w.backend.GetBlocksAlongY(x, z, func(pos geom.BlockPosition, data []byte) error {
+func (w *World) GetBlocks(selector BlockSelector, callback func(geom.BlockPosition, *MapBlock) error) error {
+	return w.backend.GetBlocks(selector, func(pos geom.BlockPosition, data []byte) error {
 		cachedBlock, ok := w.decodedBlockCache.Get(pos)
 
 		if ok {

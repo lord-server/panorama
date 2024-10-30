@@ -35,7 +35,12 @@ func (r *FlatRenderer) RenderTile(
 	rect := image.Rect(0, 0, 256, 256)
 	target := rasterizer.NewRenderBuffer(rect)
 
-	err := wd.GetBlocksAlongY(tilePos.X, tilePos.Y, func(pos geom.BlockPosition, block *world.MapBlock) error {
+	selector := world.BlocksAlongY{
+		X: tilePos.X,
+		Z: tilePos.Y,
+	}
+
+	err := wd.GetBlocks(selector, func(pos geom.BlockPosition, block *world.MapBlock) error {
 		return nil
 	})
 	if err != nil {
